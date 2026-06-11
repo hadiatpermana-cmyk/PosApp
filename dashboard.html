@@ -6,7 +6,7 @@
     <title>Dashboard - Multi Store</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -17,23 +17,24 @@
            ========================================= */
         :root {
             --primary-color: #0d9488; 
-            --primary-hover: #0f766e;
+            --btn-color: #d97706; /* Warna Tombol Aksi */
             
-            --bg-main: #f1f5f9;
+            --bg-main: #f8fafc;
             --bg-surface: #ffffff;
-            --text-main: #0f172a;
+            --text-main: #1e293b;
             --text-muted: #64748b;
             --border-color: #e2e8f0;
-            --sidebar-bg: #1e293b;
-            --sidebar-text: #cbd5e1;
-            --sidebar-hover: #334155;
+            --sidebar-bg: #ffffff;
+            --sidebar-text: #475569;
+            --sidebar-hover: #f1f5f9;
             
             --radius-sm: 8px;
-            --radius-md: 12px;
+            --radius-md: 16px;
             --radius-round: 50%;
-            --font-family: 'Inter', sans-serif;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --font-family: 'Poppins', sans-serif;
+            
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.02);
+            --shadow-md: 0 8px 20px rgba(0,0,0,0.06);
         }
 
         [data-theme="dark"] {
@@ -42,176 +43,148 @@
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border-color: #334155;
-            --sidebar-bg: #0b1120;
-            --sidebar-text: #94a3b8;
-            --sidebar-hover: #1e293b;
+            --sidebar-bg: #1e293b;
+            --sidebar-text: #cbd5e1;
+            --sidebar-hover: #334155;
         }
 
         /* =========================================
            2. GLOBAL STYLES
            ========================================= */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: var(--font-family);
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            height: 100vh;
-            display: flex;
-            overflow: hidden;
-        }
+        body { font-family: var(--font-family); background-color: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; }
 
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white; border: none;
-            width: 100%; padding: 12px;
-            border-radius: var(--radius-sm);
-            font-size: 16px; font-weight: 600;
-            cursor: pointer; transition: opacity 0.2s;
-        }
+        .btn-primary { background-color: var(--btn-color); color: white; border: none; padding: 12px; border-radius: var(--radius-sm); font-size: 16px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
         .btn-primary:hover { opacity: 0.9; }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* =========================================
            3. SIDEBAR
            ========================================= */
-        .sidebar {
-            width: 250px;
-            background-color: var(--sidebar-bg);
-            color: var(--sidebar-text);
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid var(--border-color);
-            transition: margin-left 0.3s ease;
-        }
+        .sidebar { width: 250px; flex-shrink: 0; background-color: var(--sidebar-bg); color: var(--sidebar-text); display: flex; flex-direction: column; border-right: 1px solid var(--border-color); transition: margin-left 0.3s ease; box-shadow: var(--shadow-sm); z-index: 10; }
         .sidebar.collapsed { margin-left: -250px; }
-        .sidebar-header {
-            padding: 20px;
-            font-size: 18px; font-weight: 700;
-            color: white; border-bottom: 1px solid var(--sidebar-hover);
-            display: flex; align-items: center; gap: 10px;
-        }
-        .sidebar-menu { list-style: none; padding: 20px 0; overflow-y: auto; flex-grow: 1; }
-        .sidebar-item {
-            padding: 12px 20px; cursor: pointer;
-            display: flex; align-items: center; gap: 15px;
-            font-size: 15px; transition: background-color 0.2s;
-        }
-        .sidebar-item:hover { background-color: var(--sidebar-hover); color: white; }
-        .sidebar-item.active { background-color: var(--primary-color); color: white; border-right: 4px solid white; }
+        .sidebar-header { padding: 20px; font-size: 18px; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; }
+        .sidebar-menu { list-style: none; padding: 15px 0; overflow-y: auto; flex-grow: 1; }
+        .sidebar-item { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: 500; transition: all 0.2s; margin: 0 10px 5px 10px; border-radius: var(--radius-sm); }
+        .sidebar-item i { font-size: 18px; width: 25px; text-align: center; }
+        .sidebar-item:hover { background-color: var(--sidebar-hover); color: var(--text-main); }
+        .sidebar-item.active { background-color: rgba(13, 148, 136, 0.1); color: var(--primary-color); }
+        .sidebar-item.active i { color: var(--primary-color) !important; }
 
         /* =========================================
            4. MAIN CONTENT
            ========================================= */
-        .main-wrapper {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            background-color: var(--bg-main);
-            overflow: hidden;
-            transition: width 0.3s ease;
-        }
-
-        .header_clean {
-            background-color: var(--bg-surface);
-            border-bottom: 1px solid var(--border-color);
-            padding: 15px 25px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        .main-wrapper { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; background-color: var(--bg-main); overflow: hidden; }
+        .header_clean { background-color: var(--bg-surface); border-bottom: 1px solid var(--border-color); padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
         .header-left { display: flex; align-items: center; gap: 15px; }
-        
-        /* Modifikasi container logo agar bisa memuat gambar asli */
-        .store-logo-placeholder {
-            width: 40px; height: 40px;
-            background-color: var(--primary-color); color: white;
-            border-radius: var(--radius-sm);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px; font-weight: bold;
-            overflow: hidden;
-        }
+        .store-logo-placeholder { width: 45px; height: 45px; background-color: var(--primary-color); color: white; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; overflow: hidden; }
         .store-info { display: flex; flex-direction: column; }
-        .store-name { font-size: 16px; font-weight: 600; color: var(--text-main); }
+        .store-name { font-size: 18px; font-weight: 700; color: var(--text-main); line-height: 1.2;}
         .store-tagline { font-size: 12px; color: var(--text-muted); }
-        
         .header-right { display: flex; align-items: center; gap: 15px; }
-        .user-profile { font-size: 14px; font-weight: 500; }
-        .btn-icon {
-            background: transparent; border: none; color: var(--text-main);
-            width: 35px; height: 35px; border-radius: var(--radius-round);
-            cursor: pointer; font-size: 16px;
-            display: flex; align-items: center; justify-content: center;
-            transition: background-color 0.2s;
-        }
+        .user-profile { font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px;}
+        .btn-icon { background: transparent; border: none; color: var(--text-main); width: 35px; height: 35px; border-radius: var(--radius-round); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s; }
         .btn-icon:hover { background-color: var(--border-color); }
 
-        .content-scroll { padding: 25px; overflow-y: auto; flex-grow: 1; }
+        .content-scroll { padding: 30px; overflow-y: auto; flex-grow: 1; }
         .page-section { display: none; animation: fadeIn 0.3s ease; }
         .page-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .page-title { font-size: 24px; font-weight: 600; margin-bottom: 20px; color: var(--text-main); }
-
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-        .card {
-            background-color: var(--bg-surface); border: 1px solid var(--border-color);
-            padding: 20px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
-        }
-        .card h3 { font-size: 16px; color: var(--text-muted); margin-bottom: 10px; font-weight: 500; }
-        .card .value { font-size: 28px; font-weight: 700; color: var(--text-main); }
 
         /* =========================================
-           5. HALAMAN PENGATURAN (SETTINGS)
+           5. DASHBOARD CARDS & ALERTS
            ========================================= */
-        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .settings-grid { grid-template-columns: 1fr; } }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 14px; margin-bottom: 8px; font-weight: 500;}
-        .form-control {
-            width: 100%; padding: 10px; border-radius: var(--radius-sm);
-            border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main);
-        }
-        .color-picker { display: flex; gap: 10px; margin-top: 10px; }
-        .color-btn {
-            width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent;
-            cursor: pointer; transition: transform 0.2s;
-        }
-        .color-btn:hover { transform: scale(1.1); }
-        .color-btn.active { border-color: var(--text-main); }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { border-radius: var(--radius-md); padding: 25px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: var(--shadow-md); position: relative; overflow: hidden; }
+        .stat-card h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; opacity: 0.9; margin-bottom: 5px; }
+        .stat-card .value { font-size: 36px; font-weight: 700; line-height: 1; }
+        .stat-card i.bg-icon { font-size: 80px; position: absolute; right: -10px; bottom: -10px; opacity: 0.2; transform: rotate(-10deg); }
+        .bg-blue { background: linear-gradient(135deg, #38bdf8, #0284c7); }
+        .bg-red { background: linear-gradient(135deg, #f87171, #dc2626); }
+        .bg-green { background: linear-gradient(135deg, #34d399, #059669); }
+        .section-title { font-size: 16px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .menu-card { background: var(--bg-surface); border-radius: var(--radius-md); padding: 20px; display: flex; align-items: center; gap: 20px; cursor: pointer; box-shadow: var(--shadow-md); border: 1px solid transparent; transition: all 0.2s; }
+        .menu-card:hover { transform: translateY(-3px); border-color: var(--primary-color); }
+        .menu-icon { width: 50px; height: 50px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .menu-text h4 { font-size: 16px; font-weight: 700; color: #4338ca; margin-bottom: 2px; }
+        .menu-text p { font-size: 12px; color: var(--text-muted); }
+        .alert-container { background: var(--bg-surface); border-radius: var(--radius-md); border-top: 4px solid #ef4444; box-shadow: var(--shadow-md); overflow: hidden; }
+        .alert-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); background: #fef2f2; }
+        .alert-header h4 { color: #ef4444; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .data-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .data-table th { background-color: var(--bg-surface); padding: 15px 20px; font-weight: 600; color: var(--text-muted); font-size: 12px; text-transform: uppercase; border-bottom: 1px solid var(--border-color); }
+        .data-table td { padding: 15px 20px; font-size: 14px; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
+        .data-table tr:hover td { background-color: var(--bg-main); }
+        .text-danger { color: #ef4444; font-weight: 700; }
+        .card { background-color: var(--bg-surface); border: 1px solid var(--border-color); padding: 25px; border-radius: var(--radius-md); box-shadow: var(--shadow-md); }
+        .page-title { font-size: 24px; font-weight: 700; margin-bottom: 20px; color: var(--text-main); }
 
+        /* =========================================
+           6. SETTINGS FORM (SINGLE PAGE LAYOUT)
+           ========================================= */
+        .settings-unified {
+            background-color: var(--bg-surface);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto; /* Tengah halaman */
+        }
+        .settings-header {
+            margin-bottom: 30px;
+        }
+        .settings-header h2 {
+            font-size: 20px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 10px;
+        }
+        .settings-header p { font-size: 14px; color: var(--text-muted); margin-top: 5px; }
+        
+        .logo-upload-section { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
+        .logo-preview-large { width: 80px; height: 80px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); object-fit: cover; display: flex; align-items: center; justify-content: center; background: var(--bg-main); font-size: 30px; color: var(--primary-color); }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 14px; margin-bottom: 8px; font-weight: 600; color: var(--text-main); }
+        .form-control { width: 100%; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-main); font-family: var(--font-family); font-size: 14px; transition: border-color 0.2s; }
+        .form-control:focus { outline: none; border-color: var(--primary-color); }
+        
+        /* Radio Buttons Mode */
+        .radio-group { display: flex; gap: 20px; align-items: center; }
+        .radio-label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+        .radio-label input { width: 18px; height: 18px; accent-color: var(--primary-color); cursor: pointer; }
+        
+        /* Color Pickers */
+        .color-row { display: flex; align-items: center; gap: 15px; }
+        input[type="color"] { -webkit-appearance: none; border: none; width: 40px; height: 40px; border-radius: 8px; cursor: pointer; background: transparent; padding: 0; }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: 1px solid var(--border-color); border-radius: 8px; }
+
+        /* Save Button Floating Center */
+        .save-action-area { display: flex; justify-content: center; margin-top: 40px; }
+        .btn-save-icon { background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border-color); width: 80%; max-width: 400px; padding: 15px; border-radius: var(--radius-md); font-size: 20px; cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow-sm); }
+        .btn-save-icon:hover { background: var(--primary-color); color: white; }
+
+        /* Grid 2 Column for inner layout */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
     <aside class="sidebar" id="mainSidebar">
         <div class="sidebar-header">
-            <i class="fa-solid fa-cube"></i> Back-Office
+            <i class="fa-solid fa-store" style="font-size: 24px;"></i> Point of Sale
         </div>
         <ul class="sidebar-menu">
-            <li class="sidebar-item active" data-target="page-dashboard">
-                <i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span>
-            </li>
-            <li class="sidebar-item" data-target="page-agen">
-                <i class="fa-solid fa-users"></i> <span>Agen / Konsumen</span>
-            </li>
-            <li class="sidebar-item" data-target="page-barang">
-                <i class="fa-solid fa-box"></i> <span>Master Barang</span>
-            </li>
-            <li class="sidebar-item" data-target="page-harga">
-                <i class="fa-solid fa-tags"></i> <span>Harga Khusus</span>
-            </li>
-            <li class="sidebar-item" data-target="page-penerimaan">
-                <i class="fa-solid fa-truck-ramp-box"></i> <span>Penerimaan Barang</span>
-            </li>
-            <li class="sidebar-item" data-target="page-pos">
-                <i class="fa-solid fa-cash-register"></i> <span>POS Kasir</span>
-            </li>
-            <li class="sidebar-item" data-target="page-laporan">
-                <i class="fa-solid fa-file-invoice"></i> <span>Laporan</span>
-            </li>
-            <li class="sidebar-item" data-target="page-settings" style="margin-top: 20px; border-top: 1px solid var(--sidebar-hover); padding-top: 20px;">
-                <i class="fa-solid fa-gear"></i> <span>Pengaturan Toko</span>
-            </li>
-            <li class="sidebar-item" onclick="handleLogout()" style="color: #ef4444;">
-                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
-            </li>
+            <li class="sidebar-item active" data-target="page-dashboard"><i class="fa-solid fa-chart-pie" style="color: #3b82f6;"></i> <span>Dashboard</span></li>
+            <li class="sidebar-item" data-target="page-barang"><i class="fa-solid fa-box-open" style="color: #f59e0b;"></i> <span>Master Barang</span></li>
+            <li class="sidebar-item" data-target="page-supplier"><i class="fa-solid fa-truck-fast" style="color: #8b5cf6;"></i> <span>Data Supplier</span></li>
+            <li class="sidebar-item" data-target="page-agen"><i class="fa-solid fa-users" style="color: #10b981;"></i> <span>Agen / Konsumen</span></li>
+            <li class="sidebar-item" data-target="page-harga"><i class="fa-solid fa-tags" style="color: #ec4899;"></i> <span>Harga Khusus</span></li>
+            <li class="sidebar-item" data-target="page-penerimaan"><i class="fa-solid fa-boxes-packing" style="color: #0ea5e9;"></i> <span>Penerimaan (In)</span></li>
+            <li class="sidebar-item" data-target="page-pos"><i class="fa-solid fa-cash-register" style="color: #f97316;"></i> <span>POS Kasir</span></li>
+            <li class="sidebar-item" data-target="page-laporan"><i class="fa-solid fa-chart-line" style="color: #6366f1;"></i> <span>Laporan</span></li>
+            <li class="sidebar-item" data-target="page-settings" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;"><i class="fa-solid fa-gear" style="color: #64748b;"></i> <span>Pengaturan Toko</span></li>
+            <li class="sidebar-item" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket" style="color: #ef4444;"></i> <span style="color: #ef4444;">Logout</span></li>
         </ul>
     </aside>
 
@@ -219,100 +192,135 @@
         
         <header class="header_clean">
             <div class="header-left">
-                <button class="btn-icon" onclick="toggleSidebar()" title="Sembunyikan/Tampilkan Menu" style="margin-right: 5px; font-size: 20px;">
-                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                </button>
-                
-                <div class="store-logo-placeholder" id="headerLogoArea">
-                    <i class="fa-solid fa-store"></i>
-                </div>
+                <button class="btn-icon" onclick="toggleSidebar()" style="margin-right: 5px;"><i class="fa-solid fa-bars"></i></button>
+                <div class="store-logo-placeholder" id="headerLogoArea"><i class="fa-solid fa-store"></i></div>
                 <div class="store-info">
-                    <span class="store-name" id="txtStoreName">Loading...</span>
-                    <span class="store-tagline" id="txtStoreTagline">Loading...</span>
+                    <span class="store-name" id="txtStoreName">Memuat...</span>
+                    <span class="store-tagline" id="txtStoreTagline">Harap tunggu</span>
                 </div>
             </div>
             <div class="header-right">
-                <span class="user-profile" id="txtUserName">Halo, Admin</span>
-                <button class="btn-icon" id="themeToggleBtn" title="Ganti Tema">
-                    <i class="fa-solid fa-moon"></i>
-                </button>
+                <span class="user-profile"><span id="txtUserName">Admin</span> 👋</span>
             </div>
         </header>
 
         <div class="content-scroll">
             
             <div id="page-dashboard" class="page-section active">
-                <h2 class="page-title">Overview Dashboard</h2>
-                <div class="dashboard-grid">
-                    <div class="card">
-                        <h3>Total Barang</h3>
-                        <div class="value">0</div>
-                    </div>
-                    <div class="card">
-                        <h3>Total Agen Aktif</h3>
-                        <div class="value">0</div>
-                    </div>
-                    <div class="card">
-                        <h3>Transaksi Hari Ini</h3>
-                        <div class="value">Rp 0</div>
-                    </div>
+                <div class="stat-grid">
+                    <div class="stat-card bg-blue"><div><h3>Total Barang</h3><div class="value">0</div></div><i class="fa-solid fa-box bg-icon"></i></div>
+                    <div class="stat-card bg-red"><div><h3>Stok Krisis</h3><div class="value">0</div></div><i class="fa-solid fa-triangle-exclamation bg-icon"></i></div>
+                    <div class="stat-card bg-green"><div><h3>Total Agen</h3><div class="value">0</div></div><i class="fa-solid fa-users bg-icon"></i></div>
+                </div>
+                <h3 class="section-title"><i class="fa-solid fa-wrench"></i> Menu Utama</h3>
+                <div class="menu-grid">
+                    <div class="menu-card" onclick="goToMenu('page-barang')"><div class="menu-icon" style="background: #fef3c7; color: #f59e0b;"><i class="fa-solid fa-box-open"></i></div><div class="menu-text"><h4>Master Barang</h4><p>Kelola stok & harga modal</p></div></div>
+                    <div class="menu-card" onclick="goToMenu('page-penerimaan')"><div class="menu-icon" style="background: #e0f2fe; color: #0ea5e9;"><i class="fa-solid fa-download"></i></div><div class="menu-text"><h4>Stok Masuk</h4><p>Input barang dari supplier</p></div></div>
+                    <div class="menu-card" onclick="goToMenu('page-agen')"><div class="menu-icon" style="background: #d1fae5; color: #10b981;"><i class="fa-solid fa-user-group"></i></div><div class="menu-text"><h4>Manajemen Kontak</h4><p>Supplier, Agen, & Konsumen</p></div></div>
+                    <div class="menu-card" onclick="goToMenu('page-harga')"><div class="menu-icon" style="background: #fce7f3; color: #ec4899;"><i class="fa-solid fa-money-bill-wave"></i></div><div class="menu-text"><h4>Harga Agen</h4><p>Set harga khusus per agen</p></div></div>
+                    <div class="menu-card" onclick="goToMenu('page-pos')"><div class="menu-icon" style="background: #ffedd5; color: #f97316;"><i class="fa-solid fa-cart-shopping"></i></div><div class="menu-text"><h4>Kasir / POS</h4><p>Transaksi penjualan ritel</p></div></div>
+                    <div class="menu-card" onclick="goToMenu('page-laporan')"><div class="menu-icon" style="background: #e0e7ff; color: #6366f1;"><i class="fa-solid fa-chart-bar"></i></div><div class="menu-text"><h4>Laporan</h4><p>Analisis keuntungan & omset</p></div></div>
+                </div>
+                <div class="alert-container">
+                    <div class="alert-header"><h4><i class="fa-solid fa-triangle-exclamation"></i> Perhatian: Stok Krisis! (&lt; Batas Minimal)</h4><span style="background: #fee2e2; color: #ef4444; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;">2 Item</span></div>
+                    <table class="data-table">
+                        <thead><tr><th>Nama Barang</th><th>Sisa Stok</th><th>Batas Min.</th><th>Tindakan</th></tr></thead>
+                        <tbody>
+                            <tr><td style="font-weight: 600;">Makaroni Bantet Balado</td><td class="text-danger">0 Ball</td><td>10 Ball</td><td><button style="background: #f1f5f9; border:none; padding: 6px 12px; border-radius: 6px; cursor:pointer; font-weight:600; color:#475569;" onclick="goToMenu('page-penerimaan')">Restock</button></td></tr>
+                            <tr><td style="font-weight: 600;">Plastik Ziploc 10x15</td><td class="text-danger">2 Pack</td><td>5 Pack</td><td><button style="background: #f1f5f9; border:none; padding: 6px 12px; border-radius: 6px; cursor:pointer; font-weight:600; color:#475569;" onclick="goToMenu('page-penerimaan')">Restock</button></td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <div id="page-barang" class="page-section">
-                <h2 class="page-title">Master Barang / Inventaris</h2>
-                <div class="card">
-                    <p>Halaman master data barang.</p>
-                </div>
-            </div>
+            <div id="page-barang" class="page-section"><h2 class="page-title">Master Barang</h2><div class="card"><p>Konten master barang</p></div></div>
+            <div id="page-supplier" class="page-section"><h2 class="page-title">Data Supplier</h2><div class="card"><p>Konten data supplier</p></div></div>
+            <div id="page-agen" class="page-section"><h2 class="page-title">Data Agen / Konsumen</h2><div class="card"><p>Konten data agen</p></div></div>
+            <div id="page-harga" class="page-section"><h2 class="page-title">Manajemen Harga Khusus</h2><div class="card"><p>Konten harga khusus</p></div></div>
+            <div id="page-penerimaan" class="page-section"><h2 class="page-title">Penerimaan Barang (In)</h2><div class="card"><p>Konten penerimaan stok</p></div></div>
+            <div id="page-pos" class="page-section"><h2 class="page-title">POS Kasir</h2><div class="card"><p>Antarmuka kasir penjualan</p></div></div>
+            <div id="page-laporan" class="page-section"><h2 class="page-title">Laporan</h2><div class="card"><p>Rekap data</p></div></div>
 
             <div id="page-settings" class="page-section">
-                <h2 class="page-title">Pengaturan Toko & UI Dinamis</h2>
-                <div class="settings-grid">
+                <div class="settings-unified">
                     
-                    <div class="card">
-                        <h3 style="color: var(--text-main); font-weight: 600; font-size: 18px; margin-bottom: 20px;"><i class="fa-solid fa-store"></i> Identitas Toko</h3>
-                        <div class="form-group">
-                            <label>Nama Toko</label>
-                            <input type="text" class="form-control" id="formStoreName">
+                    <div class="settings-header">
+                        <h2><i class="fa-solid fa-gear" style="color: var(--text-muted);"></i> Pengaturan Operasional & Tema Toko</h2>
+                        <p>Konfigurasi profil toko dan tema tampilan (Light/Dark Mode).</p>
+                    </div>
+
+                    <div class="logo-upload-section">
+                        <div id="previewLogoLarge" class="logo-preview-large">
+                            <i class="fa-solid fa-store"></i>
                         </div>
-                        <div class="form-group">
-                            <label>Slogan / Tagline</label>
-                            <input type="text" class="form-control" id="formStoreTagline">
-                        </div>
-                        <div class="form-group">
-                            <label>Logo Toko</label>
+                        <div>
+                            <label style="display:block; font-size:14px; font-weight:600; margin-bottom:8px;">Logo Toko / Dashboard</label>
                             <input type="file" id="fileStoreLogo" accept="image/*" style="display: none;" onchange="handleLogoUpload(this)">
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <button class="btn-primary" style="width: auto; padding: 8px 16px; background-color: var(--sidebar-bg);" onclick="document.getElementById('fileStoreLogo').click()">
-                                    <i class="fa-solid fa-upload"></i> Pilih Gambar dari Tablet
-                                </button>
-                                <span id="uploadStatus" style="font-size: 14px; color: var(--text-muted);">Belum ada file dipilih</span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <button type="button" style="background:#f1f5f9; border:1px solid var(--border-color); padding:6px 12px; border-radius:4px; cursor:pointer;" onclick="document.getElementById('fileStoreLogo').click()">Pilih File</button>
+                                <span id="uploadStatus" style="font-size: 13px; color: var(--text-muted);">Tidak ada file yang dipilih</span>
                             </div>
                             <input type="hidden" id="formStoreLogo">
                         </div>
-                        <button class="btn-primary" id="btnSaveSettings" style="margin-top: 20px;" onclick="saveStoreSettings()">Simpan Profil & Tema</button>
                     </div>
 
-                    <div class="card">
-                        <h3 style="color: var(--text-main); font-weight: 600; font-size: 18px; margin-bottom: 20px;"><i class="fa-solid fa-palette"></i> Kustomisasi Tampilan (UI)</h3>
-                        <div class="form-group">
-                            <label>Pilih Warna Utama (Primary Color)</label>
-                            <div class="color-picker">
-                                <div class="color-btn active" style="background-color: #0d9488;" data-color="#0d9488"></div>
-                                <div class="color-btn" style="background-color: #2563eb;" data-color="#2563eb"></div>
-                                <div class="color-btn" style="background-color: #dc2626;" data-color="#dc2626"></div>
-                                <div class="color-btn" style="background-color: #f59e0b;" data-color="#f59e0b"></div>
-                                <div class="color-btn" style="background-color: #7c3aed;" data-color="#7c3aed"></div>
+                    <div class="form-group">
+                        <label>Mode Tampilan Aplikasi</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="themeMode" value="light" checked onchange="toggleThemeMode('light')">
+                                ☀️ Mode Terang
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="themeMode" value="dark" onchange="toggleThemeMode('dark')">
+                                🌙 Mode Gelap
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nama Toko / Unit Usaha</label>
+                        <input type="text" class="form-control" id="formStoreName">
+                    </div>
+
+                    <div class="grid-2">
+                        <div>
+                            <div class="form-group">
+                                <label>No. WhatsApp</label>
+                                <input type="text" class="form-control" id="formStoreWhatsApp" placeholder="Contoh: 081234567890">
+                            </div>
+                            <div class="form-group">
+                                <label>Catatan Kaki Struk</label>
+                                <input type="text" class="form-control" id="formReceiptFooter" placeholder="Terima kasih sampai belanja kembali">
                             </div>
                         </div>
-                        <div class="form-group" style="margin-top: 20px;">
-                            <label>Pilih Gaya Font (Tipografi)</label>
-                            <select class="form-control" id="fontSelector">
-                                <option value="'Inter', sans-serif">Inter (Modern & Bersih)</option>
-                                <option value="'Poppins', sans-serif">Poppins (Bulat & Ramah)</option>
-                            </select>
+                        <div>
+                            <div class="form-group">
+                                <label>Warna Tema Utama</label>
+                                <div class="color-row">
+                                    <input type="color" id="colorPrimary" value="#0d9488" onchange="updateColors()">
+                                    <span style="font-size: 13px; color: var(--text-muted);">Warna Header Navbar & Aksen</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Warna Tombol</label>
+                                <div class="color-row">
+                                    <input type="color" id="colorButton" value="#d97706" onchange="updateColors()">
+                                    <span style="font-size: 13px; color: var(--text-muted);">Warna Aksi / Simpan</span>
+                                </div>
+                            </div>
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Alamat Lengkap Toko</label>
+                        <textarea class="form-control" id="formStoreAddress" rows="3" placeholder="Masukkan alamat lengkap..."></textarea>
+                    </div>
+
+                    <div class="save-action-area">
+                        <button class="btn-save-icon" id="btnSaveSettings" onclick="saveStoreSettings()" title="Simpan Pengaturan">
+                            <i class="fa-solid fa-floppy-disk"></i>Simpan Pengaturan
+                        </button>
                     </div>
 
                 </div>
@@ -322,203 +330,133 @@
     </main>
 
     <script>
-        // CONFIG SUPABASE
         const SUPABASE_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // AMBIL DATA SESI
         const storeId = localStorage.getItem('session_store_id');
         const userName = localStorage.getItem('session_user_name');
 
-        // Variabel penampung pilihan tema global
-        let selectedColor = '#0d9488';
-        let selectedFont = "'Inter', sans-serif";
+        if(!storeId) window.location.href = 'login.html';
 
-        if(!storeId) {
-            window.location.href = 'login.html';
-        }
-
-        // 1. AMBIL DATA TOKO DARI SUPABASE
         async function fetchStoreSettings() {
-            const { data: store, error } = await supabaseClient
-                .from('stores')
-                .select('*')
-                .eq('id', storeId)
-                .single();
+            const { data: store, error } = await supabaseClient.from('stores').select('*').eq('id', storeId).single();
+            if (error) return console.error("Gagal mengambil data toko:", error);
 
-            if (error) {
-                console.error("Gagal mengambil data toko:", error);
-                return;
-            }
-
-            // Pasang data ke UI Header Clean
+            // Set Teks Header Atas
             document.getElementById('txtStoreName').innerText = store.name;
-            document.getElementById('txtStoreTagline').innerText = store.tagline || 'System Administrator';
+            document.getElementById('txtStoreTagline').innerText = "System Administrator"; // Atau ambil dari store.tagline jika masih digunakan
             
-            // Render Gambar Logo di Header jika ada
+            // Set Logo Header & Preview Pengaturan
             const logoArea = document.getElementById('headerLogoArea');
+            const previewLarge = document.getElementById('previewLogoLarge');
             if(store.logo_url) {
-                logoArea.innerHTML = `<img src="${store.logo_url}" alt="Logo" style="width:100%; height:100%; object-fit:cover; border-radius:var(--radius-sm);">`;
-                document.getElementById('uploadStatus').innerText = "Logo aktif terpasang";
-            } else {
-                logoArea.innerHTML = `<i class="fa-solid fa-store"></i>`;
+                const imgHtml = `<img src="${store.logo_url}" alt="Logo" style="width:100%; height:100%; object-fit:cover;">`;
+                logoArea.innerHTML = imgHtml;
+                previewLarge.innerHTML = `<img src="${store.logo_url}" alt="Logo" style="width:100%; height:100%; object-fit:cover; border-radius: var(--radius-sm);">`;
+                document.getElementById('uploadStatus').innerText = "Logo terpasang";
             }
 
-            // Pasang data ke Form Input Pengaturan
-            document.getElementById('formStoreName').value = store.name;
-            document.getElementById('formStoreTagline').value = store.tagline || '';
+            // Set Form Values
+            document.getElementById('formStoreName').value = store.name || '';
+            document.getElementById('formStoreWhatsApp').value = store.whatsapp || '';
+            document.getElementById('formStoreAddress').value = store.address || '';
+            document.getElementById('formReceiptFooter').value = store.receipt_footer || '';
             document.getElementById('formStoreLogo').value = store.logo_url || '';
 
-            // Terapkan Tema Warna dari database
+            // Set Colors
             if(store.theme_color) {
-                selectedColor = store.theme_color;
                 document.documentElement.style.setProperty('--primary-color', store.theme_color);
-                document.querySelectorAll('.color-btn').forEach(b => {
-                    b.classList.remove('active');
-                    if(b.getAttribute('data-color') === store.theme_color) b.classList.add('active');
-                });
+                document.getElementById('colorPrimary').value = store.theme_color;
             }
-
-            // Terapkan Font dari database
-            if(store.font_family) {
-                selectedFont = store.font_family;
-                document.documentElement.style.setProperty('--font-family', store.font_family);
-                document.getElementById('fontSelector').value = store.font_family;
+            if(store.button_color) {
+                document.documentElement.style.setProperty('--btn-color', store.button_color);
+                document.getElementById('colorButton').value = store.button_color;
             }
         }
 
-        // Jalankan fetch data saat halaman dimuat
         document.addEventListener('DOMContentLoaded', () => {
-            if(userName) document.getElementById('txtUserName').innerText = "Halo, " + userName;
+            if(userName) document.getElementById('txtUserName').innerText = userName;
             fetchStoreSettings();
         });
 
-        // 2. LOGIC PROSES UPLOAD LOGO KE SUPABASE STORAGE
+        // Toggle Tema via Radio Button
+        function toggleThemeMode(mode) {
+            const htmlTag = document.documentElement;
+            if (mode === 'dark') {
+                htmlTag.setAttribute('data-theme', 'dark');
+            } else {
+                htmlTag.setAttribute('data-theme', 'light');
+            }
+        }
+
+        // Live preview warna
+        function updateColors() {
+            const primary = document.getElementById('colorPrimary').value;
+            const btn = document.getElementById('colorButton').value;
+            document.documentElement.style.setProperty('--primary-color', primary);
+            document.documentElement.style.setProperty('--btn-color', btn);
+        }
+
         async function handleLogoUpload(input) {
             const file = input.files[0];
             const statusSpan = document.getElementById('uploadStatus');
             if(!file) return;
-
-            statusSpan.innerText = "Mengunggah gambar...";
+            statusSpan.innerText = "Mengunggah...";
             
-            // Menyusun nama file unik menggunakan ID Toko dan Waktu agar tidak bentrok
             const fileExt = file.name.split('.').pop();
             const fileName = `${storeId}-${Date.now()}.${fileExt}`;
-            const filePath = `public/${fileName}`;
+            const { error } = await supabaseClient.storage.from('logos').upload(`public/${fileName}`, file, { upsert: true });
 
-            // Unggah file ke Bucket 'logos' yang sudah kita buat tadi
-            const { data, error } = await supabaseClient.storage
-                .from('logos')
-                .upload(filePath, file, { upsert: true });
-
-            if(error) {
-                console.error("Gagal upload:", error);
-                statusSpan.innerText = "Gagal mengunggah logo.";
-                return;
-            }
-
-            // Dapatkan URL publik dari file yang berhasil diunggah
-            const { data: publicUrlData } = supabaseClient.storage
-                .from('logos')
-                .getPublicUrl(filePath);
-
-            const publicUrl = publicUrlData.publicUrl;
+            if(error) { statusSpan.innerText = "Gagal upload."; return; }
+            const { data: publicUrlData } = supabaseClient.storage.from('logos').getPublicUrl(`public/${fileName}`);
             
-            // Simpan URL sementara di input tersembunyi
-            document.getElementById('formStoreLogo').value = publicUrl;
-            statusSpan.innerText = "Berhasil diunggah! Klik simpan profil.";
+            document.getElementById('formStoreLogo').value = publicUrlData.publicUrl;
+            document.getElementById('previewLogoLarge').innerHTML = `<img src="${publicUrlData.publicUrl}" alt="Logo" style="width:100%; height:100%; object-fit:cover; border-radius: var(--radius-sm);">`;
+            statusSpan.innerText = file.name;
         }
 
-        // 3. LOGIC SIMPAN PROFIL & TEMA BARU KE DATABASE
         async function saveStoreSettings() {
             const btnSave = document.getElementById('btnSaveSettings');
-            const name = document.getElementById('formStoreName').value;
-            const tagline = document.getElementById('formStoreTagline').value;
-            const logoUrl = document.getElementById('formStoreLogo').value;
-
-            btnSave.innerText = "Menyimpan...";
+            const originalIcon = btnSave.innerHTML;
+            btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
             btnSave.disabled = true;
 
-            // Update baris tabel stores berdasarkan ID Toko saat ini
-            const { error } = await supabaseClient
-                .from('stores')
-                .update({
-                    name: name,
-                    tagline: tagline,
-                    logo_url: logoUrl,
-                    theme_color: selectedColor,
-                    font_family: selectedFont
-                })
-                .eq('id', storeId);
+            const { error } = await supabaseClient.from('stores').update({
+                name: document.getElementById('formStoreName').value,
+                whatsapp: document.getElementById('formStoreWhatsApp').value,
+                address: document.getElementById('formStoreAddress').value,
+                receipt_footer: document.getElementById('formReceiptFooter').value,
+                logo_url: document.getElementById('formStoreLogo').value,
+                theme_color: document.getElementById('colorPrimary').value,
+                button_color: document.getElementById('colorButton').value
+            }).eq('id', storeId);
 
-            btnSave.innerText = "Simpan Profil & Tema";
+            btnSave.innerHTML = originalIcon; 
             btnSave.disabled = false;
 
-            if(error) {
-                alert("Gagal menyimpan: " + error.message);
-            } else {
-                alert("Pengaturan Toko berhasil diperbarui ke Supabase!");
-                fetchStoreSettings(); // Ambil data baru untuk merefresh tampilan secara instan
+            if(error) alert("Gagal menyimpan: " + error.message);
+            else { 
+                alert("Pengaturan Toko berhasil diperbarui!"); 
+                fetchStoreSettings(); 
             }
         }
 
-        // LOGIC LOGOUT
-        function handleLogout() {
-            localStorage.clear();
-            window.location.href = 'login.html';
+        function handleLogout() { localStorage.clear(); window.location.href = 'login.html'; }
+        function toggleSidebar() { document.getElementById('mainSidebar').classList.toggle('collapsed'); }
+
+        function goToMenu(targetId) {
+            document.querySelectorAll('.sidebar-item').forEach(n => n.classList.remove('active'));
+            const targetMenu = document.querySelector(`.sidebar-item[data-target="${targetId}"]`);
+            if(targetMenu) targetMenu.classList.add('active');
+
+            document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+            document.getElementById(targetId).classList.add('active');
         }
 
-        // LOGIC SIDEBAR TOGGLE
-        function toggleSidebar() {
-            document.getElementById('mainSidebar').classList.toggle('collapsed');
-        }
-
-        // LOGIC SIDEBAR NAVIGATION
         const navItems = document.querySelectorAll('.sidebar-item[data-target]');
-        const pages = document.querySelectorAll('.page-section');
-
         navItems.forEach(item => {
-            item.addEventListener('click', () => {
-                navItems.forEach(n => n.classList.remove('active'));
-                item.classList.add('active');
-
-                pages.forEach(p => p.classList.remove('active'));
-                const targetId = item.getAttribute('data-target');
-                const targetPage = document.getElementById(targetId);
-                if(targetPage) targetPage.classList.add('active');
-            });
-        });
-
-        // LOGIC DARK/LIGHT MODE
-        const themeToggleBtn = document.getElementById('themeToggleBtn');
-        const themeIcon = themeToggleBtn.querySelector('i');
-        const htmlTag = document.documentElement;
-
-        themeToggleBtn.addEventListener('click', () => {
-            if (htmlTag.getAttribute('data-theme') === 'light') {
-                htmlTag.setAttribute('data-theme', 'dark');
-                themeIcon.classList.replace('fa-moon', 'fa-sun');
-            } else {
-                htmlTag.setAttribute('data-theme', 'light');
-                themeIcon.classList.replace('fa-sun', 'fa-moon');
-            }
-        });
-
-        // LOGIC PREVIEW WARNA & FONT SECARA REAL-TIME
-        const colorBtns = document.querySelectorAll('.color-btn');
-        colorBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                colorBtns.forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                selectedColor = e.target.getAttribute('data-color');
-                htmlTag.style.setProperty('--primary-color', selectedColor);
-            });
-        });
-
-        document.getElementById('fontSelector').addEventListener('change', (e) => {
-            selectedFont = e.target.value;
-            htmlTag.style.setProperty('--font-family', selectedFont);
+            item.addEventListener('click', () => { goToMenu(item.getAttribute('data-target')); });
         });
     </script>
 </body>

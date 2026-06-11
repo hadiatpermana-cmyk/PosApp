@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Multi Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* =========================================
+           1. DESIGN TOKENS (CSS VARIABLES)
+           ========================================= */
+        :root {
+            --primary-color: #0d9488; 
+            --primary-hover: #0f766e;
+            
+            --bg-main: #f1f5f9;
+            --bg-surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --sidebar-bg: #1e293b;
+            --sidebar-text: #cbd5e1;
+            --sidebar-hover: #334155;
+            
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-round: 50%;
+            --font-family: 'Inter', sans-serif;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-main: #0f172a;
+            --bg-surface: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --sidebar-bg: #0b1120;
+            --sidebar-text: #94a3b8;
+            --sidebar-hover: #1e293b;
+        }
+
+        /* =========================================
+           2. GLOBAL STYLES
+           ========================================= */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white; border: none;
+            width: 100%; padding: 12px;
+            border-radius: var(--radius-sm);
+            font-size: 16px; font-weight: 600;
+            cursor: pointer; transition: opacity 0.2s;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* =========================================
+           3. SIDEBAR
+           ========================================= */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            transition: margin-left 0.3s ease;
+        }
+        .sidebar.collapsed { margin-left: -250px; }
+        .sidebar-header {
+            padding: 20px;
+            font-size: 18px; font-weight: 700;
+            color: white; border-bottom: 1px solid var(--sidebar-hover);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .sidebar-menu { list-style: none; padding: 20px 0; overflow-y: auto; flex-grow: 1; }
+        .sidebar-item {
+            padding: 12px 20px; cursor: pointer;
+            display: flex; align-items: center; gap: 15px;
+            font-size: 15px; transition: background-color 0.2s;
+        }
+        .sidebar-item:hover { background-color: var(--sidebar-hover); color: white; }
+        .sidebar-item.active { background-color: var(--primary-color); color: white; border-right: 4px solid white; }
+
+        /* =========================================
+           4. MAIN CONTENT
+           ========================================= */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-main);
+            overflow: hidden;
+            transition: width 0.3s ease;
+        }
+
+        .header_clean {
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 25px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        
+        /* Modifikasi container logo agar bisa memuat gambar asli */
+        .store-logo-placeholder {
+            width: 40px; height: 40px;
+            background-color: var(--primary-color); color: white;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: bold;
+            overflow: hidden;
+        }
+        .store-info { display: flex; flex-direction: column; }
+        .store-name { font-size: 16px; font-weight: 600; color: var(--text-main); }
+        .store-tagline { font-size: 12px; color: var(--text-muted); }
+        
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        .user-profile { font-size: 14px; font-weight: 500; }
+        .btn-icon {
+            background: transparent; border: none; color: var(--text-main);
+            width: 35px; height: 35px; border-radius: var(--radius-round);
+            cursor: pointer; font-size: 16px;
+            display: flex; align-items: center; justify-content: center;
+            transition: background-color 0.2s;
+        }
+        .btn-icon:hover { background-color: var(--border-color); }
+
+        .content-scroll { padding: 25px; overflow-y: auto; flex-grow: 1; }
+        .page-section { display: none; animation: fadeIn 0.3s ease; }
+        .page-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .page-title { font-size: 24px; font-weight: 600; margin-bottom: 20px; color: var(--text-main); }
+
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .card {
+            background-color: var(--bg-surface); border: 1px solid var(--border-color);
+            padding: 20px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+        }
+        .card h3 { font-size: 16px; color: var(--text-muted); margin-bottom: 10px; font-weight: 500; }
+        .card .value { font-size: 28px; font-weight: 700; color: var(--text-main); }
+
+        /* =========================================
+           5. HALAMAN PENGATURAN (SETTINGS)
+           ========================================= */
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .settings-grid { grid-template-columns: 1fr; } }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 14px; margin-bottom: 8px; font-weight: 500;}
+        .form-control {
+            width: 100%; padding: 10px; border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main);
+        }
+        .color-picker { display: flex; gap: 10px; margin-top: 10px; }
+        .color-btn {
+            width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent;
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .color-btn:hover { transform: scale(1.1); }
+        .color-btn.active { border-color: var(--text-main); }
+
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar" id="mainSidebar">
+        <div class="sidebar-header">
+            <i class="fa-solid fa-cube"></i> Back-Office
+        </div>
+        <ul class="sidebar-menu">
+            <li class="sidebar-item active" data-target="page-dashboard">
+                <i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span>
+            </li>
+            <li class="sidebar-item" data-target="page-agen">
+                <i class="fa-solid fa-users"></i> <span>Agen / Konsumen</span>
+            </li>
+            <li class="sidebar-item" data-target="page-barang">
+                <i class="fa-solid fa-box"></i> <span>Master Barang</span>
+            </li>
+            <li class="sidebar-item" data-target="page-harga">
+                <i class="fa-solid fa-tags"></i> <span>Harga Khusus</span>
+            </li>
+            <li class="sidebar-item" data-target="page-penerimaan">
+                <i class="fa-solid fa-truck-ramp-box"></i> <span>Penerimaan Barang</span>
+            </li>
+            <li class="sidebar-item" data-target="page-pos">
+                <i class="fa-solid fa-cash-register"></i> <span>POS Kasir</span>
+            </li>
+            <li class="sidebar-item" data-target="page-laporan">
+                <i class="fa-solid fa-file-invoice"></i> <span>Laporan</span>
+            </li>
+            <li class="sidebar-item" data-target="page-settings" style="margin-top: 20px; border-top: 1px solid var(--sidebar-hover); padding-top: 20px;">
+                <i class="fa-solid fa-gear"></i> <span>Pengaturan Toko</span>
+            </li>
+            <li class="sidebar-item" onclick="handleLogout()" style="color: #ef4444;">
+                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+            </li>
+        </ul>
+    </aside>
+
+    <main class="main-wrapper">
+        
+        <header class="header_clean">
+            <div class="header-left">
+                <button class="btn-icon" onclick="toggleSidebar()" title="Sembunyikan/Tampilkan Menu" style="margin-right: 5px; font-size: 20px;">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                </button>
+                
+                <div class="store-logo-placeholder" id="headerLogoArea">
+                    <i class="fa-solid fa-store"></i>
+                </div>
+                <div class="store-info">
+                    <span class="store-name" id="txtStoreName">Loading...</span>
+                    <span class="store-tagline" id="txtStoreTagline">Loading...</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="user-profile" id="txtUserName">Halo, Admin</span>
+                <button class="btn-icon" id="themeToggleBtn" title="Ganti Tema">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="content-scroll">
+            
+            <div id="page-dashboard" class="page-section active">
+                <h2 class="page-title">Overview Dashboard</h2>
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3>Total Barang</h3>
+                        <div class="value">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>Total Agen Aktif</h3>
+                        <div class="value">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>Transaksi Hari Ini</h3>
+                        <div class="value">Rp 0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-barang" class="page-section">
+                <h2 class="page-title">Master Barang / Inventaris</h2>
+                <div class="card">
+                    <p>Halaman master data barang.</p>
+                </div>
+            </div>
+
+            <div id="page-settings" class="page-section">
+                <h2 class="page-title">Pengaturan Toko & UI Dinamis</h2>
+                <div class="settings-grid">
+                    
+                    <div class="card">
+                        <h3 style="color: var(--text-main); font-weight: 600; font-size: 18px; margin-bottom: 20px;"><i class="fa-solid fa-store"></i> Identitas Toko</h3>
+                        <div class="form-group">
+                            <label>Nama Toko</label>
+                            <input type="text" class="form-control" id="formStoreName">
+                        </div>
+                        <div class="form-group">
+                            <label>Slogan / Tagline</label>
+                            <input type="text" class="form-control" id="formStoreTagline">
+                        </div>
+                        <div class="form-group">
+                            <label>Logo Toko</label>
+                            <input type="file" id="fileStoreLogo" accept="image/*" style="display: none;" onchange="handleLogoUpload(this)">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <button class="btn-primary" style="width: auto; padding: 8px 16px; background-color: var(--sidebar-bg);" onclick="document.getElementById('fileStoreLogo').click()">
+                                    <i class="fa-solid fa-upload"></i> Pilih Gambar dari Tablet
+                                </button>
+                                <span id="uploadStatus" style="font-size: 14px; color: var(--text-muted);">Belum ada file dipilih</span>
+                            </div>
+                            <input type="hidden" id="formStoreLogo">
+                        </div>
+                        <button class="btn-primary" id="btnSaveSettings" style="margin-top: 20px;" onclick="saveStoreSettings()">Simpan Profil & Tema</button>
+                    </div>
+
+                    <div class="card">
+                        <h3 style="color: var(--text-main); font-weight: 600; font-size: 18px; margin-bottom: 20px;"><i class="fa-solid fa-palette"></i> Kustomisasi Tampilan (UI)</h3>
+                        <div class="form-group">
+                            <label>Pilih Warna Utama (Primary Color)</label>
+                            <div class="color-picker">
+                                <div class="color-btn active" style="background-color: #0d9488;" data-color="#0d9488"></div>
+                                <div class="color-btn" style="background-color: #2563eb;" data-color="#2563eb"></div>
+                                <div class="color-btn" style="background-color: #dc2626;" data-color="#dc2626"></div>
+                                <div class="color-btn" style="background-color: #f59e0b;" data-color="#f59e0b"></div>
+                                <div class="color-btn" style="background-color: #7c3aed;" data-color="#7c3aed"></div>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label>Pilih Gaya Font (Tipografi)</label>
+                            <select class="form-control" id="fontSelector">
+                                <option value="'Inter', sans-serif">Inter (Modern & Bersih)</option>
+                                <option value="'Poppins', sans-serif">Poppins (Bulat & Ramah)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // CONFIG SUPABASE
+        const SUPABASE_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // AMBIL DATA SESI
+        const storeId = localStorage.getItem('session_store_id');
+        const userName = localStorage.getItem('session_user_name');
+
+        // Variabel penampung pilihan tema global
+        let selectedColor = '#0d9488';
+        let selectedFont = "'Inter', sans-serif";
+
+        if(!storeId) {
+            window.location.href = 'login.html';
+        }
+
+        // 1. AMBIL DATA TOKO DARI SUPABASE
+        async function fetchStoreSettings() {
+            const { data: store, error } = await supabaseClient
+                .from('stores')
+                .select('*')
+                .eq('id', storeId)
+                .single();
+
+            if (error) {
+                console.error("Gagal mengambil data toko:", error);
+                return;
+            }
+
+            // Pasang data ke UI Header Clean
+            document.getElementById('txtStoreName').innerText = store.name;
+            document.getElementById('txtStoreTagline').innerText = store.tagline || 'System Administrator';
+            
+            // Render Gambar Logo di Header jika ada
+            const logoArea = document.getElementById('headerLogoArea');
+            if(store.logo_url) {
+                logoArea.innerHTML = `<img src="${store.logo_url}" alt="Logo" style="width:100%; height:100%; object-fit:cover; border-radius:var(--radius-sm);">`;
+                document.getElementById('uploadStatus').innerText = "Logo aktif terpasang";
+            } else {
+                logoArea.innerHTML = `<i class="fa-solid fa-store"></i>`;
+            }
+
+            // Pasang data ke Form Input Pengaturan
+            document.getElementById('formStoreName').value = store.name;
+            document.getElementById('formStoreTagline').value = store.tagline || '';
+            document.getElementById('formStoreLogo').value = store.logo_url || '';
+
+            // Terapkan Tema Warna dari database
+            if(store.theme_color) {
+                selectedColor = store.theme_color;
+                document.documentElement.style.setProperty('--primary-color', store.theme_color);
+                document.querySelectorAll('.color-btn').forEach(b => {
+                    b.classList.remove('active');
+                    if(b.getAttribute('data-color') === store.theme_color) b.classList.add('active');
+                });
+            }
+
+            // Terapkan Font dari database
+            if(store.font_family) {
+                selectedFont = store.font_family;
+                document.documentElement.style.setProperty('--font-family', store.font_family);
+                document.getElementById('fontSelector').value = store.font_family;
+            }
+        }
+
+        // Jalankan fetch data saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', () => {
+            if(userName) document.getElementById('txtUserName').innerText = "Halo, " + userName;
+            fetchStoreSettings();
+        });
+
+        // 2. LOGIC PROSES UPLOAD LOGO KE SUPABASE STORAGE
+        async function handleLogoUpload(input) {
+            const file = input.files[0];
+            const statusSpan = document.getElementById('uploadStatus');
+            if(!file) return;
+
+            statusSpan.innerText = "Mengunggah gambar...";
+            
+            // Menyusun nama file unik menggunakan ID Toko dan Waktu agar tidak bentrok
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${storeId}-${Date.now()}.${fileExt}`;
+            const filePath = `public/${fileName}`;
+
+            // Unggah file ke Bucket 'logos' yang sudah kita buat tadi
+            const { data, error } = await supabaseClient.storage
+                .from('logos')
+                .upload(filePath, file, { upsert: true });
+
+            if(error) {
+                console.error("Gagal upload:", error);
+                statusSpan.innerText = "Gagal mengunggah logo.";
+                return;
+            }
+
+            // Dapatkan URL publik dari file yang berhasil diunggah
+            const { data: publicUrlData } = supabaseClient.storage
+                .from('logos')
+                .getPublicUrl(filePath);
+
+            const publicUrl = publicUrlData.publicUrl;
+            
+            // Simpan URL sementara di input tersembunyi
+            document.getElementById('formStoreLogo').value = publicUrl;
+            statusSpan.innerText = "Berhasil diunggah! Klik simpan profil.";
+        }
+
+        // 3. LOGIC SIMPAN PROFIL & TEMA BARU KE DATABASE
+        async function saveStoreSettings() {
+            const btnSave = document.getElementById('btnSaveSettings');
+            const name = document.getElementById('formStoreName').value;
+            const tagline = document.getElementById('formStoreTagline').value;
+            const logoUrl = document.getElementById('formStoreLogo').value;
+
+            btnSave.innerText = "Menyimpan...";
+            btnSave.disabled = true;
+
+            // Update baris tabel stores berdasarkan ID Toko saat ini
+            const { error } = await supabaseClient
+                .from('stores')
+                .update({
+                    name: name,
+                    tagline: tagline,
+                    logo_url: logoUrl,
+                    theme_color: selectedColor,
+                    font_family: selectedFont
+                })
+                .eq('id', storeId);
+
+            btnSave.innerText = "Simpan Profil & Tema";
+            btnSave.disabled = false;
+
+            if(error) {
+                alert("Gagal menyimpan: " + error.message);
+            } else {
+                alert("Pengaturan Toko berhasil diperbarui ke Supabase!");
+                fetchStoreSettings(); // Ambil data baru untuk merefresh tampilan secara instan
+            }
+        }
+
+        // LOGIC LOGOUT
+        function handleLogout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        // LOGIC SIDEBAR TOGGLE
+        function toggleSidebar() {
+            document.getElementById('mainSidebar').classList.toggle('collapsed');
+        }
+
+        // LOGIC SIDEBAR NAVIGATION
+        const navItems = document.querySelectorAll('.sidebar-item[data-target]');
+        const pages = document.querySelectorAll('.page-section');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+
+                pages.forEach(p => p.classList.remove('active'));
+                const targetId = item.getAttribute('data-target');
+                const targetPage = document.getElementById(targetId);
+                if(targetPage) targetPage.classList.add('active');
+            });
+        });
+
+        // LOGIC DARK/LIGHT MODE
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const themeIcon = themeToggleBtn.querySelector('i');
+        const htmlTag = document.documentElement;
+
+        themeToggleBtn.addEventListener('click', () => {
+            if (htmlTag.getAttribute('data-theme') === 'light') {
+                htmlTag.setAttribute('data-theme', 'dark');
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                htmlTag.setAttribute('data-theme', 'light');
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+            }
+        });
+
+        // LOGIC PREVIEW WARNA & FONT SECARA REAL-TIME
+        const colorBtns = document.querySelectorAll('.color-btn');
+        colorBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                colorBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                selectedColor = e.target.getAttribute('data-color');
+                htmlTag.style.setProperty('--primary-color', selectedColor);
+            });
+        });
+
+        document.getElementById('fontSelector').addEventListener('change', (e) => {
+            selectedFont = e.target.value;
+            htmlTag.style.setProperty('--font-family', selectedFont);
+        });
+    </script>
+</body>
+</html>

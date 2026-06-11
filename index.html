@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Back-Office - Multi Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        /* =========================================
+           1. DESIGN TOKENS (CSS VARIABLES)
+           ========================================= */
+        :root {
+            --primary-color: #0d9488; 
+            --primary-hover: #0f766e;
+            
+            --bg-main: #f1f5f9;
+            --bg-surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --sidebar-bg: #1e293b;
+            --sidebar-text: #cbd5e1;
+            --sidebar-hover: #334155;
+            
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-round: 50%;
+            --font-family: 'Inter', sans-serif;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-main: #0f172a;
+            --bg-surface: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --sidebar-bg: #0b1120;
+            --sidebar-text: #94a3b8;
+            --sidebar-hover: #1e293b;
+        }
+
+        /* =========================================
+           2. GLOBAL STYLES
+           ========================================= */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* =========================================
+           3. LAYOUT: LOGIN PAGE
+           ========================================= */
+        #loginScreen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .login-card {
+            background-color: var(--bg-surface);
+            padding: 40px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .login-logo { font-size: 48px; color: var(--primary-color); margin-bottom: 20px; }
+        .login-title { font-size: 24px; font-weight: 700; margin-bottom: 5px; }
+        .login-subtitle { font-size: 14px; color: var(--text-muted); margin-bottom: 30px; }
+        
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+        .input-group input {
+            width: 100%; padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: var(--font-family);
+        }
+        .input-group input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white; border: none;
+            width: 100%; padding: 12px;
+            border-radius: var(--radius-sm);
+            font-size: 16px; font-weight: 600;
+            cursor: pointer; transition: opacity 0.2s;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+
+        /* =========================================
+           4. LAYOUT: APP CONTAINER (Sidebar + Main)
+           ========================================= */
+        #appContainer {
+            display: flex;
+            height: 100vh;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            transition: margin-left 0.3s ease; /* Transisi halus untuk hide/show */
+        }
+        
+        /* Class tambahan untuk menyembunyikan sidebar */
+        .sidebar.collapsed {
+            margin-left: -250px;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            font-size: 18px; font-weight: 700;
+            color: white; border-bottom: 1px solid var(--sidebar-hover);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .sidebar-menu { list-style: none; padding: 20px 0; overflow-y: auto; flex-grow: 1; }
+        .sidebar-item {
+            padding: 12px 20px; cursor: pointer;
+            display: flex; align-items: center; gap: 15px;
+            font-size: 15px; transition: background-color 0.2s;
+        }
+        .sidebar-item:hover { background-color: var(--sidebar-hover); color: white; }
+        .sidebar-item.active { background-color: var(--primary-color); color: white; border-right: 4px solid white; }
+
+        /* --- MAIN CONTENT AREA --- */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-main);
+            overflow: hidden;
+            transition: width 0.3s ease;
+        }
+
+        /* --- HEADER CLEAN --- */
+        .header_clean {
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 25px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        
+        .store-logo-placeholder {
+            width: 40px; height: 40px;
+            background-color: var(--primary-color); color: white;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: bold;
+        }
+        .store-info { display: flex; flex-direction: column; }
+        .store-name { font-size: 16px; font-weight: 600; color: var(--text-main); }
+        .store-tagline { font-size: 12px; color: var(--text-muted); }
+        
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        .user-profile { font-size: 14px; font-weight: 500; }
+        .btn-icon {
+            background: transparent; border: none; color: var(--text-main);
+            width: 35px; height: 35px; border-radius: var(--radius-round);
+            cursor: pointer; font-size: 16px;
+            display: flex; align-items: center; justify-content: center;
+            transition: background-color 0.2s;
+        }
+        .btn-icon:hover { background-color: var(--border-color); }
+
+        /* --- PAGES / VIEWS --- */
+        .content-scroll { padding: 25px; overflow-y: auto; flex-grow: 1; }
+        .page-section { display: none; animation: fadeIn 0.3s ease; }
+        .page-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .page-title { font-size: 24px; font-weight: 600; margin-bottom: 20px; color: var(--text-main); }
+
+        /* Card Style */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .card {
+            background-color: var(--bg-surface); border: 1px solid var(--border-color);
+            padding: 20px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+        }
+        .card h3 { font-size: 16px; color: var(--text-muted); margin-bottom: 10px; font-weight: 500; }
+        .card .value { font-size: 28px; font-weight: 700; color: var(--text-main); }
+
+        /* =========================================
+           5. HALAMAN PENGATURAN (SETTINGS)
+           ========================================= */
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .settings-grid { grid-template-columns: 1fr; } }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 14px; margin-bottom: 8px; font-weight: 500;}
+        .form-control {
+            width: 100%; padding: 10px; border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main);
+        }
+        .color-picker { display: flex; gap: 10px; margin-top: 10px; }
+        .color-btn {
+            width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent;
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .color-btn:hover { transform: scale(1.1); }
+        .color-btn.active { border-color: var(--text-main); }
+
+    </style>
+</head>
+<body>
+
+    <div id="loginScreen">
+        <div class="login-card">
+            <div class="login-logo"><i class="fa-solid fa-boxes-packing"></i></div>
+            <h1 class="login-title">Login Sistem</h1>
+            <p class="login-subtitle">Silakan masukkan kredensial Anda</p>
+            
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" id="username" placeholder="Ketik 'admin'">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Ketik 'admin'">
+            </div>
+            <p id="loginError" style="color: #ef4444; font-size: 14px; display: none; margin-bottom: 15px;">Username atau Password salah!</p>
+            <button class="btn-primary" onclick="handleLogin()">Masuk ke Sistem</button>
+        </div>
+    </div>
+
+    <div id="appContainer">
+        
+        <aside class="sidebar" id="mainSidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-cube"></i> Back-Office
+            </div>
+            <ul class="sidebar-menu">
+                <li class="sidebar-item active" data-target="page-dashboard">
+                    <i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span>
+                </li>
+                <li class="sidebar-item" data-target="page-agen">
+                    <i class="fa-solid fa-users"></i> <span>Agen / Konsumen</span>
+                </li>
+                <li class="sidebar-item" data-target="page-barang">
+                    <i class="fa-solid fa-box"></i> <span>Master Barang</span>
+                </li>
+                <li class="sidebar-item" data-target="page-harga">
+                    <i class="fa-solid fa-tags"></i> <span>Harga Khusus</span>
+                </li>
+                <li class="sidebar-item" data-target="page-penerimaan">
+                    <i class="fa-solid fa-truck-ramp-box"></i> <span>Penerimaan Barang</span>
+                </li>
+                <li class="sidebar-item" data-target="page-pos">
+                    <i class="fa-solid fa-cash-register"></i> <span>POS Kasir</span>
+                </li>
+                <li class="sidebar-item" data-target="page-laporan">
+                    <i class="fa-solid fa-file-invoice"></i> <span>Laporan</span>
+                </li>
+                <li class="sidebar-item" data-target="page-settings" style="margin-top: 20px; border-top: 1px solid var(--sidebar-hover); padding-top: 20px;">
+                    <i class="fa-solid fa-gear"></i> <span>Pengaturan Toko</span>
+                </li>
+                <li class="sidebar-item" onclick="handleLogout()" style="color: #ef4444;">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+                </li>
+            </ul>
+        </aside>
+
+        <main class="main-wrapper">
+            
+            <header class="header_clean">
+                <div class="header-left">
+                    <button class="btn-icon" onclick="toggleSidebar()" title="Sembunyikan/Tampilkan Menu" style="margin-right: 5px; font-size: 20px;">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                    
+                    <div class="store-logo-placeholder">
+                        <i class="fa-solid fa-store"></i>
+                    </div>
+                    <div class="store-info">
+                        <span class="store-name">Toko Pusat Utama</span>
+                        <span class="store-tagline">Administrator System</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <span class="user-profile">Halo, Admin</span>
+                    <button class="btn-icon" id="themeToggleBtn" title="Ganti Tema">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-scroll">
+                
+                <div id="page-dashboard" class="page-section active">
+                    <h2 class="page-title">Overview Dashboard</h2>
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <h3>Total Barang</h3>
+                            <div class="value">1,245</div>
+                        </div>
+                        <div class="card">
+                            <h3>Total Agen Aktif</h3>
+                            <div class="value">48</div>
+                        </div>
+                        <div class="card">
+                            <h3>Transaksi Hari Ini</h3>
+                            <div class="value">Rp 12.500.000</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="page-barang" class="page-section">
+                    <h2 class="page-title">Master Barang / Inventaris</h2>
+                    <div class="card">
+                        <p>Di sini nanti akan ada tabel daftar barang, tombol tambah barang, edit stok, dan sebagainya yang datanya ditarik dari Supabase.</p>
+                    </div>
+                </div>
+
+                <div id="page-settings" class="page-section">
+                    <h2 class="page-title">Pengaturan Toko & UI Dinamis</h2>
+                    <div class="settings-grid">
+                        
+                        <div class="card">
+                            <h3 style="color: var(--text-main); font-weight: 600; font-size: 18px; margin-bottom: 20px;"><i class="fa-solid fa-store"></i> Identitas Toko</h3>
+                            <div class="form-group">
+                                <label>Nama Toko</label>
+                                <input type="text" class="form-control" value="Toko Pusat Utama">
+                            </div>
+                            <div class="form-group">
+                                <label>Slogan / Tagline</label>
+                                <input type="text" class="form-control" value="Administrator System">
+                            </div>
+                            <div class="form-group">
+                                <label>URL Logo (Supabase Storage)</label>
+                                <input type="text" class="form-control" placeholder="https://...">
+                            </div>
+                            <button class="btn-primary" style="width: auto; padding: 8px 16px; margin-top: 10px;">Simpan Profil</button>
+                        </div>
+
+                        <div class="card">
+                            <h3 style="color: var(--text-main); font-weight: 600; font-size: 18px; margin-bottom: 20px;"><i class="fa-solid fa-palette"></i> Kustomisasi Tampilan (UI)</h3>
+                            <div class="form-group">
+                                <label>Pilih Warna Utama (Primary Color)</label>
+                                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Coba klik warna di bawah ini untuk melihat perubahan real-time pada Header Logo, Menu Sidebar aktif, dan Tombol.</p>
+                                <div class="color-picker">
+                                    <div class="color-btn active" style="background-color: #0d9488;" data-color="#0d9488"></div>
+                                    <div class="color-btn" style="background-color: #2563eb;" data-color="#2563eb"></div>
+                                    <div class="color-btn" style="background-color: #dc2626;" data-color="#dc2626"></div>
+                                    <div class="color-btn" style="background-color: #f59e0b;" data-color="#f59e0b"></div>
+                                    <div class="color-btn" style="background-color: #7c3aed;" data-color="#7c3aed"></div>
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top: 20px;">
+                                <label>Pilih Gaya Font (Tipografi)</label>
+                                <select class="form-control" id="fontSelector">
+                                    <option value="'Inter', sans-serif">Inter (Modern & Bersih) - Default</option>
+                                    <option value="'Poppins', sans-serif">Poppins (Bulat & Ramah)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 style="color: var(--text-main); font-weight: 600; font-size: 18px; margin-bottom: 20px;"><i class="fa-solid fa-lock"></i> Pengaturan Akun</h3>
+                            <div class="form-group">
+                                <label>Username Login</label>
+                                <input type="text" class="form-control" value="admin">
+                            </div>
+                            <div class="form-group">
+                                <label>Password Baru</label>
+                                <input type="password" class="form-control" placeholder="Kosongkan jika tidak diubah">
+                            </div>
+                            <button class="btn-primary" style="width: auto; padding: 8px 16px; margin-top: 10px;">Update Keamanan</button>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- 1. LOGIC LOGIN ---
+        function handleLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const errorMsg = document.getElementById('loginError');
+            
+            if(user === 'admin' && pass === 'admin') {
+                document.getElementById('loginScreen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loginScreen').style.visibility = 'hidden';
+                    document.getElementById('appContainer').style.visibility = 'visible';
+                    document.getElementById('appContainer').style.opacity = '1';
+                }, 500);
+            } else {
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('appContainer').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('appContainer').style.visibility = 'hidden';
+                document.getElementById('loginScreen').style.visibility = 'visible';
+                document.getElementById('loginScreen').style.opacity = '1';
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('loginError').style.display = 'none';
+                
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                document.querySelector('.sidebar-item[data-target="page-dashboard"]').classList.add('active');
+                document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+                document.getElementById('page-dashboard').classList.add('active');
+            }, 500);
+        }
+
+        // --- 2. LOGIC SIDEBAR NAVIGATION ---
+        const navItems = document.querySelectorAll('.sidebar-item[data-target]');
+        const pages = document.querySelectorAll('.page-section');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+
+                pages.forEach(p => p.classList.remove('active'));
+                const targetId = item.getAttribute('data-target');
+                const targetPage = document.getElementById(targetId);
+                if(targetPage) {
+                    targetPage.classList.add('active');
+                }
+            });
+        });
+
+        // --- 3. LOGIC DARK/LIGHT MODE ---
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const themeIcon = themeToggleBtn.querySelector('i');
+        const htmlTag = document.documentElement;
+
+        themeToggleBtn.addEventListener('click', () => {
+            if (htmlTag.getAttribute('data-theme') === 'light') {
+                htmlTag.setAttribute('data-theme', 'dark');
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                htmlTag.setAttribute('data-theme', 'light');
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+            }
+        });
+
+        // --- 4. LOGIC UI DINAMIS (COLOR & FONT) ---
+        const colorBtns = document.querySelectorAll('.color-btn');
+        colorBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                colorBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                const newColor = e.target.getAttribute('data-color');
+                htmlTag.style.setProperty('--primary-color', newColor);
+            });
+        });
+
+        const fontSelector = document.getElementById('fontSelector');
+        fontSelector.addEventListener('change', (e) => {
+            htmlTag.style.setProperty('--font-family', e.target.value);
+        });
+
+        document.getElementById('password').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') handleLogin();
+        });
+
+        // --- 5. LOGIC SIDEBAR TOGGLE (BARU) ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mainSidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+    </script>
+</body>
+</html>

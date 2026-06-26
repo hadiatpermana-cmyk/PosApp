@@ -1,102 +1,46 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="light">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Multi Store</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
     <aside class="sidebar" id="mainSidebar">
-        <div class="sidebar-header"><i class="fa-solid fa-store"></i> Point of Sale</div>
+        <div class="sidebar-header">Point of Sale</div>
         <ul class="sidebar-menu">
-            <li class="sidebar-item active" onclick="window.location.href='dashboard.html'"><i class="fa-solid fa-chart-pie" style="color: #0d9488;"></i> <span>Dashboard</span></li>
-            <li class="sidebar-item" onclick="window.location.href='barang.html'"><i class="fa-solid fa-box-open" style="color: #64748b;"></i> <span>Master Barang</span></li>
-            <li class="sidebar-item" onclick="window.location.href='supplier.html'"><i class="fa-solid fa-truck-fast" style="color: #64748b;"></i> <span>Data Supplier</span></li>
-            <li class="sidebar-item" onclick="window.location.href='agen.html'"><i class="fa-solid fa-users" style="color: #64748b;"></i> <span>Agen / Konsumen</span></li>
-            <li class="sidebar-item" onclick="window.location.href='harga.html'"><i class="fa-solid fa-tags" style="color: #64748b;"></i> <span>Harga Khusus</span></li>
-            
-            <li class="sidebar-item" onclick="window.location.href='penerimaan.html'"><i class="fa-solid fa-boxes-packing" style="color: #3b82f6;"></i> <span>Penerimaan (In)</span></li>
-            <li class="sidebar-item" onclick="window.location.href='pos.html'"><i class="fa-solid fa-cash-register" style="color: #f97316;"></i> <span>POS Kasir</span></li>
-            <li class="sidebar-item" onclick="window.location.href='laporan.html'"><i class="fa-solid fa-chart-line" style="color: #8b5cf6;"></i> <span>Laporan</span></li>
-            
-            <li class="sidebar-item" onclick="window.location.href='pengaturan.html'" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;"><i class="fa-solid fa-gear" style="color: #64748b;"></i> <span>Pengaturan Toko</span></li>
-            <li class="sidebar-item" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket" style="color: #ef4444;"></i> <span style="color: #ef4444;">Logout</span></li>
+            <li class="sidebar-item active" onclick="window.location.href='dashboard.html'">Dashboard</li>
+            <li class="sidebar-item" onclick="window.location.href='barang.html'">Master Barang</li>
+            <li class="sidebar-item" onclick="window.location.href='agen.html'">Agen / Konsumen</li>
+            <li class="sidebar-item" onclick="window.location.href='pengaturan.html'">Pengaturan Toko</li>
         </ul>
     </aside>
 
     <main class="main-wrapper">
         <header class="header_clean">
-            <div class="header-left">
-                <button class="btn-icon" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-                <div class="store-logo-placeholder" id="headerLogoArea"><i class="fa-solid fa-store"></i></div>
-                <div class="store-info">
-                    <span class="store-name" id="txtStoreName">Memuat...</span>
-                    <span class="store-tagline" id="txtStoreTagline">System Administrator</span>
-                </div>
-            </div>
-            <div class="header-right">
-                <span class="user-profile"><span id="txtUserName">Admin</span> 👋</span>
-            </div>
+            <button onclick="document.getElementById('mainSidebar').classList.toggle('collapsed')">☰</button>
+            <h3>Toko Mang Hadi</h3>
         </header>
 
         <div class="content-scroll">
-            
             <div class="stat-grid">
-                <div class="stat-card bg-blue"><div><h3>Total Barang</h3><div class="value" id="dashTotalBarang">0</div></div><i class="fa-solid fa-box bg-icon"></i></div>
-                <div class="stat-card bg-red"><div><h3>Stok Krisis</h3><div class="value" id="dashStokKrisis">0</div></div><i class="fa-solid fa-triangle-exclamation bg-icon"></i></div>
-                <div class="stat-card bg-green"><div><h3>Total Agen</h3><div class="value" id="dashTotalCustomers">0</div></div><i class="fa-solid fa-users bg-icon"></i></div>
-            </div>
-            
-            <h3 class="section-title"><i class="fa-solid fa-wrench"></i> Menu Utama</h3>
-            
-            <div class="menu-grid" style="grid-template-columns: 1fr; gap: 15px; max-width: 800px;">
-                <div class="menu-card" onclick="window.location.href='barang.html'"><div class="menu-icon" style="background: #fef3c7; color: #f59e0b;"><i class="fa-solid fa-box-open"></i></div><div class="menu-text"><h4>Master Barang</h4><p>Kelola stok & harga modal</p></div></div>
-                
-                <div class="menu-card" onclick="window.location.href='penerimaan.html'"><div class="menu-icon" style="background: #e0f2fe; color: #0ea5e9;"><i class="fa-solid fa-download"></i></div><div class="menu-text"><h4>Stok Masuk</h4><p>Input barang dari supplier</p></div></div>
-                
-                <div class="menu-card" onclick="window.location.href='agen.html'"><div class="menu-icon" style="background: #d1fae5; color: #10b981;"><i class="fa-solid fa-user-group"></i></div><div class="menu-text"><h4>Manajemen Kontak</h4><p>Supplier, Agen, & Konsumen</p></div></div>
-                
-                <div class="menu-card" onclick="window.location.href='harga.html'"><div class="menu-icon" style="background: #fce7f3; color: #ec4899;"><i class="fa-solid fa-money-bill-wave"></i></div><div class="menu-text"><h4>Harga Agen</h4><p>Set harga khusus per agen</p></div></div>
-                
-                <div class="menu-card" onclick="window.location.href='pos.html'"><div class="menu-icon" style="background: #ffedd5; color: #f97316;"><i class="fa-solid fa-cart-shopping"></i></div><div class="menu-text"><h4>Kasir / POS</h4><p>Transaksi penjualan ritel</p></div></div>
-                
-                <div class="menu-card" onclick="window.location.href='laporan.html'"><div class="menu-icon" style="background: #ede9fe; color: #8b5cf6;"><i class="fa-solid fa-file-invoice"></i></div><div class="menu-text"><h4>Laporan</h4><p>Analisis keuntungan & omset</p></div></div>
+                <div class="stat-card" style="background: #0284c7;">Total Barang: <span id="dashTotalBarang">0</span></div>
+                <div class="stat-card" style="background: #dc2626;">Stok Krisis: <span id="dashStokKrisis">0</span></div>
+                <div class="stat-card" style="background: #059669;">Total Agen: <span id="dashTotalCustomers">0</span></div>
             </div>
 
-            <div style="margin-top: 30px; max-width: 800px;">
-                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
-                    <h4 style="color: #ef4444; margin: 0; font-size: 15px; display: flex; align-items: center; gap: 10px;">
-                        <i class="fa-solid fa-triangle-exclamation"></i> Perhatian: Stok Krisis! (< Batas Minimal)
-                    </h4>
-                    <span style="font-size: 12px; font-weight: 600; color: #ef4444; background: #fee2e2; padding: 4px 10px; border-radius: 4px;">Akan aktif setelah stok di-update</span>
-                </div>
+            <div class="menu-grid">
+                <div class="menu-card" onclick="location.href='barang.html'">Master Barang</div>
+                <div class="menu-card" onclick="location.href='penerimaan.html'">Stok Masuk</div>
+                <div class="menu-card" onclick="location.href='agen.html'">Manajemen Kontak</div>
+                <div class="menu-card" onclick="location.href='harga.html'">Harga Agen</div>
+                <div class="menu-card" onclick="location.href='pos.html'">Kasir / POS</div>
+                <div class="menu-card" onclick="location.href='laporan.html'">Laporan</div>
             </div>
-
         </div>
     </main>
 
     <script src="app.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Ambil data barang untuk 2 kotak pertama
-            const { data: barang, error: errBarang } = await supabaseClient.from('products').select('*');
-            if (!errBarang && barang) {
-                document.getElementById('dashTotalBarang').innerText = barang.length;
-                const krisisData = barang.filter(item => item.stock <= item.min_stock);
-                document.getElementById('dashStokKrisis').innerText = krisisData.length;
-            }
-
-            // Ambil data pelanggan untuk kotak ke-3 (Total Agen)
-            const { data: agen, error: errAgen } = await supabaseClient.from('customers').select('*');
-            if (!errAgen && agen) {
-                document.getElementById('dashTotalCustomers').innerText = agen.length;
-            }
-        });
-    </script>
 </body>
 </html>

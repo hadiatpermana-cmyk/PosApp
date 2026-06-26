@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Multi Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <aside class="sidebar" id="mainSidebar">
+        <div class="sidebar-header">
+            <i class="fa-solid fa-store" style="font-size: 24px;"></i> Point of Sale
+        </div>
+        <ul class="sidebar-menu">
+            <li class="sidebar-item active" onclick="window.location.href='index.html'"><i class="fa-solid fa-chart-pie" style="color: #3b82f6;"></i> <span>Dashboard</span></li>
+            <li class="sidebar-item" onclick="window.location.href='barang.html'"><i class="fa-solid fa-box-open" style="color: #f59e0b;"></i> <span>Master Barang</span></li>
+            <li class="sidebar-item" onclick="window.location.href='supplier.html'"><i class="fa-solid fa-truck-fast" style="color: #8b5cf6;"></i> <span>Data Supplier</span></li>
+            <li class="sidebar-item" onclick="window.location.href='agen.html'"><i class="fa-solid fa-users" style="color: #10b981;"></i> <span>Agen / Konsumen</span></li>
+            <li class="sidebar-item" onclick="window.location.href='harga.html'"><i class="fa-solid fa-tags" style="color: #ec4899;"></i> <span>Harga Khusus</span></li>
+            
+            <li class="sidebar-item" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;" onclick="window.location.href='settings.html'">
+                <i class="fa-solid fa-gear" style="color: #64748b;"></i> <span>Pengaturan Toko</span>
+            </li>
+            <li class="sidebar-item" onclick="handleLogout()">
+                <i class="fa-solid fa-right-from-bracket" style="color: #ef4444;"></i> <span style="color: #ef4444;">Logout</span>
+            </li>
+        </ul>
+    </aside>
+
+    <main class="main-wrapper">
+        <header class="header_clean">
+            <div class="header-left">
+                <button class="btn-icon" onclick="toggleSidebar()" style="margin-right: 5px;"><i class="fa-solid fa-bars"></i></button>
+                <div class="store-logo-placeholder" id="headerLogoArea"><i class="fa-solid fa-store"></i></div>
+                <div class="store-info">
+                    <span class="store-name" id="txtStoreName">Memuat...</span>
+                    <span class="store-tagline" id="txtStoreTagline">Harap tunggu</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="user-profile"><span id="txtUserName">Admin</span> 👋</span>
+            </div>
+        </header>
+
+        <div class="content-scroll">
+            <div class="page-section active">
+                <div class="stat-grid">
+                    <div class="stat-card bg-blue"><div><h3>Total Barang</h3><div class="value" id="dashTotalBarang">0</div></div><i class="fa-solid fa-box bg-icon"></i></div>
+                    <div class="stat-card bg-red"><div><h3>Stok Krisis</h3><div class="value" id="dashStokKrisis">0</div></div><i class="fa-solid fa-triangle-exclamation bg-icon"></i></div>
+                    <div class="stat-card bg-green"><div><h3>Total Agen</h3><div class="value" id="dashTotalCustomers">0</div></div><i class="fa-solid fa-users bg-icon"></i></div>
+                </div>
+                
+                <h3 class="section-title"><i class="fa-solid fa-wrench"></i> Menu Utama</h3>
+                <div class="menu-grid">
+                    <div class="menu-card" onclick="window.location.href='barang.html'"><div class="menu-icon" style="background: #fef3c7; color: #f59e0b;"><i class="fa-solid fa-box-open"></i></div><div class="menu-text"><h4>Master Barang</h4><p>Kelola stok & harga modal</p></div></div>
+                    <div class="menu-card" onclick="window.location.href='agen.html'"><div class="menu-icon" style="background: #d1fae5; color: #10b981;"><i class="fa-solid fa-user-group"></i></div><div class="menu-text"><h4>Agen / Konsumen</h4><p>Atur klasifikasi pelanggan</p></div></div>
+                    <div class="menu-card" onclick="window.location.href='harga.html'"><div class="menu-icon" style="background: #fce7f3; color: #ec4899;"><i class="fa-solid fa-tags"></i></div><div class="menu-text"><h4>Harga Khusus</h4><p>Set matriks harga kemasan</p></div></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/script.js"></script>
+    <script>
+        async function fetchDashboardCounters() {
+            const { data: products } = await supabaseClient.from('products').select('stock, min_stock');
+            if(products) {
+                document.getElementById('dashTotalBarang').innerText = products.length;
+                const krisis = products.filter(item => item.stock <= item.min_stock).length;
+                document.getElementById('dashStokKrisis').innerText = krisis;
+            }
+            const { data: custs } = await supabaseClient.from('customers').select('id');
+            if(custs) document.getElementById('dashTotalCustomers').innerText = custs.length;
+        }
+        document.addEventListener('DOMContentLoaded', fetchDashboardCounters);
+    </script>
+</body>
+</html>

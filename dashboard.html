@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Multi Store</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <aside class="sidebar" id="mainSidebar">
+        <div class="sidebar-header"><i class="fa-solid fa-store"></i> Point of Sale</div>
+        <ul class="sidebar-menu">
+            <li class="sidebar-item active" onclick="window.location.href='dashboard.html'"><i class="fa-solid fa-chart-pie" style="color: #3b82f6;"></i> <span>Dashboard</span></li>
+            <li class="sidebar-item" onclick="window.location.href='barang.html'"><i class="fa-solid fa-box-open" style="color: #f59e0b;"></i> <span>Master Barang</span></li>
+            <li class="sidebar-item" onclick="window.location.href='agen.html'"><i class="fa-solid fa-users" style="color: #10b981;"></i> <span>Agen / Konsumen</span></li>
+            <li class="sidebar-item" onclick="window.location.href='pengaturan.html'" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;"><i class="fa-solid fa-gear" style="color: #64748b;"></i> <span>Pengaturan Toko</span></li>
+            <li class="sidebar-item" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket" style="color: #ef4444;"></i> <span style="color: #ef4444;">Logout</span></li>
+        </ul>
+    </aside>
+
+    <main class="main-wrapper">
+        <header class="header_clean">
+            <div class="header-left">
+                <button class="btn-icon" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                <div class="store-logo-placeholder" id="headerLogoArea"><i class="fa-solid fa-store"></i></div>
+                <div class="store-info">
+                    <span class="store-name" id="txtStoreName">Memuat...</span>
+                    <span class="store-tagline" id="txtStoreTagline">System Administrator</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="user-profile">Selamat Datang, <span id="txtUserName">Admin</span> 👋</span>
+            </div>
+        </header>
+
+        <div class="content-scroll">
+            <div class="stat-grid">
+                <div class="stat-card bg-blue"><div><h3>Total Barang</h3><div class="value" id="dashTotalBarang">0</div></div><i class="fa-solid fa-box bg-icon"></i></div>
+                <div class="stat-card bg-red"><div><h3>Stok Krisis</h3><div class="value" id="dashStokKrisis">0</div></div><i class="fa-solid fa-triangle-exclamation bg-icon"></i></div>
+            </div>
+            
+            <h3 class="section-title"><i class="fa-solid fa-wrench"></i> Menu Utama</h3>
+            <div class="menu-grid">
+                <div class="menu-card" onclick="window.location.href='barang.html'"><div class="menu-icon" style="background: #fef3c7; color: #f59e0b;"><i class="fa-solid fa-box-open"></i></div><div class="menu-text"><h4>Master Barang</h4><p>Kelola stok & harga modal</p></div></div>
+                <div class="menu-card" onclick="window.location.href='agen.html'"><div class="menu-icon" style="background: #d1fae5; color: #10b981;"><i class="fa-solid fa-user-group"></i></div><div class="menu-text"><h4>Agen / Konsumen</h4><p>Atur klasifikasi pelanggan</p></div></div>
+            </div>
+
+            <h3 class="section-title" style="margin-top: 30px; color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Perlu Reorder (Stok Menipis)</h3>
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Kode SKU</th><th>Nama Barang</th><th>Sisa Stok</th><th>Batas Minimum</th></tr>
+                    </thead>
+                    <tbody id="tbodyReorder">
+                        <tr><td colspan="4" style="text-align: center; padding: 20px;">Memuat data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const { data, error } = await supabaseClient.from('products').select('*');
+            if (!error && data) {
+                document.getElementById('dashTotalBarang').innerText = data.length;
+                
+                // Filter barang yang stoknya di bawah atau sama dengan min_stock
+                const krisisData = data.filter(item => item.stock <= item.min_stock);
+                document.getElementById('dashStokKrisis').innerText = krisisData.length;
+
+                const tbody = document.getElementById('tbodyReorder');
+                tbody.innerHTML = '';
+                if (krisisData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Semua stok barang aman.</td></tr>';
+                } else {
+                    krisisData.forEach(item => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${item.product_code}</td>
+                                <td style="font-weight: 600;">${item.name}</td>
+                                <td style="color: #ef4444; font-weight: bold;">${item.stock} ${item.unit}</td>
+                                <td>${item.min_stock} ${item.unit}</td>
+                            </tr>
+                        `;
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

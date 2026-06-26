@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Barang - Multi Store</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    
+    <aside class="sidebar" id="mainSidebar">
+        <div class="sidebar-header"><i class="fa-solid fa-store"></i> Point of Sale</div>
+        <ul class="sidebar-menu">
+            <li class="sidebar-item" onclick="window.location.href='dashboard.html'"><i class="fa-solid fa-chart-pie" style="color: #3b82f6;"></i> <span>Dashboard</span></li>
+            
+            <li class="sidebar-item active" onclick="window.location.href='barang.html'"><i class="fa-solid fa-box-open" style="color: #f59e0b;"></i> <span>Master Barang</span></li>
+            
+            <li class="sidebar-item" onclick="window.location.href='supplier.html'"><i class="fa-solid fa-truck-fast" style="color: #8b5cf6;"></i> <span>Data Supplier</span></li>
+            <li class="sidebar-item" onclick="window.location.href='agen.html'"><i class="fa-solid fa-users" style="color: #10b981;"></i> <span>Agen / Konsumen</span></li>
+            <li class="sidebar-item" onclick="window.location.href='harga.html'"><i class="fa-solid fa-tags" style="color: #ec4899;"></i> <span>Harga Khusus</span></li>
+            <li class="sidebar-item" onclick="window.location.href='pengaturan.html'" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;"><i class="fa-solid fa-gear" style="color: #64748b;"></i> <span>Pengaturan Toko</span></li>
+            <li class="sidebar-item" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket" style="color: #ef4444;"></i> <span style="color: #ef4444;">Logout</span></li>
+        </ul>
+    </aside>
+
+    <main class="main-wrapper">
+        <header class="header_clean">
+            <div class="header-left">
+                <button class="btn-icon" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                <div class="store-logo-placeholder" id="headerLogoArea"><i class="fa-solid fa-store"></i></div>
+                <div class="store-info">
+                    <span class="store-name" id="txtStoreName">Memuat...</span>
+                    <span class="store-tagline" id="txtStoreTagline">System Administrator</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="user-profile">Selamat Datang, <span id="txtUserName">Admin</span> 👋</span>
+            </div>
+        </header>
+
+        <div class="content-scroll">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2 class="page-title">Master Barang</h2>
+                <button class="btn-primary" style="width: auto; padding: 10px 20px;" onclick="openModalBarang()">
+                    <i class="fa-solid fa-plus"></i> Tambah Barang
+                </button>
+            </div>
+            
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <div style="padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <div style="position: relative; width: 100%; max-width: 350px;">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 15px; top: 15px; color: var(--text-muted);"></i>
+                        <input type="text" class="form-control" placeholder="Cari kode atau nama barang..." style="padding-left: 40px;" onkeyup="cariBarangTable(this.value)">
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Kode (SKU)</th><th>Nama Barang</th><th>Stok</th><th>Satuan</th><th>Harga Modal</th><th style="text-align: center;">Aksi</th></tr>
+                        </thead>
+                        <tbody id="tbodyMasterBarang">
+                            <tr><td colspan="6" style="text-align: center; padding: 30px; color: var(--text-muted);">Memuat data barang...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal" id="modalBarang">
+        <div class="modal-content">
+            <div class="modal-header"><h3 id="modalBarangTitle"><i class="fa-solid fa-box"></i> Tambah Master Barang</h3><button class="close-btn" onclick="closeModalBarang()"><i class="fa-solid fa-xmark"></i></button></div>
+            <input type="hidden" id="formBarangId">
+            <div class="form-group"><label>Kode Barang / Barcode / SKU <span style="color:#ef4444;">*</span></label><input type="text" class="form-control" id="formBarangKode" placeholder="Contoh: BRG-001"></div>
+            <div class="form-group"><label>Nama Barang Lengkap <span style="color:#ef4444;">*</span></label><input type="text" class="form-control" id="formBarangNama" placeholder="Contoh: Beras SBR Premium 5Kg"></div>
+            <div class="grid-2">
+                <div class="form-group"><label>Stok Awal</label><input type="number" class="form-control" id="formBarangStok" value="0" min="0"></div>
+                <div class="form-group"><label>Batas Stok Menipis (Alert)</label><input type="number" class="form-control" id="formBarangMinStok" value="5" min="0"></div>
+            </div>
+            <div class="form-group"><label>Satuan Barang</label><select class="form-control" id="formBarangSatuan"><option value="Pcs">Pcs (Satuan)</option><option value="Pack">Pack</option><option value="Dus">Dus</option><option value="Karung">Karung</option><option value="Ball">Ball</option><option value="Kg">Kilogram (Kg)</option><option value="Gram">Gram (gr)</option></select></div>
+            <div class="form-group"><label>Harga Modal / Beli (Rp)</label><input type="text" class="form-control" id="formBarangBeli" value="0" onfocus="formatFocus(this)" onblur="formatBlur(this)" oninput="formatInput(this)"></div>
+            <button class="btn-primary" style="width: 100%; margin-top: 10px; padding: 15px;" onclick="simpanBarang()" id="btnSimpanBarang"><i class="fa-solid fa-check"></i> Simpan Data Barang</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    
+    <script>
+        let masterBarangData = []; 
+        
+        async function fetchMasterBarang() {
+            const tbody = document.getElementById('tbodyMasterBarang'); 
+            const { data, error } = await supabaseClient.from('products').select('*').order('created_at', { ascending: false });
+            if (error) return tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #ef4444;">Gagal memuat data barang.</td></tr>';
+            masterBarangData = data; 
+            renderTableBarang(data);
+        }
+
+        function renderTableBarang(dataArray) {
+            const tbody = document.getElementById('tbodyMasterBarang'); tbody.innerHTML = '';
+            if (dataArray.length === 0) return tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: var(--text-muted);">Belum ada data barang.</td></tr>';
+            
+            dataArray.forEach(item => {
+                const isKrisis = item.stock <= item.min_stock; 
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td style="font-family: monospace; font-weight: 600;">${item.product_code}</td><td style="font-weight: 500;">${item.name}</td><td><span style="font-weight: 700; color: ${isKrisis ? '#ef4444' : 'inherit'};">${item.stock}</span></td><td>${item.unit}</td><td style="color: var(--primary-color); font-weight: 600;">${formatRupiah(item.purchase_price)}</td><td style="text-align: center;"><button class="btn-outline" onclick='editBarang(${JSON.stringify(item)})'><i class="fa-solid fa-pen"></i> Edit</button></td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function cariBarangTable(kataKunci) {
+            const keyword = kataKunci.toLowerCase(); 
+            const filtered = masterBarangData.filter(item => item.name.toLowerCase().includes(keyword) || item.product_code.toLowerCase().includes(keyword)); 
+            renderTableBarang(filtered);
+        }
+
+        function openModalBarang() {
+            document.getElementById('formBarangId').value = ''; document.getElementById('formBarangKode').value = ''; document.getElementById('formBarangNama').value = '';
+            document.getElementById('formBarangStok').value = '0'; document.getElementById('formBarangMinStok').value = '5'; document.getElementById('formBarangSatuan').value = 'Pcs'; document.getElementById('formBarangBeli').value = '0';
+            document.getElementById('modalBarangTitle').innerHTML = '<i class="fa-solid fa-box"></i> Tambah Master Barang'; document.getElementById('modalBarang').classList.add('active');
+        }
+
+        function closeModalBarang() { document.getElementById('modalBarang').classList.remove('active'); }
+
+        function editBarang(item) {
+            document.getElementById('formBarangId').value = item.id; document.getElementById('formBarangKode').value = item.product_code; document.getElementById('formBarangNama').value = item.name;
+            document.getElementById('formBarangStok').value = item.stock; document.getElementById('formBarangMinStok').value = item.min_stock; document.getElementById('formBarangSatuan').value = item.unit;
+            document.getElementById('formBarangBeli').value = new Intl.NumberFormat('id-ID').format(item.purchase_price);
+            document.getElementById('modalBarangTitle').innerHTML = '<i class="fa-solid fa-pen"></i> Edit Data Barang'; document.getElementById('modalBarang').classList.add('active');
+        }
+
+        // Fungsi format angka dari app.js jika diperlukan langsung di form ini
+        function formatFocus(input) { let val = input.value.replace(/\D/g, ''); if (val === '0') input.value = ''; }
+        function formatBlur(input) { let val = input.value.replace(/\D/g, ''); input.value = val === '' ? '0' : new Intl.NumberFormat('id-ID').format(val); }
+        function formatInput(input) { let val = input.value.replace(/\D/g, ''); input.value = new Intl.NumberFormat('id-ID').format(val); }
+
+        async function simpanBarang() {
+            const id = document.getElementById('formBarangId').value; 
+            const kode = document.getElementById('formBarangKode').value.trim(); 
+            const nama = document.getElementById('formBarangNama').value.trim();
+            const stok = document.getElementById('formBarangStok').value; 
+            const minStok = document.getElementById('formBarangMinStok').value; 
+            const satuan = document.getElementById('formBarangSatuan').value; 
+            const beli = document.getElementById('formBarangBeli').value.replace(/\./g, '');
+            
+            if(!kode || !nama) return alert("Kode dan Nama Barang wajib diisi!");
+            
+            const btn = document.getElementById('btnSimpanBarang'); const originalBtn = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...'; btn.disabled = true;
+            const payload = { store_id: storeId, product_code: kode, name: nama, stock: parseInt(stok) || 0, min_stock: parseInt(minStok) || 0, unit: satuan, purchase_price: parseFloat(beli) || 0 };
+            
+            let pError = id ? (await supabaseClient.from('products').update(payload).eq('id', id)).error : (await supabaseClient.from('products').insert([payload])).error;
+            
+            btn.innerHTML = originalBtn; btn.disabled = false;
+            if (pError) alert(pError.code === '23505' ? `Kode "${kode}" sudah ada!` : "Gagal: " + pError.message);
+            else { closeModalBarang(); fetchMasterBarang(); }
+        }
+
+        // Jalankan fungsi saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', fetchMasterBarang);
+    </script>
+</body>
+</html>

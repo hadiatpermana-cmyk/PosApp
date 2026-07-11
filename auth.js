@@ -1,11 +1,11 @@
 // auth.js - Menangani Login & Sesi
 
-// Inisialisasi Supabase (Sesuaikan dengan kredensial Anda)
-const SUPABASE_URL = "https://fwmeuhqimqccjweabubx.supabase.co';
+// Inisialisasi Supabase (Sesuai dengan kredensial Anda)
+const SUPABASE_URL = 'https://fwmeuhqimqccjweabubx.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Event Listener untuk Form Login (Hanya berjalan jika di halaman login.html)
+// Event Listener untuk Form Login
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
@@ -30,20 +30,21 @@ if (loginForm) {
 
             if (error) throw error;
 
-            // Jika berhasil, simpan data ke localStorage untuk digunakan oleh app.js
-            // Data ini bisa ditarik dari tabel 'profiles' di database Anda nantinya
+            // Jika berhasil, simpan data ke localStorage
             localStorage.setItem('user_name', 'Hadiat'); 
             localStorage.setItem('user_role', 'System Administrator');
             localStorage.setItem('store_name', 'SBR Putra Food');
-            
-            // Simpan token otentikasi
             localStorage.setItem('is_logged_in', 'true');
 
-            // Alihkan ke Dashboard
+            // Alihkan ke Dashboard utama (index.html)
             window.location.href = 'index.html';
 
         } catch (error) {
             console.error(error);
+            
+            // ALERT BARU UNTUK CEK ERROR ASLI DARI SUPABASE
+            alert("Info Error Supabase: " + error.message);
+            
             errorMsg.innerText = "Gagal login. Periksa kembali email dan password.";
             errorMsg.style.display = 'block';
         } finally {

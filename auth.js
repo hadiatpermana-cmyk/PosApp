@@ -1,7 +1,7 @@
 // auth.js - Menangani Login & Sesi
 
 // Inisialisasi Supabase (Sesuaikan dengan kredensial Anda)
-const SUPABASE_URL = 'https://fwmeuhqimqccjweabubx.supabase.co';
+const SUPABASE_URL = "https://fwmeuhqimqccjweabubx.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 

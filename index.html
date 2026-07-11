@@ -1,10 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="id" data-theme="light">
 <head>
-    <meta http-equiv="refresh" content="0; url=login.html">
-    <title>Memuat Sistem...</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Multi Store</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <p>Mengalihkan ke halaman login...</p>
+
+    <!-- UI Components akan di-render di sini oleh ui.js -->
+    <div id="app-sidebar"></div>
+
+    <main class="main-wrapper">
+        
+        <!-- Header akan di-render di sini oleh ui.js -->
+        <div id="app-header"></div>
+
+        <div class="content-scroll">
+            
+            <div class="stat-grid">
+                <div class="stat-card bg-blue"><div><h3>Total Barang</h3><div class="value" id="dashTotalBarang">0</div></div><i class="fa-solid fa-box bg-icon"></i></div>
+                <div class="stat-card bg-red"><div><h3>Stok Krisis</h3><div class="value" id="dashStokKrisis">0</div></div><i class="fa-solid fa-triangle-exclamation bg-icon"></i></div>
+                <div class="stat-card bg-green"><div><h3>Total Agen</h3><div class="value" id="dashTotalCustomers">0</div></div><i class="fa-solid fa-users bg-icon"></i></div>
+            </div>
+            
+            <h3 class="section-title"><i class="fa-solid fa-wrench"></i> Menu Utama</h3>
+            
+            <!-- Menu Grid Anda tetap di sini -->
+            <div class="menu-grid" style="grid-template-columns: 1fr; gap: 15px; max-width: 800px;">
+                <div class="menu-card" onclick="window.location.href='barang.html'"><div class="menu-icon" style="background: #fef3c7; color: #f59e0b;"><i class="fa-solid fa-box-open"></i></div><div class="menu-text"><h4>Master Barang</h4><p>Kelola stok & harga modal</p></div></div>
+                <div class="menu-card" onclick="window.location.href='penerimaan.html'"><div class="menu-icon" style="background: #e0f2fe; color: #0ea5e9;"><i class="fa-solid fa-download"></i></div><div class="menu-text"><h4>Stok Masuk</h4><p>Input barang dari supplier</p></div></div>
+                <div class="menu-card" onclick="window.location.href='agen.html'"><div class="menu-icon" style="background: #d1fae5; color: #10b981;"><i class="fa-solid fa-user-group"></i></div><div class="menu-text"><h4>Manajemen Kontak</h4><p>Supplier, Agen, & Konsumen</p></div></div>
+                <div class="menu-card" onclick="window.location.href='harga.html'"><div class="menu-icon" style="background: #fce7f3; color: #ec4899;"><i class="fa-solid fa-money-bill-wave"></i></div><div class="menu-text"><h4>Harga Agen</h4><p>Set harga khusus per agen</p></div></div>
+                <div class="menu-card" onclick="window.location.href='pos.html'"><div class="menu-icon" style="background: #ffedd5; color: #f97316;"><i class="fa-solid fa-cart-shopping"></i></div><div class="menu-text"><h4>Kasir / POS</h4><p>Transaksi penjualan ritel</p></div></div>
+                <div class="menu-card" onclick="window.location.href='laporan.html'"><div class="menu-icon" style="background: #ede9fe; color: #8b5cf6;"><i class="fa-solid fa-file-invoice"></i></div><div class="menu-text"><h4>Laporan</h4><p>Analisis keuntungan & omset</p></div></div>
+            </div>
+
+            <div style="margin-top: 30px; max-width: 800px;">
+                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="color: #ef4444; margin: 0; font-size: 15px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Perhatian: Stok Krisis! (< Batas Minimal)
+                    </h4>
+                    <span style="font-size: 12px; font-weight: 600; color: #ef4444; background: #fee2e2; padding: 4px 10px; border-radius: 4px;">Akan aktif setelah stok di-update</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Panggil File Scripts -->
+    <script src="ui.js"></script> 
+    <script src="app.js"></script> 
 </body>
 </html>

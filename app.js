@@ -1,45 +1,153 @@
-// app.js
-const SUPABASE_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ==========================================
+// 1. INISIALISASI SUPABASE
+// ==========================================
+const SUPABASE_URL = 'https://fwmeuhqimqccjweabubx.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno';
 
-const storeId = localStorage.getItem('session_store_id');
-const userName = localStorage.getItem('session_user_name');
+// Inisialisasi client Supabase
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-if (!storeId && !window.location.href.includes('login.html')) {
-    window.location.href = 'login.html';
-}
 
-const formatRupiah = (angka) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-};
+// ==========================================
+// 2. KONTROL UTAMA (Routing per Halaman)
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+    // A. Selalu muat profil user & toko di setiap halaman (kecuali login)
+    loadUserProfile();
 
-// Fungsi ini akan berjalan di SETIAP halaman untuk menyamakan tema & header
-async function initGlobalLayout() {
-    if (userName) document.getElementById('txtUserName').innerText = userName;
+    // B. Deteksi sedang berada di halaman mana
+    let path = window.location.pathname;
+    let currentPage = path.split("/").pop();
+    if (currentPage === "") currentPage = "index.html"; 
 
-    const { data: store, error } = await supabaseClient.from('stores').select('*').eq('id', storeId).single();
-    if (error) return console.error("Gagal mengambil data toko:", error);
-
-    // Update Header
-    const storeNameEl = document.getElementById('txtStoreName');
-    if (storeNameEl) storeNameEl.innerText = store.name;
-    
-    const logoArea = document.getElementById('headerLogoArea');
-    if (logoArea && store.logo_url) {
-        logoArea.innerHTML = `<img src="${store.logo_url}" alt="Logo" style="width:100%; height:100%; object-fit:cover;">`;
+    // C. Jalankan fungsi spesifik sesuai halaman yang aktif
+    switch (currentPage) {
+        case "index.html":
+        case "dashboard.html":
+            await initDashboard();
+            break;
+        case "barang.html":
+            await initMasterBarang();
+            break;
+        case "pos.html":
+            // await initKasir(); // Akan kita buat nanti
+            break;
+        // Tambahkan halaman lain di sini nanti jika diperlukan
     }
+});
 
-    // Terapkan Tema Warna & Font
-    if (store.theme_color) document.documentElement.style.setProperty('--primary-color', store.theme_color);
-    if (store.font_family) document.documentElement.style.setProperty('--font-family', store.font_family);
-    
-    // Terapkan Mode Gelap/Terang
-    const savedTheme = localStorage.getItem('themeMode') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
+
+// ==========================================
+// 3. FUNGSI GLOBAL (Dipakai di semua halaman)
+// ==========================================
+function loadUserProfile() {
+    // Tarik data dari localStorage (di-set oleh auth.js saat Login berhasil)
+    // Jika masih kosong/belum login, gunakan default fallback ini
+    const storeName = localStorage.getItem('store_name') || 'SBR Putra Food';
+    const userName = localStorage.getItem('user_name') || 'Hadiat';
+    const role = localStorage.getItem('user_role') || 'System Administrator';
+
+    // Update elemen UI di Header
+    const elStoreName = document.getElementById('txtStoreName');
+    const elStoreTagline = document.getElementById('txtStoreTagline');
+    const elUserName = document.getElementById('txtUserName');
+
+    if (elStoreName) elStoreName.innerText = storeName;
+    if (elStoreTagline) elStoreTagline.innerText = role;
+    if (elUserName) elUserName.innerText = userName;
 }
 
-function toggleSidebar() { document.getElementById('mainSidebar').classList.toggle('collapsed'); }
-function handleLogout() { localStorage.clear(); window.location.href = 'login.html'; }
 
-document.addEventListener('DOMContentLoaded', initGlobalLayout);
+// ==========================================
+// 4. FUNGSI KHUSUS: DASHBOARD
+// ==========================================
+async function initDashboard() {
+    try {
+        // Ambil data barang untuk menghitung total dan stok krisis
+        const { data: barang, error: errBarang } = await supabase.from('products').select('*');
+        
+        if (!errBarang && barang) {
+            const elTotalBarang = document.getElementById('dashTotalBarang');
+            const elStokKrisis = document.getElementById('dashStokKrisis');
+
+            if (elTotalBarang) elTotalBarang.innerText = barang.length;
+
+            const krisisData = barang.filter(item => item.stock <= item.min_stock);
+            if (elStokKrisis) elStokKrisis.innerText = krisisData.length;
+        }
+
+        // Ambil data agen/pelanggan untuk menghitung total agen
+        const { data: agen, error: errAgen } = await supabase.from('customers').select('*');
+        
+        if (!errAgen && agen) {
+            const elTotalAgen = document.getElementById('dashTotalCustomers');
+            if (elTotalAgen) elTotalAgen.innerText = agen.length;
+        }
+
+    } catch (error) {
+        console.error("Gagal memuat data dashboard:", error);
+    }
+}
+
+
+// ==========================================
+// 5. FUNGSI KHUSUS: MASTER BARANG
+// ==========================================
+async function initMasterBarang() {
+    const tbody = document.getElementById('dataBarang');
+    if (!tbody) return;
+
+    try {
+        // Tarik data dari tabel 'products' dan urutkan dari yang terbaru
+        const { data: barang, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+        
+        if (error) throw error;
+
+        tbody.innerHTML = ''; // Kosongkan placeholder "Memuat data..."
+        
+        if (barang.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Belum ada data barang.</td></tr>';
+            return;
+        }
+
+        // Looping data barang dan masukkan ke dalam baris tabel (<tr>)
+        barang.forEach(item => {
+            const tr = document.createElement('tr');
+            
+            // Jika stok di bawah atau sama dengan minimal, beri warna teks merah tebal
+            const stokClass = item.stock <= item.min_stock ? 'style="color: #ef4444; font-weight: bold;"' : '';
+            
+            tr.innerHTML = `
+                <td><strong>${item.item_code || '-'}</strong></td>
+                <td>${item.item_name}</td>
+                <td>${item.unit || 'Pcs'}</td>
+                <td>Rp ${item.cost_price.toLocaleString('id-ID')}</td>
+                <td>Rp ${item.retail_price.toLocaleString('id-ID')}</td>
+                <td ${stokClass}>${item.stock}</td>
+                <td style="text-align: center;">
+                    <!-- Sesuai preferensi, kita gunakan tombol Edit, bukan Delete -->
+                    <button class="btn-edit" onclick="editBarang('${item.id}')">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (error) {
+        console.error("Error loading barang:", error);
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Gagal memuat data dari database.</td></tr>';
+    }
+}
+
+// Fungsi sementara yang akan dipanggil saat tombol "Edit" di tabel diklik
+function editBarang(id) {
+    console.log("Membuka form edit untuk ID:", id);
+    alert("Fungsi edit akan segera diimplementasikan untuk ID: " + id);
+}
+
+// Fungsi sementara yang akan dipanggil saat tombol "Tambah Barang" diklik
+function bukaModalTambah() {
+    console.log("Membuka form tambah barang");
+    alert("Form tambah barang akan segera diimplementasikan.");
+}

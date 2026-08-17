@@ -74,15 +74,25 @@
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; justify-content: center; align-items: center; }
         .modal-card { background: var(--bg-card); width: min(95vw, 420px); max-height: 90vh; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--border-line); }
         .modal-header { padding: 14px 16px; background: var(--p-color); color: white; font-weight: 800; display: flex; justify-content: space-between; align-items: center; font-size: 15px; }
-        .modal-body { padding: 16px; overflow-y: auto; background: var(--bg-main); display: flex; justify-content: center; }
+        .modal-body { padding: 16px; overflow-y: auto; background: var(--bg-main); display: flex; flex-direction: column; align-items: center; }
         .modal-footer { padding: 14px 16px; border-top: 1px solid var(--border-line); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-card); }
         
-        .thermal-receipt { background: #fff; color: #000; padding: 10px; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; line-height: 1.3; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin: 0 auto; width: 100%; }
+        .thermal-receipt { background: #fff; color: #000; padding: 10px; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; line-height: 1.3; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin: 0 auto 15px auto; width: 100%; page-break-after: always; break-after: page; }
         .thermal-receipt.w80 { max-width: 80mm; font-size: 12px; }
         .thermal-receipt.w58 { max-width: 58mm; font-size: 10px; }
         .receipt-center { text-align: center; }
         .receipt-line { border-bottom: 1px dashed #000; margin: 6px 0; }
         .receipt-row { display: flex; justify-content: space-between; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #modalPreview, #modalPreview * { visibility: visible; }
+            #modalPreview { position: absolute; left: 0; top: 0; width: 100%; background: none; display: block !important; }
+            .modal-card { width: 100% !important; max-width: 100% !important; border: none !important; box-shadow: none !important; }
+            .modal-header, .modal-footer { display: none !important; }
+            .modal-body { padding: 0 !important; background: none !important; }
+            .thermal-receipt { box-shadow: none !important; margin: 0 auto !important; page-break-after: always; break-after: page; }
+        }
     </style>
 </head>
 <body>
@@ -464,6 +474,7 @@
 
             let rincianProdHtml = '';
             let rincianLemburHtml = '';
+            let calcTotalUpah = 0;
 
             for(let i in ITEM_LABELS) {
                 let qty = Number(row['q_' + i] || 0);
@@ -472,11 +483,13 @@
                 if (qty > 0) {
                     let hrg = t[i] || 0;
                     let sub = qty * hrg;
+                    calcTotalUpah += sub;
                     rincianProdHtml += `<div class="bon-rincian-item"><span>${ITEM_LABELS[i]} (${qty}x)</span><span>Rp ${sub.toLocaleString('id-ID')}</span></div>`;
                 }
                 if (lmb > 0) {
                     let hrgLmb = t['lembur_' + i] || 0;
                     let subLmb = lmb * hrgLmb;
+                    calcTotalUpah += subLmb;
                     rincianLemburHtml += `<div class="bon-rincian-item"><span>[Lembur] ${ITEM_LABELS[i]} (${lmb}x)</span><span style="color:var(--blue);">Rp ${subLmb.toLocaleString('id-ID')}</span></div>`;
                 }
             }
@@ -496,7 +509,7 @@
                     ${rincianLemburHtml}
                     <div class="bon-footer">
                         <span style="font-size:13px; color:var(--text-muted);">Total Gaji:</span>
-                        <span style="font-size:16px; color:var(--green);">Rp ${Number(row.total_upah || 0).toLocaleString('id-ID')}</span>
+                        <span style="font-size:16px; color:var(--green);">Rp ${Number(row.total_upah || calcTotalUpah).toLocaleString('id-ID')}</span>
                     </div>
                 </div>
             `;
@@ -538,35 +551,35 @@
             let emp = grouped[kid];
             let t = tarifMap[kid] || {};
             let grandTotal = 0;
+            let detailHtml = '';
+
+            emp.rows.forEach(r => {
+                detailHtml += `<div style="font-weight:bold; margin-top:4px;">Tgl: ${r.tanggal}</div>`;
+                for(let i in ITEM_LABELS) {
+                    let q = Number(r['q_' + i] || 0);
+                    let l = Number(r['l_' + i] || 0);
+                    if(q > 0) {
+                        let sub = q * (t[i] || 0);
+                        grandTotal += sub;
+                        detailHtml += `<div class="receipt-row"><span>- ${ITEM_LABELS[i]} (${q}x)</span><span>Rp ${sub.toLocaleString('id-ID')}</span></div>`;
+                    }
+                    if(l > 0) {
+                        let subL = l * (t['lembur_' + i] || 0);
+                        grandTotal += subL;
+                        detailHtml += `<div class="receipt-row" style="color:var(--blue);"><span>  [Lembur] ${ITEM_LABELS[i]} (${l}x)</span><span>Rp ${subL.toLocaleString('id-ID')}</span></div>`;
+                    }
+                }
+            });
 
             htmlContent += `
-            <div class="thermal-receipt w${ukuran}" style="margin-bottom: 15px;">
+            <div class="thermal-receipt w${ukuran}">
                 <div class="receipt-center"><b>TOKO KAMI</b></div>
                 <div class="receipt-center" style="font-size:9px;">SLIP GAJI (${ukuran}mm)</div>
                 <div class="receipt-center" style="font-size:9px;">Periode: ${mulai} s/d ${selesai}</div>
                 <div class="receipt-line"></div>
                 <div><b>Karyawan: ${emp.nama}</b></div>
                 <div class="receipt-line"></div>
-            `;
-
-            emp.rows.forEach(r => {
-                htmlContent += `<div style="font-weight:bold; margin-top:4px;">Tgl: ${r.tanggal}</div>`;
-                for(let i in ITEM_LABELS) {
-                    let q = Number(r['q_' + i] || 0);
-                    let l = Number(r['l_' + i] || 0);
-                    if(q > 0) {
-                        let sub = q * (t[i] || 0);
-                        htmlContent += `<div class="receipt-row"><span>- ${ITEM_LABELS[i]} (${q}x)</span><span>Rp ${sub.toLocaleString('id-ID')}</span></div>`;
-                    }
-                    if(l > 0) {
-                        let subL = l * (t['lembur_' + i] || 0);
-                        htmlContent += `<div class="receipt-row" style="color:var(--blue);"><span>  [Lembur] ${ITEM_LABELS[i]} (${l}x)</span><span>Rp ${subL.toLocaleString('id-ID')}</span></div>`;
-                    }
-                }
-                grandTotal += Number(r.total_upah || 0);
-            });
-
-            htmlContent += `
+                ${detailHtml}
                 <div class="receipt-line"></div>
                 <div class="receipt-row" style="font-size:11px;"><b>TOTAL GAJI</b><b>Rp ${grandTotal.toLocaleString('id-ID')}</b></div>
                 <div class="receipt-line"></div>

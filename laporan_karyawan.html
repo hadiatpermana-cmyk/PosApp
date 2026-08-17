@@ -265,7 +265,7 @@
         };
     }
 
-    async function prosesSimpanDanKirimWA() {
+      async function prosesSimpanDanKirimWA() {
         const plat = document.getElementById('selMobil').value;
         const checked = Array.from(document.querySelectorAll('input[name="nota_pilih"]:checked'));
         const pilihanAgen = document.getElementById('sumber_agen').value;
@@ -285,38 +285,68 @@
         const totalExp = uJalan + uBBM + uBongkar + nomLain;
         const sisaCashBersih = calc.rawCash - totalExp;
 
-        const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-        let pesan = "*REKAP LAPORAN PENGIRIMAN BARANG*\n";
-        pesan += "----------------------------------------\n";
-        pesan += "📅 *Tanggal:* " + tgl + "\n";
-        pesan += "🚗 *Armada/Driver:* " + plat + "\n\n";
-        
-        pesan += "*DAFTAR NOTA TERKIRIM:*\n";
-        calc.detail.forEach(b => {
-            pesan += "▪ " + b.agen + " (" + b.nota + ")\n  - Cash: Rp " + Number(b.cash).toLocaleString('id-ID') + "\n  - TRF: Rp " + Number(b.trf).toLocaleString('id-ID') + "\n";
-        });
-        pesan += "\n*TOTAL PEMBAYARAN:*\n";
-        pesan += "• Total Cash: Rp " + calc.rawCash.toLocaleString('id-ID') + "\n";
-        pesan += "• Total Transfer: Rp " + calc.rawTrf.toLocaleString('id-ID') + "\n\n";
+        // Ambil nomor nota yang dicentang (digabung jika lebih dari satu)
+        const listNoNotaStr = calc.detail.map(b => b.nota).join(', ');
+        const listNamaAgenStr = calc.detail.map(b => b.agen).join(', ');
 
-        pesan += "*PENGELUARAN JALAN:*\n";
-        pesan += "• Sumber Kas: " + pilihanAgen + "\n"; 
-        pesan += "• Uang Jalan: Rp " + uJalan.toLocaleString('id-ID') + "\n";
-        pesan += "• BBM/Solar: Rp " + uBBM.toLocaleString('id-ID') + "\n";
-        pesan += "• Bongkar: Rp " + uBongkar.toLocaleString('id-ID') + "\n";
-        pesan += "• Lain-lain (" + ketLain + "): Rp " + nomLain.toLocaleString('id-ID') + "\n";
-        
-        pesan += "----------------------------------------\n";
-        pesan += "• *Total Biaya:* Rp " + totalExp.toLocaleString('id-ID') + "\n";
-        pesan += "• *SISA CASH BERSIH DISETOR:* Rp " + sisaCashBersih.toLocaleString('id-ID') + "\n\n";
-        pesan += "_Laporan otomatis terekam sistem SBR_";
+        try {
+            // SIMPAN KE DATABASE SUPABASE (Tabel: rekap_laporan_driver)
+            const { error: insertError } = await _supabase.from('rekap_laporan_driver').insert([{
+                toko_id: tokoIdGlobal || null,
+                no_nota: listNoNotaStr,
+                nama_agen: listNamaAgenStr,
+                nama_driver: calc.driver || "Driver",
+                plat_nomor: plat,
+                km_input: 0,
+                uang_jalan: uJalan,
+                uang_bbm: uBBM,
+                uang_bongkar: uBongkar,
+                lain_lain: nomLain,
+                ket_lain_lain: ketLain,
+                sumber_agen: pilihanAgen
+            }]);
 
-        window.open("https://wa.me/?text=" + encodeURIComponent(pesan), '_blank');
-        
-        setTimeout(function() {
-            location.reload();
-        }, 1500);
+            if (insertError) throw insertError;
+
+            // FORMAT PESAN WHATSAPP
+            const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+            let pesan = "*REKAP LAPORAN PENGIRIMAN BARANG*\n";
+            pesan += "------------------------------\n";
+            pesan += "📅 *Tanggal:* " + tgl + "\n";
+            pesan += "🚗 *Armada/Driver:* " + plat + "\n\n";
+            
+            pesan += "*DAFTAR NOTA TERKIRIM:*\n";
+            calc.detail.forEach(b => {
+                pesan += "▪ " + b.agen + " (" + b.nota + ")\n  - Cash: Rp " + Number(b.cash).toLocaleString('id-ID') + "\n  - TRF: Rp " + Number(b.trf).toLocaleString('id-ID') + "\n";
+            });
+            pesan += "\n*TOTAL PEMBAYARAN:*\n";
+            pesan += "• Total Cash: Rp " + calc.rawCash.toLocaleString('id-ID') + "\n";
+            pesan += "• Total Transfer: Rp " + calc.rawTrf.toLocaleString('id-ID') + "\n\n";
+
+            pesan += "*PENGELUARAN JALAN:*\n";
+            pesan += "• Sumber Kas: " + pilihanAgen + "\n"; 
+            pesan += "• Uang Jalan: Rp " + uJalan.toLocaleString('id-ID') + "\n";
+            pesan += "• BBM/Solar: Rp " + uBBM.toLocaleString('id-ID') + "\n";
+            pesan += "• Bongkar: Rp " + uBongkar.toLocaleString('id-ID') + "\n";
+            pesan += "• Lain-lain (" + ketLain + "): Rp " + nomLain.toLocaleString('id-ID') + "\n";
+            
+            pesan += "------------------------------\n";
+            pesan += "• *Total Biaya:* Rp " + totalExp.toLocaleString('id-ID') + "\n";
+            pesan += "• *SISA CASH BERSIH DISETOR:* Rp " + sisaCashBersih.toLocaleString('id-ID') + "\n\n";
+            pesan += "_Laporan otomatis terekam sistem_";
+
+            alert("✅ Data Laporan Berhasil Disimpan ke Database!");
+            window.open("https://wa.me/?text=" + encodeURIComponent(pesan), '_blank');
+            
+            setTimeout(function() {
+                location.reload();
+            }, 1500);
+
+        } catch (e) {
+            alert("❌ Gagal menyimpan ke database: " + e.message);
+        }
     }
+
 
     window.onload = initHalaman;
 </script>

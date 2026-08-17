@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Penerimaan Stok - SBR App</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --p-color: #334155; --bg-main: #f1f5f9; --bg-card: #ffffff; --text-main: #1e293b; --red: #e11d48; --green: #16a34a; --blue: #0284c7; }
+        body { font-family: 'Roboto Condensed', sans-serif; background: var(--bg-main); margin: 0; color: var(--text-main); padding-bottom: 50px; }
+        .header { background: var(--p-color); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 10px; max-width: 600px; margin: auto; }
+        .card { background: var(--bg-card); border-radius: 8px; padding: 10px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        select, input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; font-family: inherit; box-sizing: border-box; }
+        
+        /* Style Link Kembali */
+        .link-kembali { color: var(--blue); text-decoration: none; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 12px; }
+        .link-kembali:hover { text-decoration: underline; }
+
+        /* Style ala Bon Karyawan */
+        .section-header { background: #1e293b; color: white; padding: 8px 12px; border-radius: 6px 6px 0 0; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 14px; }
+        .table-custom { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        .table-custom th { font-size: 11px; text-transform: uppercase; color: #64748b; padding: 5px; text-align: left; }
+        .table-custom td { padding: 8px 5px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        .sub-total { background: #f8fafc; padding: 10px; font-weight: bold; text-align: right; border-radius: 0 0 6px 6px; }
+        .summary-box { background: #1e293b; color: white; padding: 15px; border-radius: 8px; font-size: 14px; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .grand-total { font-size: 18px; color: #f87171; border-top: 1px dashed #475569; margin-top: 5px; padding-top: 5px; }
+        
+        .btn { border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; }
+        .btn-green { background: var(--green); color: white; }
+        .btn-blue { background: var(--blue); color: white; }
+        .btn-red { background: var(--red); color: white; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div style="font-weight:bold; font-size:18px;" id="txtNamaToko">TOKO MADINAH</div>
+    <button class="btn btn-red" onclick="prosesLogout()">LOGOUT</button>
+</div>
+
+<div class="container">
+    <!-- Tombol Kembali ke Dashboard -->
+    <a href="dashboard_karyawan.html" class="link-kembali">← Kembali ke Dashboard</a>
+
+    <div class="grid-2">
+        <input type="text" id="lblFaktur" readonly style="background:#f8fafc;">
+        <input type="text" id="lblTanggal" readonly style="background:#f8fafc;">
+    </div>
+    <div class="grid-2">
+        <select id="inSupplier" onchange="filterBarang()"></select>
+        <select id="inChecker"><option>-- CHECKER --</option></select>
+    </div>
+    <div class="grid-2">
+        <select><option>-- ARMADA --</option></select>
+        <select><option>-- DRIVER --</option></select>
+    </div>
+
+    <!-- BOX DITERIMA -->
+    <div class="card" style="padding:0;">
+        <div class="section-header">
+            <span>📦 DITERIMA :</span>
+            <button class="btn btn-green" onclick="bukaModal('TERIMA')">+ ITEM</button>
+        </div>
+        <table class="table-custom" id="tbTerima">
+            <thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th>#</th></tr></thead>
+            <tbody></tbody>
+        </table>
+        <div class="sub-total" id="totTerima">SUBTOTAL: Rp 0</div>
+    </div>
+
+    <!-- BOX RETUR -->
+    <div class="card" style="padding:0;">
+        <div class="section-header" style="background:#b91c1c;">
+            <span>🔄 RETUR :</span>
+            <button class="btn btn-green" onclick="bukaModal('RETUR')">+ ITEM</button>
+        </div>
+        <table class="table-custom" id="tbRetur">
+            <thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th>#</th></tr></thead>
+            <tbody></tbody>
+        </table>
+        <div class="sub-total" id="totRetur">SUBTOTAL: Rp 0</div>
+    </div>
+
+    <!-- SISA AKHIR -->
+    <div class="summary-box">
+        <div class="summary-row"><span>Kirim:</span> <span id="sumKirim">Rp 0</span></div>
+        <div class="summary-row"><span>Retur:</span> <span id="sumRetur">Rp 0</span></div>
+        <div class="summary-row grand-total"><span>SISA AKHIR:</span> <span id="grandTotal">Rp 0</span></div>
+    </div>
+
+    <button class="btn btn-blue" style="width:100%; padding:15px; margin-top:10px; font-size:16px;" onclick="cetakPrinter()">🖨️ HUBUNGKAN PRINTER</button>
+</div>
+
+<script>
+    // Inisialisasi dasar
+    document.getElementById('lblFaktur').value = "PB-" + Date.now().toString().slice(-6);
+    document.getElementById('lblTanggal').value = new Date().toLocaleDateString('id-ID');
+
+    async function prosesLogout() { alert("Logout..."); }
+    function bukaModal(jenis) { alert("Buka modal input untuk: " + jenis); }
+    function cetakPrinter() { alert("Menghubungkan printer..."); }
+</script>
+
+</body>
+</html>

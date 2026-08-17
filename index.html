@@ -1,60 +1,190 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="light">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Multi Store</title>
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-    <!-- Supabase -->
+    <title>Manajemen Store - Login</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --p-color: #1e272e; --s-color: #72a339; --bg: #f1f2f6; }
+        body { font-family: 'Roboto Condensed', sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .auth-container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 420px; box-sizing: border-box; }
+        h2 { text-align: center; margin-top: 0; color: var(--p-color); font-size: 22px; text-transform: uppercase; }
+        h2 span { color: var(--s-color); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; color: #555; text-transform: uppercase; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        .btn-auth { width: 100%; padding: 12px; background: var(--p-color); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 14px; }
+        .btn-auth:active { transform: scale(0.98); }
+        .toggle-link { text-align: center; margin-top: 15px; font-size: 14px; color: #2563eb; cursor: pointer; text-decoration: underline; }
+        .msg-box { padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; display: none; font-weight: bold; }
+        .msg-error { background: #fed7d7; color: #c53030; border: 1px solid #feb2b2; }
+        .msg-success { background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; }
+    </style>
 </head>
 <body>
 
-    <!-- UI Components akan di-render di sini oleh ui.js -->
-    <div id="app-sidebar"></div>
+<div class="auth-container">
+    <h2 id="authTitle">Store<span>digital</span> POS</h2>
+    <div id="msgBox" class="msg-box"></div>
 
-    <main class="main-wrapper">
-        
-        <!-- Header akan di-render di sini oleh ui.js -->
-        <div id="app-header"></div>
-
-        <div class="content-scroll">
-            
-            <div class="stat-grid">
-                <div class="stat-card bg-blue"><div><h3>Total Barang</h3><div class="value" id="dashTotalBarang">0</div></div><i class="fa-solid fa-box bg-icon"></i></div>
-                <div class="stat-card bg-red"><div><h3>Stok Krisis</h3><div class="value" id="dashStokKrisis">0</div></div><i class="fa-solid fa-triangle-exclamation bg-icon"></i></div>
-                <div class="stat-card bg-green"><div><h3>Total Agen</h3><div class="value" id="dashTotalCustomers">0</div></div><i class="fa-solid fa-users bg-icon"></i></div>
-            </div>
-            
-            <h3 class="section-title"><i class="fa-solid fa-wrench"></i> Menu Utama</h3>
-            
-            <!-- Menu Grid Anda tetap di sini -->
-            <div class="menu-grid" style="grid-template-columns: 1fr; gap: 15px; max-width: 800px;">
-                <div class="menu-card" onclick="window.location.href='barang.html'"><div class="menu-icon" style="background: #fef3c7; color: #f59e0b;"><i class="fa-solid fa-box-open"></i></div><div class="menu-text"><h4>Master Barang</h4><p>Kelola stok & harga modal</p></div></div>
-                <div class="menu-card" onclick="window.location.href='penerimaan.html'"><div class="menu-icon" style="background: #e0f2fe; color: #0ea5e9;"><i class="fa-solid fa-download"></i></div><div class="menu-text"><h4>Stok Masuk</h4><p>Input barang dari supplier</p></div></div>
-                <div class="menu-card" onclick="window.location.href='agen.html'"><div class="menu-icon" style="background: #d1fae5; color: #10b981;"><i class="fa-solid fa-user-group"></i></div><div class="menu-text"><h4>Manajemen Kontak</h4><p>Supplier, Agen, & Konsumen</p></div></div>
-                <div class="menu-card" onclick="window.location.href='harga.html'"><div class="menu-icon" style="background: #fce7f3; color: #ec4899;"><i class="fa-solid fa-money-bill-wave"></i></div><div class="menu-text"><h4>Harga Agen</h4><p>Set harga khusus per agen</p></div></div>
-                <div class="menu-card" onclick="window.location.href='pos.html'"><div class="menu-icon" style="background: #ffedd5; color: #f97316;"><i class="fa-solid fa-cart-shopping"></i></div><div class="menu-text"><h4>Kasir / POS</h4><p>Transaksi penjualan ritel</p></div></div>
-                <div class="menu-card" onclick="window.location.href='laporan.html'"><div class="menu-icon" style="background: #ede9fe; color: #8b5cf6;"><i class="fa-solid fa-file-invoice"></i></div><div class="menu-text"><h4>Laporan</h4><p>Analisis keuntungan & omset</p></div></div>
-            </div>
-
-            <div style="margin-top: 30px; max-width: 800px;">
-                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
-                    <h4 style="color: #ef4444; margin: 0; font-size: 15px; display: flex; align-items: center; gap: 10px;">
-                        <i class="fa-solid fa-triangle-exclamation"></i> Perhatian: Stok Krisis! (< Batas Minimal)
-                    </h4>
-                    <span style="font-size: 12px; font-weight: 600; color: #ef4444; background: #fee2e2; padding: 4px 10px; border-radius: 4px;">Akan aktif setelah stok di-update</span>
-                </div>
-            </div>
-
+    <!-- FORM LOGIN -->
+    <div id="formLogin">
+        <div class="form-group">
+            <label>Email Pengguna</label>
+            <input type="email" id="loginEmail" placeholder="nama@email.com">
         </div>
-    </main>
+        <div class="form-group">
+            <label>Kata Sandi</label>
+            <input type="password" id="loginPassword" placeholder="******">
+        </div>
+        <button class="btn-auth" onclick="prosesLogin()">Masuk Aplikasi</button>
+        <div class="toggle-link" onclick="tukarForm(true)">Belum punya akun? Daftar Karyawan</div>
+    </div>
 
-    <!-- Panggil File Scripts -->
-    <script src="ui.js"></script> 
-    <script src="app.js"></script> 
+    <!-- FORM PENDAFTARAN KARYAWAN -->
+    <div id="formDaftar" style="display: none;">
+        <!-- Bagian Input ID Toko Otomatis / Readonly -->
+        <div id="boxFormKaryawan">
+            <div class="form-group">
+                <label>ID Toko (Terisi Otomatis)</label>
+                <input type="text" id="regIdToko" readonly style="background: #e9ecef; color: #495057; font-weight: bold;" placeholder="Memuat ID Toko...">
+                <small style="color: #6c757d; font-size: 11px; margin-top: 3px; display: block;">*ID toko terdeteksi otomatis dari sesi login aktif.</small>
+            </div>
+            <hr style="border: 0; border-top: 1px dashed #ddd; margin: 15px 0;">
+        </div>
+
+        <!-- Form Umum -->
+        <div class="form-group">
+            <label>Nama Lengkap Anda</label>
+            <input type="text" id="regNamaLengkap" placeholder="Nama Karyawan">
+        </div>
+        <div class="form-group">
+            <label>Email Pendaftaran</label>
+            <input type="email" id="regEmail" placeholder="email@anda.com">
+        </div>
+        <div class="form-group">
+            <label>Kata Sandi</label>
+            <input type="password" id="regPassword" placeholder="Minimal 6 karakter">
+        </div>
+        <button class="btn-auth" style="background: #72a339;" onclick="prosesRegistrasi()">Daftarkan Akun</button>
+        <div class="toggle-link" onclick="tukarForm(false)">Sudah memiliki akun? Login di sini</div>
+    </div>
+</div>
+
+<script>
+    const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    function tampilkanPesan(teks, tipe) {
+        const box = document.getElementById('msgBox');
+        box.innerText = teks;
+        box.style.display = 'block';
+        box.className = 'msg-box ' + (tipe === 'error' ? 'msg-error' : 'msg-success');
+    }
+
+    async function muatIdTokoOtomatis() {
+        try {
+            const { data: sessionData } = await _supabase.auth.getSession();
+            if (sessionData && sessionData.session) {
+                const { data: profile } = await _supabase.from('profiles').select('toko_id').eq('id', sessionData.session.user.id).single();
+                if (profile && profile.toko_id) {
+                    const inputToko = document.getElementById('regIdToko');
+                    inputToko.value = profile.toko_id;
+                }
+            }
+        } catch (e) {
+            console.error("Gagal memuat ID toko otomatis:", e);
+        }
+    }
+
+    function tukarForm(keDaftar) {
+        document.getElementById('msgBox').style.display = 'none';
+        if (keDaftar) {
+            document.getElementById('formLogin').style.display = 'none';
+            document.getElementById('formDaftar').style.display = 'block';
+            document.getElementById('authTitle').innerHTML = "DAFTAR<span>KARYAWAN BARU</span>";
+            muatIdTokoOtomatis(); // Panggil fungsi untuk mengisi ID toko saat form daftar dibuka
+        } else {
+            document.getElementById('formLogin').style.display = 'block';
+            document.getElementById('formDaftar').style.display = 'none';
+            document.getElementById('authTitle').innerHTML = "Store<span>digital</span> POS";
+        }
+    }
+
+    async function prosesRegistrasi() {
+        const namaLengkap = document.getElementById('regNamaLengkap').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        const idTokoFinal = document.getElementById('regIdToko').value.trim().toUpperCase();
+
+        if (!namaLengkap || !email || !password || !idTokoFinal) {
+            return tampilkanPesan("Semua kolom wajib harus diisi termasuk ID Toko!", "error");
+        }
+
+        try {
+            // Validasi apakah ID Toko benar-benar ada di database
+            const { data: cekToko, error: errCek } = await _supabase.from('toko')
+                .select('id')
+                .eq('id', idTokoFinal)
+                .single();
+            if (errCek || !cekToko) throw new Error("ID Toko aktif tidak valid atau tidak ditemukan.");
+
+            // Daftarkan Akun ke Supabase Auth
+            const { data: dataAuth, error: errAuth } = await _supabase.auth.signUp({ email, password });
+            if (errAuth) throw errAuth;
+            if (!dataAuth.user) throw new Error("Registrasi gagal. Cek format email Anda.");
+
+            // Masukkan data ke tabel Profiles dengan role karyawan
+            const { error: errProfile } = await _supabase.from('profiles').insert([{
+                id: dataAuth.user.id,
+                toko_id: idTokoFinal,
+                nama_lengkap: namaLengkap,
+                role: 'karyawan'
+            }]);
+            if (errProfile) throw errProfile;
+
+            tampilkanPesan("✅ Pendaftaran Karyawan Berhasil! Silakan login.", "success");
+            setTimeout(() => tukarForm(false), 2000);
+
+        } catch (e) {
+            tampilkanPesan("❌ Registrasi Gagal: " + e.message, "error");
+        }
+    }
+
+    async function prosesLogin() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
+        if (!email || !password) return tampilkanPesan("Email dan Kata Sandi wajib diisi!", "error");
+
+        try {
+            const { data: authData, error: errAuth } = await _supabase.auth.signInWithPassword({ email, password });
+            if (errAuth) throw errAuth;
+
+            const { data: profile, error: errProf } = await _supabase.from('profiles')
+                .select('role, toko_id')
+                .eq('id', authData.user.id)
+                .single();
+
+            if (errProf || !profile) throw new Error("Data profil pengguna tidak ditemukan.");
+
+            tampilkanPesan("⚡ Autentikasi berhasil! Mengalihkan...", "success");
+            
+            setTimeout(() => {
+                if (profile.role === 'karyawan') {
+                    window.location.href = "dashboard_karyawan.html";
+                } else {
+                    window.location.href = "dashboard.html";
+                }
+            }, 1000);
+
+        } catch (e) {
+            tampilkanPesan("❌ Gagal Masuk: " + e.message, "error");
+        }
+    }
+</script>
 </body>
 </html>

@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Penerimaan Stok - SBR SaaS</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+Prime&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --sidebar-width: 250px; --topbar-height: 60px; }
+        [data-theme="dark"] { --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333; }
+        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
+        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--p-color); flex-shrink: 0; }
+        .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
+        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
+        .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
+        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
+        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; }
+        .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
+        .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; transition: width 0.3s; }
+        .sidebar.collapsed { width: 0; border: none; }
+        .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
+        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); font-weight: bold; }
+        .nav-item:hover, .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
+        
+        .content-area { padding: 25px; overflow-y: auto; flex: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: start; box-sizing: border-box; }
+        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: var(--text-muted); }
+        
+        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid var(--border-line); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-line); padding-bottom: 10px; }
+        
+        .form-grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
+        .form-group input, .form-group select { width: 100%; padding: 8px 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font-weight: bold; box-sizing: border-box; }
+        
+        .btn-action { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; font-family: inherit; }
+        .btn-icon { background: transparent; border: none; cursor: pointer; font-size: 14px; padding: 0 4px; }
+        
+        .link-kembali { color: var(--green); text-decoration: none; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 15px; }
+        .link-kembali:hover { text-decoration: underline; }
+
+        .bon-container { background: #fffdf5; color: #000; font-family: 'Courier Prime', monospace; padding: 15px; border-radius: 4px; border: 1px dashed #ccc; font-size: 13px; width: 100%; box-sizing: border-box; }
+        [data-theme="dark"] .bon-container { background: #2d2d2d; color: #f1f1f1; border-color: #555; }
+        .toko-title { text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 5px; text-transform: uppercase; }
+        .bon-divider { border-bottom: 1px dashed #999; margin: 8px 0; }
+        .bon-header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
+        .text-right { text-align: right; }
+        .bon-table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 5px; }
+        .bon-table th, .bon-table td { padding: 3px 0; vertical-align: middle; }
+        .bon-table th { border-bottom: 1px dashed #999; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-struk-content { background: #fffdf5; color: #000; font-family: 'Courier Prime', monospace; padding: 20px; border-radius: 8px; width: 90%; max-width: 380px; max-height: 85vh; overflow-y: auto; text-align: left; border: 1px solid #ccc; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <a href="dashboard.html" class="store-brand">
+            <div class="store-logo" id="logoTopbar">🏪</div>
+            <div class="store-info"><h3 id="txtNamaTokoTop">Memuat...</h3><p>Admin</p></div>
+        </a>
+    </div>
+    <div class="topbar-right">
+        <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
+        <span id="txtNamaUser">User</span> 👋
+        <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="sidebar collapsed" id="sidebar">
+        <div class="nav-menu">
+            <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+            <a href="barang.html" class="nav-item">📦 Master Barang</a>
+            <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+            <a href="stok_masuk.html" class="nav-item active">📥 Stok Masuk</a>
+            <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
+            <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+            <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
+            <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
+            <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
+            <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <div id="loader"><h2 style="margin:0;">⏳ Menyiapkan Data...</h2></div>
+        
+        <!-- STRUK / BON DI SEBELAH KIRI -->
+        <div class="bon-container" id="areaBon">
+            <div class="toko-title" id="lblTokoBon">NAMA TOKO</div>
+            <div style="text-align:center; font-size:11px; margin-bottom:5px;" id="lblAlamatBon">Alamat...</div>
+            <div style="text-align:center; font-weight:bold; text-decoration:underline; font-size:13px; margin-bottom:10px;">FAKTUR PENERIMAAN BARANG</div>
+            <div class="bon-divider"></div>
+            <div class="bon-header-grid">
+                <div>No : <strong id="lblFaktur">PB-000</strong></div>
+                <div class="text-right">Tgl : <span id="lblTanggal">00/00/00</span></div>
+                <div>Spl: <span id="lblSupplier">-</span></div>
+                <div class="text-right">Opr: <span id="lblPenerima">-</span></div>
+            </div>
+            <div class="bon-divider"></div>
+            <div style="font-weight:bold;">DITERIMA</div>
+            <table class="bon-table">
+                <thead><tr><th>Qty</th><th>Barang</th><th class="text-right">Harga</th><th class="text-right">Total</th><th style="text-align:center;">Aksi</th></tr></thead>
+                <tbody id="tbTerima"></tbody>
+            </table>
+            <div class="bon-divider"></div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Total Terima</span><span id="totTerima">0</span></div>
+            
+            <div id="areaRetur" style="display: none;">
+                <div style="font-weight:bold; margin-top:10px; color:red;">RETUR</div>
+                <table class="bon-table" style="color:red;">
+                    <thead><tr><th>Qty</th><th>Barang</th><th class="text-right">Harga</th><th class="text-right">Total</th><th style="text-align:center;">Aksi</th></tr></thead>
+                    <tbody id="tbRetur"></tbody>
+                </table>
+                <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Total Retur</span><span id="totRetur">0</span></div>
+            </div>
+            
+            <div class="bon-divider" style="border-top:2px dashed #999;"></div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span>GRAND TOTAL</span><span id="grandTotal">0</span></div>
+
+            <div style="margin-top: 20px;">
+                <button class="btn-action" style="background:var(--green); color:white;" id="btnSimpan" onclick="validasiSimpan()">Simpan & Update Stok</button>
+            </div>
+        </div>
+
+        <!-- FORM KERANJANG DI SEBELAH KANAN -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h3 style="margin:0;">Input Barang Faktur</h3>
+                </div>
+            </div>
+            <a href="dashboard.html" class="link-kembali">← Kembali ke Dashboard</a>
+
+            <div class="form-grid-container">
+                <div class="form-group">
+                    <label>Supplier / Pemasok *</label>
+                    <select id="inSupplier" onchange="filterBarangSupplier(); updateFakturInfo();">
+                        <option value="">-- Pilih Supplier --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Jenis Transaksi</label>
+                    <select id="inJenis">
+                        <option value="TERIMA">DITERIMA</option>
+                        <option value="RETUR">RETUR</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Nama Barang *</label>
+                    <select id="inBarang" onchange="autoFillHarga()">
+                        <option value="">-- Pilih Supplier Dahulu --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Satuan</label>
+                    <select id="inSatuan" onchange="autoFillHarga()">
+                        <option value="Bal" selected>Bal</option>
+                        <option value="Pack">Pack</option>
+                        <option value="Pcs">Pcs / Lembar / Kg</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Qty (Kemasan)</label>
+                    <input type="number" id="inQty" min="0" value="0" onclick="this.value=''">
+                </div>
+                <div class="form-group">
+                    <label>Harga Beli Satuan (Rp)</label>
+                    <input type="text" id="inHarga" placeholder="0" oninput="formatRibuan(this)">
+                </div>
+            </div>
+
+            <button class="btn-action" style="background:var(--p-color); color:white; margin-top: 15px;" onclick="tambahKeFaktur()">+ Tambahkan ke Faktur</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal Pop-up Struk Digital -->
+<div id="modalStrukDigital" class="modal">
+    <div class="modal-struk-content">
+        <div class="toko-title" id="digToko">NAMA TOKO</div>
+        <div style="text-align:center; font-size:11px; margin-bottom:5px;" id="digAlamat">Alamat...</div>
+        <div style="text-align:center; font-weight:bold; text-decoration:underline; font-size:13px; margin-bottom:10px;">FAKTUR PENERIMAAN BARANG</div>
+        <div class="bon-divider"></div>
+        <div class="bon-header-grid">
+            <div>No : <strong id="digFaktur">PB-000</strong></div>
+            <div class="text-right">Tgl : <span id="digTgl">00/00/00</span></div>
+            <div>Spl: <span id="digSpl">-</span></div>
+            <div class="text-right">Opr: <span id="digOpr">-</span></div>
+        </div>
+        <div class="bon-divider"></div>
+        <div style="font-weight:bold;">DITERIMA</div>
+        <table class="bon-table">
+            <thead><tr><th>Qty</th><th>Barang</th><th class="text-right">Harga</th><th class="text-right">Total</th></tr></thead>
+            <tbody id="digTbTerima"></tbody>
+        </table>
+        <div class="bon-divider"></div>
+        <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Total Terima</span><span id="digTotTerima">0</span></div>
+        
+        <div id="digAreaRetur" style="display: none;">
+            <div style="font-weight:bold; margin-top:10px; color:red;">RETUR</div>
+            <table class="bon-table" style="color:red;">
+                <thead><tr><th>Qty</th><th>Barang</th><th class="text-right">Harga</th><th class="text-right">Total</th></tr></thead>
+                <tbody id="digTbRetur"></tbody>
+            </table>
+            <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Total Retur</span><span id="digTotRetur">0</span></div>
+        </div>
+        
+        <div class="bon-divider" style="border-top:2px dashed #999;"></div>
+        <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span>GRAND TOTAL</span><span id="digGrandTotal">0</span></div>
+
+        <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn-action" style="background:var(--green); color:white; padding: 10px;" onclick="cetakViaBluetooth()">🖨️ Cetak ke Printer Bluetooth</button>
+            <button class="btn-action" style="background:var(--bg-main); color:var(--text-main); border: 1px solid var(--border-line); padding: 10px;" onclick="tutupModalStrukDigital()">✖️ Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pilihan Aksi Item Faktur (Edit / Hapus) -->
+<div id="modalAksiItem" class="modal">
+    <div class="modal-content" style="background:var(--bg-card); padding:25px; border-radius:12px; width:90%; max-width:320px; border:1px solid var(--border-line); text-align:center;">
+        <h3 style="margin-top: 0; margin-bottom: 5px; color: var(--p-color);">Pilihan Aksi</h3>
+        <p id="txtNamaItemAksi" style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; font-weight: bold;"></p>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn-action" style="background:var(--blue); color:white; padding: 10px;" onclick="pilihAksiEdit()">✏️ Edit Data</button>
+            <button class="btn-action" style="background:var(--red); color:white; padding: 10px;" onclick="pilihAksiHapus()">🗑️ Hapus Baris</button>
+            <button class="btn-action" style="background:var(--bg-main); color:var(--text-main); border: 1px solid var(--border-line); padding: 10px;" onclick="tutupModalAksi()">Batal</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+    
+    let tokoIdGlobal = null, namaKasirGlobal = "", namaTokoGlobal = "", alamatTokoGlobal = "";
+    let listBarang = [], listHargaAgen = [], listAgenSupplier = [], cartTerima = [], cartRetur = [];
+    let lastPrintedTerima = [], lastPrintedRetur = []; // Variabel penampung sementara untuk cetak
+    let noFakturAktif = "";
+    let selectedItemIndex = null;
+    let selectedItemJenis = null;
+    let bluetoothCharacteristic = null;
+
+    function initTheme() { if (localStorage.getItem('themeMode') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); document.getElementById('btnThemeToggle').innerText = '☀️'; } }
+    function toggleTheme() { let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('themeMode', t); document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; }
+    initTheme(); 
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+
+    function formatRibuan(input) {
+        let val = input.value.replace(/[^0-9]/g, '');
+        input.value = val ? parseInt(val).toLocaleString('id-ID') : '';
+    }
+    function parseRupiah(str) { return str ? parseInt(str.toString().replace(/\./g, '')) || 0 : 0; }
+
+    function getBarangKonversi(barang) {
+        const jenis = (barang?.satuan_jenis || 'pcs').toLowerCase();
+        const isiPack = Number(barang?.isi_pack) || 1;
+        const isiPcs = Number(barang?.isi_pcs) || 1;
+        if (jenis === 'kg') return { jenis: 'kg', base: 'Kg', packPerBal: 1, pcsPerPack: 1 };
+        if (jenis === 'lembar') return { jenis: 'lembar', base: 'Lembar', packPerBal: 1, pcsPerPack: isiPcs || 1 };
+        return { jenis: 'pcs', base: 'Pcs', packPerBal: isiPack || 1, pcsPerPack: isiPcs || 1 };
+    }
+
+    function qtyKeSatuanTerkecil(barang, qty, satuan) {
+        const jml = Number(qty) || 0;
+        if (jml <= 0) return 0;
+        const cfg = getBarangKonversi(barang);
+        const unit = (satuan || '').toLowerCase();
+
+        if (cfg.jenis === 'kg') return jml;
+        if (cfg.jenis === 'lembar') {
+            if (unit === 'bal') return jml * (cfg.packPerBal * cfg.pcsPerPack);
+            if (unit === 'pack') return jml * cfg.pcsPerPack;
+            return jml;
+        }
+
+        if (unit === 'bal') return jml * (cfg.packPerBal * cfg.pcsPerPack);
+        if (unit === 'pack') return jml * cfg.pcsPerPack;
+        return jml;
+    }
+
+    function buatNoFaktur() {
+        const d = new Date();
+        const uniqueId = Date.now() + Math.floor(1000 + Math.random() * 9000);
+        noFakturAktif = `PB-${uniqueId}`;
+        document.getElementById('lblFaktur').innerText = noFakturAktif;
+        document.getElementById('lblTanggal').innerText = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+    }
+
+    async function verifikasiSesi() {
+        const { data: sessionData } = await _supabase.auth.getSession();
+        if (!sessionData.session) return window.location.replace("index.html");
+        const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
+        tokoIdGlobal = profile.toko_id;
+        namaKasirGlobal = profile.nama_lengkap.split(' ')[0];
+        
+        const { data: toko } = await _supabase.from('toko').select('*').eq('id', tokoIdGlobal).single();
+        namaTokoGlobal = toko.nama_toko;
+        alamatTokoGlobal = toko.alamat || '-';
+
+        document.getElementById('txtNamaTokoTop').innerText = namaTokoGlobal;
+        document.getElementById('lblTokoBon').innerText = namaTokoGlobal; 
+        document.getElementById('lblAlamatBon').innerText = alamatTokoGlobal;
+        if(toko.warna_tema) document.documentElement.style.setProperty('--p-color', toko.warna_tema);
+        if(toko.logo_url) document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
+        
+        document.getElementById('txtNamaUser').innerText = namaKasirGlobal;
+        document.getElementById('lblPenerima').innerText = namaKasirGlobal;
+        
+        buatNoFaktur();
+        await muatDataBarangDanSupplier();
+        document.getElementById('loader').style.display = 'none';
+    }
+
+    async function muatDataBarangDanSupplier() {
+        const { data: barang } = await _supabase.from('barang').select('*').eq('toko_id', tokoIdGlobal).order('nama_barang');
+        listBarang = barang || []; 
+
+        const { data: agen } = await _supabase.from('agen').select('*').eq('toko_id', tokoIdGlobal);
+        listAgenSupplier = agen || [];
+
+        let supplierSet = new Set();
+        listBarang.forEach(b => { if(b.supplier) supplierSet.add(b.supplier); });
+
+        let dropdownHtml = '<option value="">-- Pilih Supplier --</option>';
+        supplierSet.forEach(sup => {
+            dropdownHtml += `<option value="${sup}">${sup}</option>`;
+        });
+        document.getElementById('inSupplier').innerHTML = dropdownHtml;
+    }
+
+    function filterBarangSupplier() {
+        const namaSup = document.getElementById('inSupplier').value;
+        const selBrg = document.getElementById('inBarang');
+        if (!namaSup) {
+            selBrg.innerHTML = '<option value="">-- Pilih Supplier Dahulu --</option>';
+            return;
+        }
+        const filtered = listBarang.filter(b => b.supplier === namaSup);
+        selBrg.innerHTML = '<option value="">-- Pilih Barang --</option>' + filtered.map(b => `<option value="${b.id}">${b.nama_barang}</option>`).join('');
+    }
+
+    function autoFillHarga() {
+        const idB = document.getElementById('inBarang').value;
+        if (!idB) return;
+        const brg = listBarang.find(b => b.id === idB);
+        if (brg) {
+            document.getElementById('inHarga').value = brg.harga_beli_dasar ? Number(brg.harga_beli_dasar).toLocaleString('id-ID') : '';
+        }
+    }
+
+    function updateFakturInfo() {
+        const sel = document.getElementById('inSupplier');
+        document.getElementById('lblSupplier').innerText = sel.value === "" ? "-" : sel.value;
+    }
+
+    function tambahKeFaktur() {
+        const idBarang = document.getElementById('inBarang').value;
+        const selBarang = document.getElementById('inBarang');
+        if (!idBarang) return alert("Pilih barang terlebih dahulu!");
+
+        const brg = listBarang.find(b => b.id === idBarang);
+        const namaBarang = selBarang.options[selBarang.selectedIndex].text;
+        const qty = parseInt(document.getElementById('inQty').value) || 0;
+        const satuan = document.getElementById('inSatuan').value;
+        const harga = parseRupiah(document.getElementById('inHarga').value);
+        const jenis = document.getElementById('inJenis').value;
+
+        if(qty <= 0 || isNaN(harga)) return alert("Qty harus > 0 dan harga harus diisi benar!");
+
+        const qtyBase = qtyKeSatuanTerkecil(brg, qty, satuan);
+        let targetCart = jenis === 'TERIMA' ? cartTerima : cartRetur;
+        const idx = targetCart.findIndex(i => i.id_barang === idBarang && i.satuan === satuan);
+
+        if (idx !== -1) {
+            targetCart[idx].qty += qty;
+            targetCart[idx].qty_base = (Number(targetCart[idx].qty_base) || 0) + qtyBase;
+            targetCart[idx].total = targetCart[idx].qty * targetCart[idx].harga;
+        } else {
+            targetCart.push({ 
+                id_barang: idBarang, 
+                nama: namaBarang, 
+                qty, 
+                qty_base: qtyBase,
+                satuan, 
+                harga, 
+                total: qty * harga 
+            });
+        }
+        
+        document.getElementById('inBarang').value = '';
+        document.getElementById('inQty').value = '0';
+        document.getElementById('inHarga').value = '';
+        renderBon();
+    }
+
+    function formatQtyStrukDigital(qty, satuan, barang) {
+        const jumlah = Number(qty) || 0;
+        const unit = (satuan || barang?.satuan_jenis || 'pcs').toLowerCase();
+        if (!barang) return `${jumlah.toLocaleString('id-ID')} ${unit || 'pcs'}`;
+
+        const isiPack = Number(barang.isi_pack) || 1;
+        const isiPcs = Number(barang.isi_pcs) || 1;
+        const totalPerBal = (isiPack || 1) * (isiPcs || 1);
+
+        if (unit.includes('bal')) return `${jumlah.toLocaleString('id-ID')} bal`;
+        if (unit.includes('pack')) {
+            const bal = Math.floor(jumlah / (isiPack || 1));
+            const sisaPack = jumlah % (isiPack || 1);
+            const pcs = sisaPack * (isiPcs || 1);
+            if (bal > 0 && pcs === 0) return `${bal.toLocaleString('id-ID')} bal`;
+            if (bal > 0) return `${bal.toLocaleString('id-ID')} bal (${pcs.toLocaleString('id-ID')} pcs)`;
+            return `${jumlah.toLocaleString('id-ID')} pack`;
+        }
+
+        const bal = Math.floor(jumlah / totalPerBal);
+        const sisaSetelahBal = jumlah % totalPerBal;
+        const pack = Math.floor(sisaSetelahBal / (isiPcs || 1));
+        const pcs = sisaSetelahBal % (isiPcs || 1);
+
+        if (bal > 0 && pack === 0 && pcs === 0) return `${bal.toLocaleString('id-ID')} bal`;
+        if (bal > 0) return `${bal.toLocaleString('id-ID')} bal (${pack} pack${pcs > 0 ? ` ${pcs} pcs` : ''})`;
+        if (pack > 0) return `${pack.toLocaleString('id-ID')} pack (${pcs.toLocaleString('id-ID')} pcs)`;
+        return `${jumlah.toLocaleString('id-ID')} pcs`;
+    }
+
+    function renderBon() {
+        let sumTrm = 0, htmlTrm = '';
+        cartTerima.forEach((c, idx) => {
+            sumTrm += c.total;
+            htmlTrm += `<tr>
+                <td>${c.qty} ${c.satuan}</td>
+                <td>${c.nama}</td>
+                <td class="text-right">${c.harga.toLocaleString()}</td>
+                <td class="text-right">${c.total.toLocaleString()}</td>
+                <td style="text-align:center;">
+                    <button class="btn-icon" onclick="bukaModalAksi('TERIMA', ${idx})" title="Edit/Hapus">✏️</button>
+                </td>
+            </tr>`;
+        });
+        document.getElementById('tbTerima').innerHTML = htmlTrm || '<tr><td colspan="5" style="color:#aaa; text-align:center;">Kosong</td></tr>';
+        document.getElementById('totTerima').innerText = sumTrm.toLocaleString();
+
+        let sumRtr = 0, htmlRtr = '';
+        cartRetur.forEach((c, idx) => {
+            sumRtr += c.total;
+            htmlRtr += `<tr>
+                <td>${c.qty} ${c.satuan}</td>
+                <td>${c.nama}</td>
+                <td class="text-right">${c.harga.toLocaleString()}</td>
+                <td class="text-right">${c.total.toLocaleString()}</td>
+                <td style="text-align:center;">
+                    <button class="btn-icon" onclick="bukaModalAksi('RETUR', ${idx})" title="Edit/Hapus">✏️</button>
+                </td>
+            </tr>`;
+        });
+        document.getElementById('tbRetur').innerHTML = htmlRtr;
+        document.getElementById('totRetur').innerText = sumRtr.toLocaleString();
+        document.getElementById('areaRetur').style.display = cartRetur.length > 0 ? 'block' : 'none';
+
+        document.getElementById('grandTotal').innerText = (sumTrm - sumRtr).toLocaleString();
+    }
+
+    function bukaModalAksi(jenis, index) {
+        selectedItemJenis = jenis;
+        selectedItemIndex = index;
+        let item = jenis === 'TERIMA' ? cartTerima[index] : cartRetur[index];
+        document.getElementById('txtNamaItemAksi').innerText = `${item.nama} (${item.qty} ${item.satuan})`;
+        document.getElementById('modalAksiItem').style.display = 'flex';
+    }
+    function tutupModalAksi() {
+        selectedItemIndex = null;
+        selectedItemJenis = null;
+        document.getElementById('modalAksiItem').style.display = 'none';
+    }
+
+    function pilihAksiHapus() {
+        if (selectedItemJenis === 'TERIMA') cartTerima.splice(selectedItemIndex, 1);
+        else cartRetur.splice(selectedItemIndex, 1);
+        tutupModalAksi();
+        renderBon();
+    }
+
+    function pilihAksiEdit() {
+        let item = selectedItemJenis === 'TERIMA' ? cartTerima[selectedItemIndex] : cartRetur[selectedItemIndex];
+        document.getElementById('inJenis').value = selectedItemJenis;
+        document.getElementById('inBarang').value = item.id_barang;
+        document.getElementById('inSatuan').value = item.satuan;
+        document.getElementById('inQty').value = item.qty;
+        document.getElementById('inHarga').value = item.harga ? item.harga.toLocaleString('id-ID') : '';
+
+        if (selectedItemJenis === 'TERIMA') cartTerima.splice(selectedItemIndex, 1);
+        else cartRetur.splice(selectedItemIndex, 1);
+
+        tutupModalAksi();
+        renderBon();
+    }
+
+    function validasiSimpan() {
+        const namaSupplier = document.getElementById('inSupplier').value;
+        if(!namaSupplier) return alert("Pilih Supplier terlebih dahulu!");
+        if(cartTerima.length === 0 && cartRetur.length === 0) return alert("Faktur kosong!");
+        eksekusiSimpan();
+    }
+
+    async function eksekusiSimpan() {
+        const namaSupplier = document.getElementById('inSupplier').value;
+        const btn = document.getElementById('btnSimpan');
+        btn.disabled = true; btn.innerText = "MENYIMPAN & KONVERSI...";
+
+        try {
+            let totalQtyPb = 0, totalRupiahPb = 0;
+
+            for (const item of cartTerima) {
+                const brgMaster = listBarang.find(b => b.id === item.id_barang);
+                const qtyPcs = Number(item.qty_base) || qtyKeSatuanTerkecil(brgMaster, item.qty, item.satuan);
+                totalQtyPb += qtyPcs;
+                totalRupiahPb += item.total;
+            }
+
+            const { error: errHeader } = await _supabase.from('pembelian_header').insert([{
+                id: noFakturAktif,
+                toko_id: tokoIdGlobal, 
+                no_pb: noFakturAktif, 
+                supplier: namaSupplier,
+                total_qty: totalQtyPb, 
+                total_rupiah: totalRupiahPb
+            }]);
+            if (errHeader) throw new Error("Header: " + errHeader.message);
+
+            let counter = 1;
+            for (const item of cartTerima) {
+                const brgMaster = listBarang.find(b => b.id === item.id_barang);
+                const totalPcsKonversi = Number(item.qty_base) || qtyKeSatuanTerkecil(brgMaster, item.qty, item.satuan);
+
+                let uniqueDetailId = `${noFakturAktif}-D${counter++}`;
+                
+                const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();
+                await _supabase.from('barang').update({ stok_sekarang: Number(brg?.stok_sekarang || 0) + totalPcsKonversi }).eq('id', item.id_barang);
+
+                const { error: errDetail } = await _supabase.from('pembelian_detail').insert([{
+                    id: uniqueDetailId,
+                    toko_id: tokoIdGlobal, 
+                    no_pb: noFakturAktif, 
+                    barang_id: item.id_barang, 
+                    qty: totalPcsKonversi, 
+                    satuan: 'pcs', 
+                    harga_satuan: item.harga, 
+                    subtotal: item.total
+                }]);
+                if (errDetail) throw new Error("Pembelian Detail: " + errDetail.message);
+            }
+
+            for (const item of cartRetur) {
+                const brgMaster = listBarang.find(b => b.id === item.id_barang);
+                const totalPcsKonversi = Number(item.qty_base) || qtyKeSatuanTerkecil(brgMaster, item.qty, item.satuan);
+
+                const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();
+                await _supabase.from('barang').update({ stok_sekarang: Number(brg?.stok_sekarang || 0) - totalPcsKonversi }).eq('id', item.id_barang);
+            }
+
+            // SIMPAN KE VARIABEL SEMENTARA UNTUK DICETAK SEBELUM KERANJANG DIKOSONGKAN
+            lastPrintedTerima = [...cartTerima];
+            lastPrintedRetur = [...cartRetur];
+
+            tampilkanStrukDigital(namaSupplier);
+            cartTerima = []; cartRetur = [];
+            buatNoFaktur(); renderBon();
+        } catch (e) { 
+            console.error(e);
+            alert("Gagal menyimpan: " + e.message); 
+        } finally { 
+            btn.disabled = false; btn.innerText = "Simpan & Update Stok"; 
+        }
+    }
+
+    function tampilkanStrukDigital(namaSupplier) {
+        document.getElementById('digToko').innerText = namaTokoGlobal;
+        document.getElementById('digAlamat').innerText = alamatTokoGlobal;
+        document.getElementById('digFaktur').innerText = noFakturAktif;
+        const d = new Date();
+        document.getElementById('digTgl').innerText = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+        document.getElementById('digSpl').innerText = namaSupplier;
+        document.getElementById('digOpr').innerText = namaKasirGlobal;
+
+        let sumTrm = 0, htmlTrm = '';
+        cartTerima.forEach(c => {
+            const brg = listBarang.find(b => String(b.id) === String(c.id_barang));
+            const qtyText = formatQtyStrukDigital(c.qty, c.satuan, brg);
+            sumTrm += c.total;
+            htmlTrm += `<tr><td>${qtyText}</td><td>${c.nama}</td><td class="text-right">${c.harga.toLocaleString()}</td><td class="text-right">${c.total.toLocaleString()}</td></tr>`;
+        });
+        document.getElementById('digTbTerima').innerHTML = htmlTrm;
+        document.getElementById('digTotTerima').innerText = sumTrm.toLocaleString();
+
+        let sumRtr = 0, htmlRtr = '';
+        cartRetur.forEach(c => {
+            const brg = listBarang.find(b => String(b.id) === String(c.id_barang));
+            const qtyText = formatQtyStrukDigital(c.qty, c.satuan, brg);
+            sumRtr += c.total;
+            htmlRtr += `<tr><td>${qtyText}</td><td>${c.nama}</td><td class="text-right">${c.harga.toLocaleString()}</td><td class="text-right">${c.total.toLocaleString()}</td></tr>`;
+        });
+        document.getElementById('digTbRetur').innerHTML = htmlRtr;
+        document.getElementById('digTotRetur').innerText = sumRtr.toLocaleString();
+        document.getElementById('digAreaRetur').style.display = cartRetur.length > 0 ? 'block' : 'none';
+
+        document.getElementById('digGrandTotal').innerText = (sumTrm - sumRtr).toLocaleString();
+        document.getElementById('modalStrukDigital').style.display = 'flex';
+    }
+
+    function tutupModalStrukDigital() { document.getElementById('modalStrukDigital').style.display = 'none'; }
+
+    async function cetakViaBluetooth() {
+        try {
+            // Menggunakan data sementara dari lastPrintedTerima agar tidak kosong
+            const dataTerimaCetak = lastPrintedTerima.length > 0 ? lastPrintedTerima : cartTerima;
+            if (dataTerimaCetak.length === 0) {
+                return alert("Tidak ada data item untuk dicetak.");
+            }
+
+            if (!bluetoothCharacteristic) {
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '49535343-fe7d-4ae5-8fa9-9fafd205e455', '0000ff00-0000-1000-8000-00805f9b34fb']
+                });
+                const server = await device.gatt.connect();
+                const services = await server.getPrimaryServices();
+                
+                let targetChar = null;
+                for (const service of services) {
+                    try {
+                        const characteristics = await service.getCharacteristics();
+                        targetChar = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
+                        if (targetChar) break;
+                    } catch (err) {
+                        console.log("Lewati service:", err);
+                    }
+                }
+
+                if (!targetChar) throw new Error("Characteristic printer write tidak ditemukan!");
+                bluetoothCharacteristic = targetChar;
+            }
+
+            let encoder = new TextEncoder();
+            let perintah = '\x1B\x40'; 
+            perintah += '\x1B\x61\x01'; 
+            perintah += `${namaTokoGlobal}\n`;
+            perintah += `${alamatTokoGlobal}\n`;
+            perintah += `FAKTUR PENERIMAAN BARANG\n`;
+            perintah += `--------------------------------\n`;
+            perintah += `No : ${document.getElementById('digFaktur').innerText}\n`;
+            perintah += `Tgl: ${document.getElementById('digTgl').innerText} | Opr: ${namaKasirGlobal}\n`;
+            perintah += `Spl: ${document.getElementById('digSpl').innerText}\n`;
+            perintah += `--------------------------------\n`;
+            perintah += '\x1B\x61\x00'; 
+
+            let totalTerimaRp = 0;
+            dataTerimaCetak.forEach(c => {
+                const brg = listBarang.find(b => String(b.id) === String(c.id_barang));
+                totalTerimaRp += c.total;
+                perintah += `${c.nama}\n`;
+                perintah += `  ${formatQtyStrukDigital(c.qty, c.satuan, brg)} x ${c.harga.toLocaleString()} = Rp ${c.total.toLocaleString()}\n`;
+            });
+
+            perintah += `--------------------------------\n`;
+            perintah += '\x1B\x61\x02'; 
+            perintah += `GRAND TOTAL: Rp ${document.getElementById('digGrandTotal').innerText}\n`;
+            perintah += `--------------------------------\n`;
+            perintah += '\x1B\x61\x01'; 
+            perintah += `Terima Kasih\n`;
+            perintah += `Barang yang sudah diterima\nperiksa kembali dengan teliti.\n\n\n`;
+
+            await bluetoothCharacteristic.writeValue(encoder.encode(perintah));
+            alert("✅ Berhasil mencetak faktur penerimaan ke printer thermal!");
+        } catch (error) {
+            console.error(error);
+            alert("Gagal cetak Bluetooth: " + error.message);
+        }
+    }
+
+    async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
+    verifikasiSesi();
+</script>
+</body>
+</html>

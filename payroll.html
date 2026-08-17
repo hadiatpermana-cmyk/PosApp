@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Payroll Produksi - SBR SaaS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #b45309; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --sidebar-width: 250px; --topbar-height: 60px; }
+        [data-theme="dark"] { --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333; }
+        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
+        
+        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--p-color); flex-shrink: 0; }
+        .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
+        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
+        .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
+        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
+        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; }
+        .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
+
+        .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; transition: width 0.3s; z-index: 10; }
+        .sidebar.collapsed { width: 0; border: none; }
+        .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
+        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); font-weight: bold; }
+        .nav-item:hover, .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
+
+        .content-area { padding: 20px; overflow-y: auto; flex: 1; box-sizing: border-box; }
+        
+        .main-card { background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-line); padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 20px; }
+        .main-card-header { font-size: 18px; font-weight: bold; color: var(--p-color); border-bottom: 2px solid var(--border-line); padding-bottom: 10px; margin-bottom: 15px; }
+
+        .tab-container { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { padding: 10px 18px; background: var(--bg-main); border: 1px solid var(--border-line); border-radius: 6px; font-weight: bold; cursor: pointer; color: var(--text-main); font-family: inherit; font-size: 14px; }
+        .tab-btn.active { background: var(--p-color); color: white; border-color: var(--p-color); }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-box { background: var(--bg-main); border: 1px solid var(--border-line); padding: 15px; border-radius: 6px; }
+        .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
+        .stat-value { font-size: 20px; font-weight: bold; color: var(--text-main); }
+
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
+        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font-weight: bold; font-family: inherit; }
+
+        .production-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
+        .prod-item-box { background: var(--bg-main); border: 1px solid var(--border-line); padding: 10px; border-radius: 6px; display: flex; flex-direction: column; gap: 5px; }
+        .prod-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .prod-col { display: flex; flex-direction: column; gap: 3px; }
+        .prod-col label { font-size: 10px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
+        .prod-col input { padding: 8px; border: 1px solid var(--border-line); border-radius: 4px; background: var(--bg-card); color: var(--text-main); font-weight: bold; font-family: inherit; width: 100%; box-sizing: border-box; }
+
+        .btn-action { padding: 12px 20px; background: var(--green); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-family: inherit; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: var(--p-color); color: white; padding: 10px; text-align: left; font-size: 13px; text-transform: uppercase; }
+        td { padding: 12px 10px; border-bottom: 1px solid var(--border-line); font-size: 14px; vertical-align: middle; }
+        
+        .rincian-item { font-size: 13px; border-bottom: 1px dashed var(--border-line); padding: 4px 0; margin-bottom: 4px; }
+        .rincian-item:last-child { border-bottom: none; margin-bottom: 0; }
+        .rincian-title { font-weight: bold; color: var(--text-main); }
+        .rincian-calc { color: var(--text-muted); font-size: 12px; }
+        .rincian-subtotal { color: var(--p-color); font-weight: bold; float: right; }
+
+        /* MODAL PREVIEW STRUK */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-card { background: var(--bg-card); width: 420px; max-width: 95%; max-height: 90vh; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .modal-header { padding: 15px 20px; background: var(--p-color); color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 20px; overflow-y: auto; background: #eee; display: flex; justify-content: center; }
+        .modal-footer { padding: 15px 20px; border-top: 1px solid var(--border-line); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-card); }
+        
+        /* KERTAS THERMAL DINAMIS */
+        .thermal-receipt { background: #fff; color: #000; padding: 8mm; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; line-height: 1.3; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin: 0 auto; }
+        .thermal-receipt.w80 { width: 80mm; font-size: 12px; }
+        .thermal-receipt.w58 { width: 58mm; font-size: 10px; }
+        .receipt-center { text-align: center; }
+        .receipt-line { border-bottom: 1px dashed #000; margin: 6px 0; }
+        .receipt-row { display: flex; justify-content: space-between; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <a href="dashboard.html" class="store-brand">
+            <div class="store-logo" id="logoTopbar">🏪</div>
+            <div class="store-info"><h3 id="txtNamaTokoTop">Toko Madinah</h3><p>Admin</p></div>
+        </a>
+    </div>
+    <div class="topbar-right">
+        <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
+        <span id="txtNamaUser">User</span> 👋
+        <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
+    </div>
+</div>
+
+<div class="main-container">
+    <div class="sidebar" id="sidebar">
+        <div class="nav-menu">
+            <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
+            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+            <a href="barang.html" class="nav-item">📦 Master Barang</a>
+            <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+            <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+            <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
+            <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+            <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
+            <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
+            <a href="payroll.html" class="nav-item active">💵 Payroll & Produksi</a>
+            <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <div class="main-card">
+            <div class="main-card-header">👷‍♂️ Manajemen Payroll & Produksi Harian</div>
+
+            <!-- TAB NAVIGASI -->
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="switchTab('input', event)">1. Input Harian Produksi</button>
+                <button class="tab-btn" onclick="switchTab('setting', event)">2. Setting Harga Produksi</button>
+                <button class="tab-btn" onclick="switchTab('rekap', event)">3. Rekap Produksi Total</button>
+                <button class="tab-btn" onclick="switchTab('slip', event)">4. Cetak Slip Gaji</button>
+            </div>
+
+            <!-- KOTAK STATISTIK RINGKASAN -->
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Total Input Hari Ini</div>
+                    <div class="stat-value" id="statTotalInput">0 Sesi</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Total Upah Terhitung</div>
+                    <div class="stat-value" id="statTotalUpah">Rp 0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Total Lembur</div>
+                    <div class="stat-value" id="statTotalLembur">0 Pcs</div>
+                </div>
+            </div>
+
+            <!-- KONTEN TAB 1: INPUT HARIAN -->
+            <div id="tab-input" class="tab-content active">
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>Tanggal Produksi</label>
+                        <input type="date" id="inTanggal">
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Karyawan</label>
+                        <select id="inKaryawan"><option value="">-- Pilih Karyawan --</option></select>
+                    </div>
+                </div>
+
+                <div style="font-weight: bold; margin: 15px 0 10px; color: var(--p-color); text-transform: uppercase; font-size: 14px;">Masukkan Jumlah Hasil Produksi:</div>
+                
+                <div class="production-grid">
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">1. GORENG</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_goreng" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_goreng" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">2. KEMAS MIE PENDEK</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_kemas_pendek" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_kemas_pendek" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">3. KEMAS MIE PANJANG</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_kemas_panjang" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_kemas_panjang" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">4. PACK OPP 10</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_pack_opp10" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_pack_opp10" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">5. PACK OPP 12</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_pack_opp12" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_pack_opp12" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">6. PACK TOPLES</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_pack_toples" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_pack_toples" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">7. PACK KARAKTER</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_pack_karakter" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_pack_karakter" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">8. REPACK MAKARONI</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_repack_makaroni" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_repack_makaroni" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">9. PRESS</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_press" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_press" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-action" style="margin-top: 15px;" onclick="simpanInputHarian()">Simpan Hasil Produksi</button>
+            </div>
+
+            <!-- KONTEN TAB 2: SETTING HARGA -->
+            <div id="tab-setting" class="tab-content">
+                <div class="form-group" style="margin-bottom: 15px; max-width: 300px;">
+                    <label>Pilih Karyawan</label>
+                    <select id="settingKaryawan" onchange="muatDropdownSettingKaryawan()"><option value="">-- Pilih Karyawan --</option></select>
+                </div>
+
+                <div style="font-weight: bold; margin: 15px 0 10px; color: var(--p-color); text-transform: uppercase; font-size: 14px;">Atur Tarif per Jenis Pekerjaan (Rp):</div>
+
+                <div class="production-grid">
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">1. GORENG</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_goreng" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_goreng" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">2. KEMAS MIE PENDEK</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_kemas_pendek" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_kemas_pendek" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">3. KEMAS MIE PANJANG</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_kemas_panjang" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_kemas_panjang" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">4. PACK OPP 10</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_pack_opp10" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_pack_opp10" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">5. PACK OPP 12</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_pack_opp12" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_pack_opp12" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">6. PACK TOPLES</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_pack_toples" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_pack_toples" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">7. PACK KARAKTER</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_pack_karakter" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_pack_karakter" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">8. REPACK MAKARONI</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_repack_makaroni" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_repack_makaroni" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                        </div>
+                    </div>
+                    <div class="prod-item-box">
+                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">9. PRESS</label>
+                        <div class="prod-row">
+                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_press" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_press" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-action" style="background: var(--blue); margin-top: 15px;" onclick="simpanSettingHarga()">Simpan Tarif Khusus Karyawan</button>
+            </div>
+
+            <!-- KONTEN TAB 3: REKAP PRODUKSI TOTAL -->
+            <div id="tab-rekap" class="tab-content">
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr auto; align-items: end;">
+                    <div class="form-group"><label>Dari Tanggal</label><input type="date" id="rekapMulai"></div>
+                    <div class="form-group"><label>Sampai Tanggal</label><input type="date" id="rekapSelesai"></div>
+                    <button class="btn-action" style="background: var(--p-color); height: 42px;" onclick="muatRekap()">Tampilkan Rekap</button>
+                </div>
+                <div style="overflow-x: auto; margin-top: 15px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 20%; text-align: center;">Tanggal & Karyawan</th>
+                                <th style="width: 35%;">Total Produksi (Rincian)</th>
+                                <th style="width: 35%;">Total Lembur (Rincian)</th>
+                                <th style="width: 10%; text-align: center;">Total Gaji</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelRekapBody">
+                            <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Silakan pilih tanggal dan klik tampilkan rekap.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- KONTEN TAB 4: CETAK SLIP GAJI -->
+            <div id="tab-slip" class="tab-content">
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr auto; align-items: end;">
+                    <div class="form-group">
+                        <label>Pilih Karyawan</label>
+                        <select id="slipKaryawan"><option value="">-- Pilih Karyawan --</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Rentang Tanggal Slip</label>
+                        <div style="display: flex; gap: 5px;">
+                            <input type="date" id="slipMulai">
+                            <input type="date" id="slipSelesai">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Ukuran Kertas</label>
+                        <select id="slipUkuranKertas">
+                            <option value="80">Thermal 80 mm</option>
+                            <option value="58">Thermal 58 mm</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-action" style="background: var(--p-color); height: 42px;" onclick="previewSlipGaji()">👁️ Preview</button>
+                        <button class="btn-action" style="background: #2563eb; height: 42px;" onclick="cetakSlipGaji()">🖨️ Cetak</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PREVIEW STRUK -->
+<div class="modal-overlay" id="modalPreview">
+    <div class="modal-card">
+        <div class="modal-header">
+            <span id="modalTitle">Preview Slip Gaji</span>
+            <button onclick="document.getElementById('modalPreview').style.display='none'" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+        </div>
+        <div class="modal-body" id="modalPreviewBody">
+            <!-- Konten Struk Di Sini -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn-action" style="background: var(--text-muted); padding: 8px 15px;" onclick="document.getElementById('modalPreview').style.display='none'">Tutup</button>
+            <button class="btn-action" style="background: #2563eb; padding: 8px 15px;" onclick="window.print()">🖨️ Cetak Fisik</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    const ITEM_LABELS = {
+        'goreng': 'Goreng', 'kemas_pendek': 'Kemas Pendek', 'kemas_panjang': 'Kemas Panjang',
+        'pack_opp10': 'Pack OPP 10', 'pack_opp12': 'Pack OPP 12', 'pack_toples': 'Pack Toples',
+        'pack_karakter': 'Pack Karakter', 'repack_makaroni': 'Repack Makaroni', 'press': 'Press'
+    };
+
+    function autoSelect(input) { setTimeout(() => input.select(), 50); }
+    function autoZero(input) { if (input.value.trim() === '') { input.value = '0'; } }
+    function formatRibuan(input) { let val = input.value.replace(/[^0-9]/g, ''); input.value = val ? parseInt(val).toLocaleString('id-ID') : ''; }
+    function bersihFormat(val) { return val ? parseInt(val.replace(/\./g, '')) || 0 : 0; }
+
+    function initTheme() { if (localStorage.getItem('themeMode') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); document.getElementById('btnThemeToggle').innerText = '☀️'; } }
+    function toggleTheme() { let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('themeMode', t); document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; }
+    initTheme();
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+
+    function switchTab(tabId, evt) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        evt.currentTarget.classList.add('active');
+        if(tabId === 'setting') muatDropdownSettingKaryawan();
+    }
+
+    let tglHariIni = new Date().toISOString().split('T')[0];
+    document.getElementById('inTanggal').value = tglHariIni;
+    document.getElementById('rekapMulai').value = tglHariIni;
+    document.getElementById('rekapSelesai').value = tglHariIni;
+    document.getElementById('slipMulai').value = tglHariIni;
+    document.getElementById('slipSelesai').value = tglHariIni;
+
+    async function initData() {
+        const { data: karyawan } = await _supabase.from('karyawan').select('*');
+        if(karyawan) {
+            let opt = '<option value="ALL">🌟 SEMUA KARYAWAN</option>';
+            karyawan.forEach(k => { opt += `<option value="${k.id}">${k.nama_karyawan || k.nama}</option>`; });
+            document.getElementById('inKaryawan').innerHTML = '<option value="">-- Pilih Karyawan --</option>' + opt.replace('<option value="ALL">🌟 SEMUA KARYAWAN</option>', '');
+            document.getElementById('slipKaryawan').innerHTML = opt;
+            document.getElementById('settingKaryawan').innerHTML = '<option value="">-- Pilih Karyawan --</option>' + opt.replace('<option value="ALL">🌟 SEMUA KARYAWAN</option>', '');
+        }
+        muatStatistikHariIni();
+    }
+
+    async function muatStatistikHariIni() {
+        let tglHariIni = new Date().toISOString().split('T')[0];
+        const { data } = await _supabase.from('produksi_harian').select('*').eq('tanggal', tglHariIni);
+        if(data) {
+            let totalSesi = data.length;
+            let totalUpah = data.reduce((acc, curr) => acc + Number(curr.total_upah || 0), 0);
+            let totalLembur = data.reduce((acc, curr) => {
+                return acc + Number(curr.l_goreng || 0) + Number(curr.l_kemas_pendek || 0) + Number(curr.l_kemas_panjang || 0) + 
+                             Number(curr.l_pack_opp10 || 0) + Number(curr.l_pack_opp12 || 0) + Number(curr.l_pack_toples || 0) + 
+                             Number(curr.l_pack_karakter || 0) + Number(curr.l_repack_makaroni || 0) + Number(curr.l_press || 0);
+            }, 0);
+            document.getElementById('statTotalInput').innerText = totalSesi + " Sesi";
+            document.getElementById('statTotalUpah').innerText = "Rp " + totalUpah.toLocaleString('id-ID');
+            document.getElementById('statTotalLembur').innerText = totalLembur.toLocaleString('id-ID') + " Pcs";
+        }
+    }
+
+    async function muatDropdownSettingKaryawan() {
+        let kId = document.getElementById('settingKaryawan').value;
+        let items = ['goreng', 'kemas_pendek', 'kemas_panjang', 'pack_opp10', 'pack_opp12', 'pack_toples', 'pack_karakter', 'repack_makaroni', 'press'];
+        
+        items.forEach(k => {
+            if(document.getElementById('h_' + k)) document.getElementById('h_' + k).value = 0;
+            if(document.getElementById('hl_' + k)) document.getElementById('hl_' + k).value = 0;
+        });
+
+        if(!kId) return;
+
+        const { data } = await _supabase.from('tarif_karyawan').select('*').eq('karyawan_id', kId);
+        if(data) {
+            data.forEach(s => {
+                if (s.kategori.startsWith('lembur_')) {
+                    let itemId = s.kategori.replace('lembur_', '');
+                    let el = document.getElementById('hl_' + itemId);
+                    if(el) el.value = Number(s.tarif).toLocaleString('id-ID');
+                } else {
+                    let el = document.getElementById('h_' + s.kategori);
+                    if(el) el.value = Number(s.tarif).toLocaleString('id-ID');
+                }
+            });
+        }
+    }
+
+    async function simpanSettingHarga() {
+        let kId = document.getElementById('settingKaryawan').value;
+        if(!kId) { alert("Silakan pilih karyawan terlebih dahulu!"); return; }
+
+        let items = ['goreng', 'kemas_pendek', 'kemas_panjang', 'pack_opp10', 'pack_opp12', 'pack_toples', 'pack_karakter', 'repack_makaroni', 'press'];
+        let payloads = [];
+        
+        for(let k of items) {
+            let valNormal = bersihFormat(document.getElementById('h_' + k).value);
+            let valLembur = bersihFormat(document.getElementById('hl_' + k).value);
+
+            payloads.push({ karyawan_id: kId, kategori: k, tarif: valNormal });
+            payloads.push({ karyawan_id: kId, kategori: 'lembur_' + k, tarif: valLembur });
+        }
+
+        await _supabase.from('tarif_karyawan').upsert(payloads, { onConflict: 'karyawan_id,kategori' });
+        alert("Tarif Khusus (Normal & Lembur) untuk karyawan ini berhasil disimpan!");
+    }
+
+    async function simpanInputHarian() {
+        let tanggal = document.getElementById('inTanggal').value;
+        let karyawan_id = document.getElementById('inKaryawan').value;
+
+        if(!tanggal || !karyawan_id) { alert("Tanggal dan Karyawan wajib dipilih!"); return; }
+
+        let items = ['goreng', 'kemas_pendek', 'kemas_panjang', 'pack_opp10', 'pack_opp12', 'pack_toples', 'pack_karakter', 'repack_makaroni', 'press'];
+        let q = {}; let l = {};
+
+        items.forEach(item => {
+            q[item] = parseInt(document.getElementById('q_' + item).value) || 0;
+            l[item] = parseInt(document.getElementById('l_' + item).value) || 0;
+        });
+
+        const { data: setTarif } = await _supabase.from('tarif_karyawan').select('*').eq('karyawan_id', karyawan_id);
+        let tarif = {};
+        if(setTarif) { setTarif.forEach(s => { tarif[s.kategori] = Number(s.tarif); }); }
+
+        let total_upah = 0;
+        items.forEach(item => {
+            let h_normal = tarif[item] || 0;
+            let h_lembur = tarif['lembur_' + item] || 0; 
+            total_upah += (q[item] * h_normal) + (l[item] * h_lembur);
+        });
+
+        let payload = {
+            tanggal, karyawan_id, total_upah,
+            q_goreng: q.goreng, q_kemas_pendek: q.kemas_pendek, q_kemas_panjang: q.kemas_panjang,
+            q_pack_opp10: q.pack_opp10, q_pack_opp12: q.pack_opp12, q_pack_toples: q.pack_toples,
+            q_pack_karakter: q.pack_karakter, q_repack_makaroni: q.repack_makaroni, q_press: q.press,
+            l_goreng: l.goreng, l_kemas_pendek: l.kemas_pendek, l_kemas_panjang: l.kemas_panjang,
+            l_pack_opp10: l.pack_opp10, l_pack_opp12: l.pack_opp12, l_pack_toples: l.pack_toples,
+            l_pack_karakter: l.pack_karakter, l_repack_makaroni: l.repack_makaroni, l_press: l.press
+        };
+
+        const { error } = await _supabase.from('produksi_harian').insert([payload]);
+        if(error) {
+            alert("Gagal menyimpan: " + error.message);
+        } else {
+            alert("Sukses! Hasil produksi & upah personal tersimpan.");
+            muatStatistikHariIni();
+            items.forEach(item => {
+                document.getElementById('q_' + item).value = 0;
+                document.getElementById('l_' + item).value = 0;
+            });
+        }
+    }
+
+    async function muatRekap() {
+        let mulai = document.getElementById('rekapMulai').value;
+        let selesai = document.getElementById('rekapSelesai').value;
+
+        const { data, error } = await _supabase
+            .from('produksi_harian')
+            .select(`*, karyawan:karyawan_id (*)`)
+            .gte('tanggal', mulai)
+            .lte('tanggal', selesai)
+            .order('tanggal', { ascending: false });
+
+        let tbody = document.getElementById('tabelRekapBody');
+        if (error) { tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--red);">Gagal memuat rekap</td></tr>`; return; }
+
+        const { data: tarifData } = await _supabase.from('tarif_karyawan').select('*');
+        let tarifMap = {};
+        if (tarifData) {
+            tarifData.forEach(t => {
+                if(!tarifMap[t.karyawan_id]) tarifMap[t.karyawan_id] = {};
+                tarifMap[t.karyawan_id][t.kategori] = Number(t.tarif);
+            });
+        }
+
+        tbody.innerHTML = '';
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Tidak ada data pada rentang tanggal tersebut.</td></tr>`;
+            return;
+        }
+
+        let items = ['goreng', 'kemas_pendek', 'kemas_panjang', 'pack_opp10', 'pack_opp12', 'pack_toples', 'pack_karakter', 'repack_makaroni', 'press'];
+
+        data.forEach(row => {
+            let kId = row.karyawan_id;
+            let kName = row.karyawan?.nama_karyawan || row.karyawan?.nama || row.karyawan?.nama_lengkap || 'Karyawan (ID: ' + kId + ')';
+            let t = tarifMap[kId] || {};
+
+            let detailProduksiHTML = '';
+            let detailLemburHTML = '';
+            let totalPcsProd = 0, totalPcsLembur = 0, totalRupiahProd = 0, totalRupiahLembur = 0;
+
+            items.forEach(i => {
+                let qty = Number(row['q_' + i] || 0);
+                let lmb = Number(row['l_' + i] || 0);
+                
+                if (qty > 0) {
+                    let hrg = t[i] || 0;
+                    let sub = qty * hrg;
+                    totalPcsProd += qty; totalRupiahProd += sub;
+                    detailProduksiHTML += `<div class="rincian-item"><span class="rincian-title">${ITEM_LABELS[i]}</span><br><span class="rincian-calc">${qty.toLocaleString('id-ID')} Pcs x Rp ${hrg.toLocaleString('id-ID')}</span><span class="rincian-subtotal">Rp ${sub.toLocaleString('id-ID')}</span></div>`;
+                }
+                if (lmb > 0) {
+                    let hrgLmb = t['lembur_' + i] || 0;
+                    let subLmb = lmb * hrgLmb;
+                    totalPcsLembur += lmb; totalRupiahLembur += subLmb;
+                    detailLemburHTML += `<div class="rincian-item"><span class="rincian-title">${ITEM_LABELS[i]}</span><br><span class="rincian-calc">${lmb.toLocaleString('id-ID')} Pcs x Rp ${hrgLmb.toLocaleString('id-ID')}</span><span class="rincian-subtotal">Rp ${subLmb.toLocaleString('id-ID')}</span></div>`;
+                }
+            });
+
+            if (detailProduksiHTML === '') detailProduksiHTML = '<span style="color:var(--text-muted);">-</span>';
+            else detailProduksiHTML += `<div style="margin-top:6px; font-weight:bold; font-size: 12px; border-top: 1px solid var(--border-line); padding-top: 4px; display: flex; justify-content: space-between;"><span>Total Normal: ${totalPcsProd.toLocaleString('id-ID')} Pcs</span><span style="color:var(--p-color);">Rp ${totalRupiahProd.toLocaleString('id-ID')}</span></div>`;
+
+            if (detailLemburHTML === '') detailLemburHTML = '<span style="color:var(--text-muted);">-</span>';
+            else detailLemburHTML += `<div style="margin-top:6px; font-weight:bold; font-size: 12px; border-top: 1px solid var(--border-line); padding-top: 4px; display: flex; justify-content: space-between;"><span>Total Lembur: ${totalPcsLembur.toLocaleString('id-ID')} Pcs</span><span style="color:var(--p-color);">Rp ${totalRupiahLembur.toLocaleString('id-ID')}</span></div>`;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td style="text-align: center; vertical-align: middle;"><b style="color:var(--p-color);">${row.tanggal}</b><br><b>${kName}</b></td>
+                    <td style="background: var(--bg-main); border-right: 2px solid white; border-radius: 6px;">${detailProduksiHTML}</td>
+                    <td style="background: var(--bg-main); border-radius: 6px;">${detailLemburHTML}</td>
+                    <td style="text-align: center; vertical-align: middle;"><b style="color:var(--green); font-size: 15px;">Rp ${Number(row.total_upah || 0).toLocaleString('id-ID')}</b></td>
+                </tr>
+            `;
+        });
+    }
+
+    // PREVIEW STRUK DENGAN UKURAN 58MM / 80MM
+    async function previewSlipGaji() {
+        let kId = document.getElementById('slipKaryawan').value;
+        let mulai = document.getElementById('slipMulai').value;
+        let selesai = document.getElementById('slipSelesai').value;
+        let ukuran = document.getElementById('slipUkuranKertas').value; // '58' atau '80'
+
+        if(!kId) { alert("Silakan pilih karyawan terlebih dahulu!"); return; }
+
+        let query = _supabase.from('produksi_harian').select(`*, karyawan:karyawan_id (*)`).gte('tanggal', mulai).lte('tanggal', selesai);
+        if(kId !== 'ALL') { query = query.eq('karyawan_id', kId); }
+
+        let { data, error } = await query;
+        if(error || !data || data.length === 0) { alert("Tidak ada data slip gaji pada rentang tanggal tersebut."); return; }
+
+        const { data: tarifData } = await _supabase.from('tarif_karyawan').select('*');
+        let tarifMap = {};
+        if (tarifData) {
+            tarifData.forEach(t => {
+                if(!tarifMap[t.karyawan_id]) tarifMap[t.karyawan_id] = {};
+                tarifMap[t.karyawan_id][t.kategori] = Number(t.tarif);
+            });
+        }
+
+        let items = ['goreng', 'kemas_pendek', 'kemas_panjang', 'pack_opp10', 'pack_opp12', 'pack_toples', 'pack_karakter', 'repack_makaroni', 'press'];
+        let htmlContent = '';
+
+        let grouped = {};
+        data.forEach(row => {
+            let kid = row.karyawan_id;
+            if(!grouped[kid]) grouped[kid] = { nama: row.karyawan?.nama_karyawan || row.karyawan?.nama || 'Karyawan', rows: [] };
+            grouped[kid].rows.push(row);
+        });
+
+        for (let kid in grouped) {
+            let emp = grouped[kid];
+            let t = tarifMap[kid] || {};
+            let grandTotal = 0;
+
+            htmlContent += `
+            <div class="thermal-receipt w${ukuran}" style="margin-bottom: 20px;">
+                <div class="receipt-center"><b>TOKO MADINAH</b></div>
+                <div class="receipt-center" style="font-size:9px;">SLIP GAJI PRODUKSI (${ukuran}mm)</div>
+                <div class="receipt-center" style="font-size:9px;">Periode: ${mulai} s/d ${selesai}</div>
+                <div class="receipt-line"></div>
+                <div><b>Karyawan: ${emp.nama}</b></div>
+                <div class="receipt-line"></div>
+            `;
+
+            emp.rows.forEach(r => {
+                htmlContent += `<div style="font-weight:bold; margin-top:4px;">Tgl: ${r.tanggal}</div>`;
+                items.forEach(i => {
+                    let q = Number(r['q_' + i] || 0);
+                    let l = Number(r['l_' + i] || 0);
+                    if(q > 0) {
+                        let sub = q * (t[i] || 0);
+                        htmlContent += `<div class="receipt-row"><span>- ${ITEM_LABELS[i]} (${q}x)</span><span>Rp ${sub.toLocaleString('id-ID')}</span></div>`;
+                    }
+                    if(l > 0) {
+                        let subL = l * (t['lembur_' + i] || 0);
+                        htmlContent += `<div class="receipt-row" style="color:#b45309;"><span>  [Lembur] ${ITEM_LABELS[i]} (${l}x)</span><span>Rp ${subL.toLocaleString('id-ID')}</span></div>`;
+                    }
+                });
+                grandTotal += Number(r.total_upah || 0);
+            });
+
+            htmlContent += `
+                <div class="receipt-line"></div>
+                <div class="receipt-row" style="font-size:11px;"><b>TOTAL GAJI</b><b>Rp ${grandTotal.toLocaleString('id-ID')}</b></div>
+                <div class="receipt-line"></div>
+                <div class="receipt-center" style="font-size:9px; margin-top:8px;">Terima Kasih!</div>
+            </div>
+            `;
+        }
+
+        document.getElementById('modalTitle').innerText = `Preview Slip Gaji (${ukuran}mm Thermal)`;
+        document.getElementById('modalPreviewBody').innerHTML = htmlContent;
+        document.getElementById('modalPreview').style.display = 'flex';
+    }
+
+    function cetakSlipGaji() {
+        previewSlipGaji();
+        setTimeout(() => { window.print(); }, 500);
+    }
+
+    async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
+    initData();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pengaturan Toko - PosApp</title>
+    <title>Pengaturan Toko - SBR SaaS</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -74,10 +74,9 @@
             <a href="barang.html" class="nav-item">📦 Master Barang</a>
             <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
             <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
-            <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
             <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+            <a href="bon_karyawan.html" class="nav-item">📋 Bon Karyawan</a>
             <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
-            <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
             <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
             <a href="pengaturan.html" class="nav-item active">⚙️ Pengaturan Toko</a>
         </div>
@@ -92,7 +91,7 @@
                 <button class="tab-btn" onclick="bukaTab(event, 'tabVisual')">🎨 Visual & Logo</button>
                 <button class="tab-btn" onclick="bukaTab(event, 'tabStruk')">🖨️ Struk & Sistem</button>
                 <button class="tab-btn" onclick="bukaTab(event, 'tabKaryawan')">👥 Data Karyawan</button>
-                <button class="tab-btn" onclick="bukaTab(event, 'tabKodeToko')">🔑 Kode Toko</button>
+                <button class="tab-btn" onclick="bukaTab(event, 'tabKendaraan')">🚚 Data Kendaraan</button>
             </div>
             
             <div id="tabProfil" class="tab-content active">
@@ -145,19 +144,29 @@
                 </div>
             </div>
 
-            <!-- TAB KODE TOKO UNTUK VERIFIKASI KARYAWAN -->
-            <div id="tabKodeToko" class="tab-content">
-                <h3 style="margin-top:0; color:var(--p-color);">🔑 Kode / ID Toko</h3>
-                <p style="font-size:13px; color:var(--text-muted); line-height: 1.5;">
-                    Bagikan kode atau ID toko ini kepada karyawan baru agar mereka dapat melakukan verifikasi saat mendaftarkan akun di halaman utama aplikasi.
-                </p>
-
-                <div style="background:var(--bg-main); padding:20px; border-radius:8px; border:1px solid var(--border-line); margin-top:20px; text-align: center;">
-                    <label style="font-size: 13px; text-transform: uppercase; color: var(--text-muted); font-weight: bold; margin-bottom: 8px; display: block;">ID Toko Anda Saat Ini</label>
-                    <div id="displayKodeToko" style="font-size: 26px; font-weight: bold; color: var(--p-color); letter-spacing: 2px; padding: 12px; background: var(--bg-card); border: 1px dashed var(--border-line); border-radius: 6px; display: inline-block; min-width: 200px; margin-bottom: 15px;">-</div>
-                    <div>
-                        <button class="btn-action" style="background: var(--blue); color: white; padding: 10px 20px; font-size: 14px;" onclick="salinKodeToko()">📋 Salin Kode Toko</button>
+            <div id="tabKendaraan" class="tab-content">
+                <h3 style="margin-top:0; color:var(--p-color);">Manajemen Data Kendaraan (Armada)</h3>
+                <p style="font-size:13px; color:var(--text-muted);">Kelola daftar armada atau kendaraan operasional untuk keperluan pengiriman dan sales.</p>
+                
+                <div style="background:var(--bg-main); padding:15px; border-radius:8px; border:1px solid var(--border-line); margin-bottom:15px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="form-group" style="margin-bottom:10px;"><label>Plat Nomor / Nama Armada</label><input type="text" id="inputPlatNomor" placeholder="Contoh: D 1234 ABC"></div>
+                        <div class="form-group" style="margin-bottom:10px;"><label>Jenis Kendaraan</label>
+                            <select id="inputJenisKendaraan">
+                                <option value="Mobil / Pickup">Mobil / Pickup</option>
+                                <option value="Motor / Box">Motor / Box</option>
+                                <option value="Truk">Truk</option>
+                            </select>
+                        </div>
                     </div>
+                    <button class="btn-action" style="background:var(--green); color:white; width:100%; padding:12px; font-size:14px; text-transform:uppercase;" onclick="tambahKendaraan()">+ Tambah Kendaraan Baru</button>
+                </div>
+
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead><tr><th>Plat Nomor / Nama Armada</th><th>Jenis Kendaraan</th><th style="text-align:center;">Aksi</th></tr></thead>
+                        <tbody id="isiTabelKendaraan"><tr><td colspan="3" style="text-align:center;">Memuat data...</td></tr></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -210,20 +219,9 @@
         if (toko.logo_url) { document.getElementById('boxPreviewLogo').innerHTML = `<img src="${toko.logo_url}">`; document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`; }
         document.getElementById('txtNamaUser').innerText = profile.nama_lengkap.split(' ')[0];
         
-        // Menampilkan ID / Kode Toko pada tab baru
-        document.getElementById('displayKodeToko').innerText = tokoIdGlobal;
-
         await muatDataKaryawan();
+        await muatDataKendaraan();
         document.getElementById('loader').style.display = 'none';
-    }
-
-    function salinKodeToko() {
-        const kode = document.getElementById('displayKodeToko').innerText;
-        navigator.clipboard.writeText(kode).then(() => {
-            alert("✅ Kode toko berhasil disalin ke clipboard!");
-        }).catch(err => {
-            alert("❌ Gagal menyalin kode: " + err);
-        });
     }
 
     async function muatDataKaryawan() {
@@ -265,6 +263,48 @@
         if (confirm("Yakin ingin menghapus data karyawan ini?")) {
             await _supabase.from('karyawan').delete().eq('id', id);
             muatDataKaryawan();
+        }
+    }
+
+    async function muatDataKendaraan() {
+        const { data, error } = await _supabase.from('kendaraan').select('*').eq('toko_id', tokoIdGlobal).order('plat_nomor');
+        const tbody = document.getElementById('isiTabelKendaraan');
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Belum ada data kendaraan terdaftar.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.map(v => `
+            <tr>
+                <td style="font-weight:bold;">${v.plat_nomor || v.plat || '-'}</td>
+                <td><span style="background:var(--bg-main); padding:3px 8px; border-radius:4px; border:1px solid var(--border-line);">${v.jenis_kendaraan || v.jenis || '-'}</span></td>
+                <td align="center"><button class="btn-action" style="background:var(--red); color:white;" onclick="hapusKendaraan('${v.id}')">Hapus</button></td>
+            </tr>
+        `).join('');
+    }
+
+async function tambahKendaraan() {
+    const plat = document.getElementById('inputPlatNomor').value.trim();
+    const jenis = document.getElementById('inputJenisKendaraan').value;
+    if (!plat) return alert("Plat nomor / nama armada wajib diisi!");
+
+    try {
+        const { error } = await _supabase.from('kendaraan').insert([{
+            toko_id: tokoIdGlobal,
+            plat_nomor: plat,
+            jenis_kendaraan: jenis
+        }]);
+        if (error) throw error;
+        alert("✅ Kendaraan Berhasil Ditambahkan!");
+        document.getElementById('inputPlatNomor').value = '';
+        muatDataKendaraan();
+    } catch(e) { alert("Gagal menambah kendaraan: " + e.message); }
+}
+
+
+    async function hapusKendaraan(id) {
+        if (confirm("Yakin ingin menghapus data kendaraan ini?")) {
+            await _supabase.from('kendaraan').delete().eq('id', id);
+            muatDataKendaraan();
         }
     }
 

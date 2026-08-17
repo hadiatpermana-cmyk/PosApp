@@ -105,7 +105,7 @@
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('salesHarian', this)">💵 Sales Harian</button>
                 <button class="tab-btn" onclick="switchTab('penerimaan', this)">📥 Penerimaan Barang</button>
-                <button class="tab-btn" onclick="switchTab('keluar', this)">📤 Keluar Barang</button>
+                <button class="tab-btn" onclick="switchTab('laporanDriver', this)">🚚 Laporan Driver</button>
                 <button class="tab-btn" onclick="switchTab('kartuStok', this)">📋 Kartu Stok</button>
                 <button class="tab-btn" onclick="switchTab('bahanBaku', this)">⚙️ Monitoring Bahan</button>
                 <button class="tab-btn" onclick="switchTab('labaRugi', this)">💰 Laba Rugi</button>
@@ -138,7 +138,7 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
     let toko_id = null, activeTab = 'salesHarian';
-    let dbPbHeader = [], dbPbDetail = [], dbPengirimanHeader = [], dbPengirimanDetail = [], dbStokKeluarBahan = [], dbBarang = [], dbAgen = [];
+    let dbPbHeader = [], dbPbDetail = [], dbPengirimanHeader = [], dbPengirimanDetail = [], dbStokKeluarBahan = [], dbBarang = [], dbAgen = [], dbRekapDriver = [];
 
     function setDefaultDates() {
         const today = new Date();
@@ -186,13 +186,14 @@
             document.getElementById('txtNamaUser').innerText = profile.nama_lengkap;
         }
 
-        const [pbHead, pbDet, kirimHead, kirimDet, brg, agn] = await Promise.all([
+        const [pbHead, pbDet, kirimHead, kirimDet, brg, agn, driverRes] = await Promise.all([
             _supabase.from('pembelian_header').select('*'),
             _supabase.from('pembelian_detail').select('*'),
             _supabase.from('transaksi_pengiriman').select('*'),
             _supabase.from('transaksi_pengiriman_detail').select('*'),
             _supabase.from('barang').select('*'),
-            _supabase.from('agen').select('*')
+            _supabase.from('agen').select('*'),
+            _supabase.from('rekap_laporan_driver').select('*')
         ]);
 
         let stokKeluarBakuRes = { data: [] };
@@ -205,6 +206,7 @@
         dbStokKeluarBahan = stokKeluarBakuRes.data || [];
         dbBarang = brg.data || [];
         dbAgen = agn.data || [];
+        dbRekapDriver = driverRes.data || [];
 
         const selSup = document.getElementById('filterSupplier');
         selSup.innerHTML = '<option value="">-- Semua Supplier --</option>';
@@ -318,6 +320,7 @@
         let filteredPb = filterByWaktu(dbPbHeader, 'tanggal');
         let filteredKirim = filterByWaktu(dbPengirimanHeader, 'tanggal');
         let filteredStokKeluarBaku = filterByWaktu(dbStokKeluarBahan, 'tanggal');
+        let filteredRekapDriver = filterByWaktu(dbRekapDriver, 'created_at');
         
         const area = document.getElementById('areaTabelContent');
         const boxSum = document.getElementById('boxRingkasan');
@@ -330,13 +333,10 @@
 
             let totalCash = 0, totalTrf = 0;
             filteredKirim.forEach(k => {
-                let metode = (k.metode_pembayaran || k.metode || k.jenis_pembayaran || 'cash').toLowerCase();
-                let nominal = Number(k.total_kirim || k.total || k.grand_total || 0);
-                if (metode.includes('trf') || metode.includes('transfer') || metode.includes('bca') || metode.includes('bank')) {
-                    totalTrf += nominal;
-                } else {
-                    totalCash += nominal;
-                }
+                let cashVal = Number(k.bayar_cash || 0);
+                let trfVal = Number(k.bayar_transfer || 0);
+                totalCash += cashVal;
+                totalTrf += trfVal;
             });
 
             let totalSalesAll = totalCash + totalTrf;
@@ -357,18 +357,17 @@
                     rekapMap[tglKey] = { tanggal: tglKey, cash: 0, trf: 0, total: 0, listNota: [] };
                 }
 
-                let metode = (k.metode_pembayaran || k.metode || k.jenis_pembayaran || 'cash').toLowerCase();
-                let nominal = Number(k.total_kirim || 0);
-                if (metode.includes('trf') || metode.includes('transfer') || metode.includes('bca') || metode.includes('bank')) {
-                    rekapMap[tglKey].trf += nominal;
-                } else {
-                    rekapMap[tglKey].cash += nominal;
-                }
-                rekapMap[tglKey].total += nominal;
+                let cashVal = Number(k.bayar_cash || 0);
+                let trfVal = Number(k.bayar_transfer || 0);
+                let nominalTotal = Number(k.total_kirim || 0);
+
+                rekapMap[tglKey].cash += cashVal;
+                rekapMap[tglKey].trf += trfVal;
+                rekapMap[tglKey].total += nominalTotal;
                 rekapMap[tglKey].listNota.push(k);
             });
 
-            let rekapArray = Object.values(rekapMap).sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
+            let rekapArray = Object.values(rekapMap).sort((a,b) => new Date(b.tanggal) - new Date(b.tanggal));
 
             area.innerHTML = `<table><thead><tr><th>Tanggal</th><th>Jumlah Transaksi</th><th>Total Cash (Tunai)</th><th>Total Transfer (TRF)</th><th>Total Omzet Hari Ini</th><th>Aksi Rincian</th></tr></thead><tbody>` +
                 (rekapArray.length === 0 ? `<tr><td colspan="6" align="center">Tidak ada data rekap sales harian pada periode ini</td></tr>` :
@@ -427,7 +426,7 @@
                 rekapPbMap[tglKey].listPb.push(p);
             });
 
-            let rekapPbArray = Object.values(rekapPbMap).sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
+            let rekapPbArray = Object.values(rekapPbMap).sort((a,b) => new Date(b.tanggal) - new Date(b.tanggal));
 
             area.innerHTML = `<table><thead><tr><th>Tanggal</th><th>Jumlah Nota PB</th><th>Total Rupiah Pembelian</th><th>Aksi Rincian</th></tr></thead><tbody>` +
                 (rekapPbArray.length === 0 ? `<tr><td colspan="4" align="center">Tidak ada data rekap penerimaan barang pada periode ini</td></tr>` :
@@ -441,54 +440,32 @@
                     </tr>`;
                 }).join('')) + `</tbody></table>`;
 
-        } else if (activeTab === 'keluar') {
+        } else if (activeTab === 'laporanDriver') {
             boxSum.style.display = 'grid';
-            document.getElementById('lblSum1').innerText = "Total Omzet Kirim";
-            document.getElementById('lblSum2').innerText = "Total Retur";
-            document.getElementById('lblSum3').innerText = "Jumlah Transaksi";
+            document.getElementById('lblSum1').innerText = "Total Laporan Setor";
+            document.getElementById('lblSum2').innerText = "Total Biaya Operasional";
+            document.getElementById('lblSum3').innerText = "Armada / Plat Nomor";
 
-            let totalOmzet = 0, totalRetur = 0;
-            filteredKirim.forEach(k => {
-                totalOmzet += parseFloat(k.total_kirim || 0);
-                totalRetur += parseFloat(k.total_retur || 0);
+            let totalBiayaOp = 0;
+            filteredRekapDriver.forEach(r => {
+                totalBiayaOp += Number(r.uang_jalan || 0) + Number(r.uang_bbm || 0) + Number(r.uang_bongkar || 0) + Number(r.lain_lain || 0);
             });
 
-            document.getElementById('valSum1').innerText = `Rp ${totalOmzet.toLocaleString()}`;
-            document.getElementById('valSum2').innerText = `Rp ${totalRetur.toLocaleString()}`;
-            document.getElementById('valSum3').innerText = `${filteredKirim.length} Transaksi`;
+            document.getElementById('valSum1').innerText = `${filteredRekapDriver.length} Laporan`;
+            document.getElementById('valSum2').innerText = `Rp ${totalBiayaOp.toLocaleString()}`;
+            document.getElementById('valSum3').innerText = `Operasional Jalan`;
 
-            let rekapKeluarMap = {};
-            filteredKirim.forEach(k => {
-                let rawDate = k.tanggal || k.created_at;
-                let d = new Date(rawDate);
-                let year = d.getFullYear();
-                let month = String(d.getMonth() + 1).padStart(2, '0');
-                let day = String(d.getDate()).padStart(2, '0');
-                let tglKey = `${year}-${month}-${day}`;
-
-                if (!rekapKeluarMap[tglKey]) {
-                    rekapKeluarMap[tglKey] = { tanggal: tglKey, totalKirim: 0, totalRetur: 0, listNota: [] };
-                }
-
-                let kirimVal = Number(k.total_kirim || 0);
-                let returVal = Number(k.total_retur || 0);
-                rekapKeluarMap[tglKey].totalKirim += kirimVal;
-                rekapKeluarMap[tglKey].totalRetur += returVal;
-                rekapKeluarMap[tglKey].listNota.push(k);
-            });
-
-            let rekapKeluarArray = Object.values(rekapKeluarMap).sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
-
-            area.innerHTML = `<table><thead><tr><th>Tanggal</th><th>Jumlah Transaksi Kirim</th><th>Total Kirim (Rp)</th><th>Total Retur (Rp)</th><th>Aksi Rincian</th></tr></thead><tbody>` +
-                (rekapKeluarArray.length === 0 ? `<tr><td colspan="5" align="center">Tidak ada data rekap keluar barang pada periode ini</td></tr>` :
-                rekapKeluarArray.map(r => {
-                    let tglFormatted = new Date(r.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            area.innerHTML = `<table><thead><tr><th>Tanggal / Waktu</th><th>Armada / Driver</th><th>No Nota / Agen</th><th>Biaya Operasional (Jalan + BBM + Lain)</th><th>Aksi Rincian</th></tr></thead><tbody>` +
+                (filteredRekapDriver.length === 0 ? `<tr><td colspan="5" align="center">Tidak ada data laporan setoran driver pada periode ini</td></tr>` :
+                filteredRekapDriver.map(r => {
+                    let tglStr = r.created_at ? new Date(r.created_at).toLocaleString('id-ID') : '-';
+                    let totalOpItem = Number(r.uang_jalan || 0) + Number(r.uang_bbm || 0) + Number(r.uang_bongkar || 0) + Number(r.lain_lain || 0);
                     return `<tr>
-                        <td><b>${tglFormatted}</b></td>
-                        <td>${r.listNota.length} Nota Kirim</td>
-                        <td style="color:var(--blue); font-weight:bold;">Rp ${r.totalKirim.toLocaleString()}</td>
-                        <td style="color:var(--red);">Rp ${r.totalRetur.toLocaleString()}</td>
-                        <td><span class="link-nota" onclick='bukaRincianKeluarHarian(${JSON.stringify(r)})'>Lihat Rincian Nota</span></td>
+                        <td><b>${tglStr}</b></td>
+                        <td>${r.plat_nomor || '-'}<br><small style="color:var(--text-muted);">Driver: ${r.nama_driver || '-'}</small></td>
+                        <td><b>${r.no_nota || '-'}</b><br><small style="color:var(--text-muted);">${r.nama_agen || '-'}</small></td>
+                        <td style="color:var(--red); font-weight:bold;">Rp ${totalOpItem.toLocaleString()}</td>
+                        <td><span class="link-nota" onclick='bukaRincianDriver(${JSON.stringify(r)})'>Lihat Rincian Biaya</span></td>
                     </tr>`;
                 }).join('')) + `</tbody></table>`;
 
@@ -700,13 +677,13 @@
         document.getElementById('modalTitle').innerText = `RINCIAN STRUK HARIAN: ${rekapItem.tanggal}`;
         let rowsHtml = '';
         rekapItem.listNota.forEach(k => {
-            let metode = (k.metode_pembayaran || k.metode || 'CASH').toUpperCase();
+            let cashVal = Number(k.bayar_cash || 0);
+            let trfVal = Number(k.bayar_transfer || 0);
             let nominal = Number(k.total_kirim || 0);
-            let badgeColor = metode.includes('TRF') ? 'var(--blue)' : 'var(--green)';
             rowsHtml += `<tr>
                 <td><b>${k.no_nota || '-'}</b></td>
                 <td>${k.nama_agen || '-'}</td>
-                <td><span style="background:${badgeColor}; color:white; padding:2px 6px; border-radius:3px; font-weight:bold; font-size:11px;">${metode}</span></td>
+                <td style="color:var(--green);">Cash: Rp ${cashVal.toLocaleString()}<br><span style="color:var(--blue);">TRF: Rp ${trfVal.toLocaleString()}</span></td>
                 <td><b>Rp ${nominal.toLocaleString()}</b></td>
                 <td><span class="link-nota" onclick='bukaNotaPengiriman(${JSON.stringify(k)})'>Lihat Barang</span></td>
             </tr>`;
@@ -718,7 +695,7 @@
             <hr style="border:1px dashed var(--border-line);">
             <table>
                 <thead>
-                    <tr><th>No Nota</th><th>Agen / Pelanggan</th><th>Metode</th><th>Total (Rp)</th><th>Aksi</th></tr>
+                    <tr><th>No Nota</th><th>Agen / Pelanggan</th><th>Pembayaran (Cash / TRF)</th><th>Total (Rp)</th><th>Aksi</th></tr>
                 </thead>
                 <tbody>${rowsHtml}</tbody>
             </table>
@@ -755,32 +732,26 @@
         document.getElementById('modalNota').style.display = 'flex';
     }
 
-    function bukaRincianKeluarHarian(rekapItem) {
-        document.getElementById('modalTitle').innerText = `RINCIAN KELUAR BARANG: ${rekapItem.tanggal}`;
-        let rowsHtml = '';
-        rekapItem.listNota.forEach(k => {
-            let nominal = Number(k.total_kirim || 0);
-            let returVal = Number(k.total_retur || 0);
-            rowsHtml += `<tr>
-                <td><b>${k.no_nota || '-'}</b></td>
-                <td>${k.nama_agen || '-'}</td>
-                <td>${k.driver_1 || '-'}</td>
-                <td>Rp ${nominal.toLocaleString()}</td>
-                <td>Rp ${returVal.toLocaleString()}</td>
-                <td><span class="link-nota" onclick='bukaNotaPengiriman(${JSON.stringify(k)})'>Lihat Barang</span></td>
-            </tr>`;
-        });
-
+    function bukaRincianDriver(r) {
+        document.getElementById('modalTitle').innerText = `RINCIAN LAPORAN DRIVER: ${r.no_nota || '-'}`;
+        let totalOp = Number(r.uang_jalan || 0) + Number(r.uang_bbm || 0) + Number(r.uang_bongkar || 0) + Number(r.lain_lain || 0);
         document.getElementById('detailNotaContent').innerHTML = `
-            <b>Tanggal Rekap:</b> ${rekapItem.tanggal}<br>
-            <b>Total Transaksi:</b> ${rekapItem.listNota.length} Nota<br>
+            <b>Waktu Setor:</b> ${r.created_at ? new Date(r.created_at).toLocaleString('id-ID') : '-'}<br>
+            <b>Armada / Plat Nomor:</b> ${r.plat_nomor || '-'}<br>
+            <b>Driver 1:</b> ${r.nama_driver || '-'}<br>
+            <b>Driver 2:</b> ${r.driver_2 || '-'}<br>
+            <b>Nomor Nota:</b> ${r.no_nota || '-'}<br>
+            <b>Nama Agen:</b> ${r.nama_agen || '-'}<br>
+            <b>Sumber Kas / Agen:</b> ${r.sumber_agen || '-'}<br>
+            <b>Odometer (KM):</b> ${Number(r.km_input || 0).toLocaleString('id-ID')} KM<br>
             <hr style="border:1px dashed var(--border-line);">
-            <table>
-                <thead>
-                    <tr><th>No Nota</th><th>Agen</th><th>Driver</th><th>Total Kirim</th><th>Retur</th><th>Aksi</th></tr>
-                </thead>
-                <tbody>${rowsHtml}</tbody>
-            </table>
+            <b>RINCIAN BIAYA OPERASIONAL:</b><br>
+            • Uang Jalan: Rp ${Number(r.uang_jalan || 0).toLocaleString('id-ID')}<br>
+            • BBM / Solar: Rp ${Number(r.uang_bbm || 0).toLocaleString('id-ID')}<br>
+            • Uang Bongkar: Rp ${Number(r.uang_bongkar || 0).toLocaleString('id-ID')}<br>
+            • Biaya Lain-lain (${r.ket_lain_lain || '-'}): Rp ${Number(r.lain_lain || 0).toLocaleString('id-ID')}<br>
+            <hr style="border:1px dashed var(--border-line);">
+            <b>TOTAL KESELURUHAN BIAYA: Rp ${totalOp.toLocaleString('id-ID')}</b>
         `;
         document.getElementById('modalNota').style.display = 'flex';
     }
@@ -999,7 +970,8 @@
         document.getElementById('detailNotaContent').innerHTML = `
             <b>No Nota:</b> ${kirim.no_nota || '-'}<br>
             <b>Nama Agen:</b> ${kirim.nama_agen || '-'}<br>
-            <b>Metode Bayar:</b> ${(kirim.metode_pembayaran || kirim.metode || 'CASH').toUpperCase()}<br>
+            <b>Pembayaran Cash:</b> Rp ${Number(kirim.bayar_cash || 0).toLocaleString()}<br>
+            <b>Pembayaran Transfer:</b> Rp ${Number(kirim.bayar_transfer || 0).toLocaleString()}<br>
             <b>Driver:</b> ${kirim.driver_1 || '-'}<br>
             <hr style="border:1px dashed var(--border-line);">
             <ul style="padding-left:15px; margin:0; line-height:1.6;">${itemsHtml.length > 0 ? itemsHtml : '<li>Tidak ada rincian detail barang</li>'}</ul>

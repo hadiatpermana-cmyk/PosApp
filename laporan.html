@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pusat Laporan Keuangan - PosApp</title>
+    <title>Pusat Laporan Keuangan</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+Prime&display=swap" rel="stylesheet">
     <style>
@@ -15,7 +15,7 @@
         .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
         .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
         .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
-        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); border-bottom: none; }
+        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
         .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
         .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; }
         .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
@@ -45,7 +45,7 @@
         .tab-btn.active { background: var(--p-color); color: white; border-color: var(--p-color); }
         .link-nota { color: var(--blue); cursor: pointer; text-decoration: underline; font-weight: bold; }
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
-        .modal-content { background: var(--bg-card); color: var(--text-main); padding: 20px; border-radius: 8px; width: min(92vw, 1100px); font-family: 'Courier Prime', monospace; border: 1px dashed var(--border-line); max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
+        .modal-content { background: var(--bg-card); color: var(--text-main); padding: 20px; border-radius: 8px; width: min(95vw, 1150px); font-family: 'Courier Prime', monospace; border: 1px dashed var(--border-line); max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -73,11 +73,10 @@
             <a href="barang.html" class="nav-item">📦 Master Barang</a>
             <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
             <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
-            <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
             <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+            <a href="bon_karyawan.html" class="nav-item">📋 Bon Karyawan</a>
             <a href="laporan.html" class="nav-item active">📈 Pusat Laporan</a>
             <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
-            <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
             <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
         </div>
     </div>
@@ -257,6 +256,7 @@
         const unit = (satuan || '').toLowerCase();
         if (unit.includes('bal')) return jml;
         if (unit.includes('pack')) return jml / (konversi.packPerBal || 1);
+        if (totalPerBal <= 0) return 0;
         return jml / totalPerBal;
     }
 
@@ -592,56 +592,38 @@
             boxSum.style.display = 'grid';
             document.getElementById('lblSum1').innerText = "Total Catatan Keluar";
             document.getElementById('lblSum2').innerText = "Total Qty Keluar";
-            document.getElementById('lblSum3').innerText = "Jumlah Hari Transaksi";
+            document.getElementById('lblSum3').innerText = "Kategori";
 
             let totalQtyBaku = 0;
             filteredStokKeluarBaku.forEach(s => {
                 totalQtyBaku += Number(s.qty || s.jumlah || 0);
             });
 
-            // Group by date
-            let rekapBakuMap = {};
-            filteredStokKeluarBaku.forEach(s => {
-                let rawDate = s.tanggal || s.created_at;
-                let d = new Date(rawDate);
-                let year = d.getFullYear();
-                let month = String(d.getMonth() + 1).padStart(2, '0');
-                let day = String(d.getDate()).padStart(2, '0');
-                let tglKey = `${year}-${month}-${day}`;
-
-                if (!rekapBakuMap[tglKey]) {
-                    rekapBakuMap[tglKey] = { tanggal: tglKey, totalQty: 0, listBaku: [] };
-                }
-
-                let qty = Number(s.qty || s.jumlah || 0);
-                rekapBakuMap[tglKey].totalQty += qty;
-                rekapBakuMap[tglKey].listBaku.push(s);
-            });
-
-            let rekapBakuArray = Object.values(rekapBakuMap).sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
-
             document.getElementById('valSum1').innerText = `${filteredStokKeluarBaku.length} Catatan`;
             document.getElementById('valSum2').innerText = `${totalQtyBaku.toLocaleString()} Unit`;
-            document.getElementById('valSum3').innerText = `${rekapBakuArray.length} Hari`;
+            document.getElementById('valSum3').innerText = `Bahan Baku (BB)`;
 
-            area.innerHTML = `<table><thead><tr><th>Tanggal</th><th>Jumlah Catatan</th><th>Total Qty Keluar</th><th>Kategori Utama</th><th>Aksi Rincian</th></tr></thead><tbody>` +
-                (rekapBakuArray.length === 0 ? `<tr><td colspan="5" align="center">Belum ada data pengeluaran bahan baku tercatat</td></tr>` :
-                rekapBakuArray.map(r => {
-                    let tglFormatted = new Date(r.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                    let categories = [...new Set(r.listBaku.map(b => b.kategori || 'PRODUKSI'))];
+            area.innerHTML = `<table><thead><tr><th>Tanggal</th><th>Kategori Pengeluaran</th><th>Nama Bahan Baku</th><th>Qty Keluar</th><th>Saldo Akhir (Stok)</th><th>Catatan</th></tr></thead><tbody>` +
+                (filteredStokKeluarBaku.length === 0 ? `<tr><td colspan="6" align="center">Belum ada data pengeluaran bahan baku tercatat</td></tr>` :
+                filteredStokKeluarBaku.map(s => {
+                    let matchedBrg = carikanBarangDetail(s);
+                    let namaBaku = matchedBrg ? matchedBrg.nama_barang : (s.nama_barang || 'Bahan Baku');
+                    let saldoAkhirStok = matchedBrg ? Number(matchedBrg.stok_sekarang || 0) : 0;
+                    let tglFormat = s.tanggal ? new Date(s.tanggal).toLocaleDateString() : (s.created_at ? new Date(s.created_at).toLocaleDateString() : '-');
                     return `<tr>
-                        <td><b>${tglFormatted}</b></td>
-                        <td>${r.listBaku.length} Catatan</td>
-                        <td style="color:var(--red); font-weight:bold;">-${r.totalQty.toLocaleString()} Unit</td>
-                        <td><span style="background:rgba(240,80,80,0.1); color:var(--red); padding:3px 6px; border-radius:4px; font-weight:bold;">${categories.join(', ')}</span></td>
-                        <td><span class="link-nota" onclick='bukaRincianBahanBakuHarian(${JSON.stringify(r)})'>Lihat Rincian Detail</span></td>
+                        <td>${tglFormat}</td>
+                        <td><span style="background:rgba(240,80,80,0.1); color:var(--red); padding:3px 6px; border-radius:4px; font-weight:bold;">${s.kategori || 'PRODUKSI'}</span></td>
+                        <td><b>${namaBaku}</b></td>
+                        <td style="color:var(--red); font-weight:bold;">-${Number(s.qty || s.jumlah || 0).toLocaleString()}</td>
+                        <td><b>${saldoAkhirStok.toLocaleString()} unit</b></td>
+                        <td>${s.catatan || '-'}</td>
                     </tr>`;
                 }).join('')) + `</tbody></table>`;
 
         } else if (activeTab === 'labaRugi') {
             boxSum.style.display = 'grid';
             document.getElementById('lblSum1').innerText = "Total Omzet (Sales)";
-            document.getElementById('lblSum2').innerText = "Total HPP (Modal)";
+            document.getElementById('lblSum2').innerText = "Total HPP (Modal Bal)";
             document.getElementById('lblSum3').innerText = "Laba Bersih";
 
             let totalOmzet = 0, totalHpp = 0;
@@ -658,64 +640,58 @@
                 return filteredKirimIds.includes(pId) || filteredNoNotas.includes(nNota);
             });
 
+            let itemRincianMap = {};
             relatedDetails.forEach(d => {
                 let bId = d.barang_id || d.id_barang || d.barangId;
                 let bNama = d.nama_barang || d.namabarang;
-                let qtyVal = Number(d.qty || d.jumlah || 0);
+                
                 let matchedBarang = dbBarang.find(b => {
                     if (bId && (String(b.id) === String(bId) || String(b.id_barang) === String(bId))) return true;
                     if (bNama && b.nama_barang && b.nama_barang.trim().toLowerCase() === bNama.trim().toLowerCase()) return true;
                     return false;
                 });
 
-                let hargaBeliDasar = matchedBarang ? Number(matchedBarang.harga_beli_dasar || 0) : Number(d.harga_beli_dasar || 0);
-                let qtyDalamBal = qtyKeBal(qtyVal, d.satuan || matchedBarang?.satuan_jenis || 'pcs', matchedBarang);
-                totalHpp += hargaBeliDasar * qtyDalamBal;
+                let hargaBeliBal = matchedBarang ? Number(matchedBarang.harga_beli_dasar || 0) : Number(d.harga_beli_dasar || 0);
+                let qtyVal = Number(d.qty || d.jumlah || 0);
+                
+                let qtyPcs = qtyKeBasisPcs(qtyVal, d.satuan || matchedBarang?.satuan_jenis || 'pcs', matchedBarang);
+                let qtyBal = qtyKeBal(qtyPcs, 'pcs', matchedBarang);
+                
+                let subTotalHpp = hargaBeliBal * qtyBal;
+                let subTotalOmzet = Number(d.subtotal || (qtyVal * (d.harga_satuan || 0)) || 0);
+
+                totalHpp += subTotalHpp;
+
+                let namaBarangFinal = matchedBarang ? matchedBarang.nama_barang : (bNama || 'Unknown');
+                if (!itemRincianMap[namaBarangFinal]) {
+                    itemRincianMap[namaBarangFinal] = { 
+                        nama: namaBarangFinal, 
+                        qtyPcs: 0, 
+                        qtyBal: 0, 
+                        barangObj: matchedBarang,
+                        hargaBeliBal: hargaBeliBal, 
+                        totalHpp: 0, 
+                        totalOmzet: 0 
+                    };
+                }
+                itemRincianMap[namaBarangFinal].qtyPcs += qtyPcs;
+                itemRincianMap[namaBarangFinal].qtyBal += qtyBal;
+                itemRincianMap[namaBarangFinal].totalHpp += subTotalHpp;
+                itemRincianMap[namaBarangFinal].totalOmzet += subTotalOmzet;
             });
 
             let labaBersih = totalOmzet - totalHpp;
-            let rincianLabaRugi = filteredKirim.map(k => {
-                let totalPenjualan = Number(k.total_kirim || 0);
-                let totalHppNota = 0;
-                let details = dbPengirimanDetail.filter(d => {
-                    let pId = String(d.pengiriman_id || d.transaksi_pengiriman_id || d.id_pengiriman || '');
-                    let nNota = String(d.no_nota || '');
-                    return String(k.id) === pId || String(k.no_nota) === nNota;
-                });
-
-                details.forEach(d => {
-                    let bId = d.barang_id || d.id_barang || d.barangId;
-                    let bNama = d.nama_barang || d.namabarang;
-                    let qtyVal = Number(d.qty || d.jumlah || 0);
-                    let matchedBarang = dbBarang.find(b => {
-                        if (bId && (String(b.id) === String(bId) || String(b.id_barang) === String(bId))) return true;
-                        if (bNama && b.nama_barang && b.nama_barang.trim().toLowerCase() === bNama.trim().toLowerCase()) return true;
-                        return false;
-                    });
-                    let hargaBeliDasar = matchedBarang ? Number(matchedBarang.harga_beli_dasar || 0) : Number(d.harga_beli_dasar || 0);
-                    let qtyDalamBal = qtyKeBal(qtyVal, d.satuan || matchedBarang?.satuan_jenis || 'pcs', matchedBarang);
-                    totalHppNota += hargaBeliDasar * qtyDalamBal;
-                });
-
-                return {
-                    noNota: k.no_nota || '-',
-                    tanggal: k.tanggal ? new Date(k.tanggal).toLocaleDateString() : '-',
-                    omzet: totalPenjualan,
-                    hpp: totalHppNota,
-                    laba: totalPenjualan - totalHppNota
-                };
-            });
-
-            const detailLabaRugiJson = JSON.stringify(rincianLabaRugi);
+            let rincianPerItemArray = Object.values(itemRincianMap);
+            const detailLabaRugiJson = JSON.stringify(rincianPerItemArray);
 
             document.getElementById('valSum1').innerText = `Rp ${totalOmzet.toLocaleString()}`;
             document.getElementById('valSum2').innerText = `Rp ${totalHpp.toLocaleString()}`;
-            document.getElementById('valSum3').innerHTML = `<span class="link-nota" onclick='bukaRincianLabaRugi(${detailLabaRugiJson})'>Rp ${labaBersih.toLocaleString()}</span>`;
+            document.getElementById('valSum3').innerHTML = `<span class="link-nota" onclick='bukaRincianLabaRugiItem(${detailLabaRugiJson})'>Rp ${labaBersih.toLocaleString()}</span>`;
 
             area.innerHTML = `<table><thead><tr><th>Komponen Laporan</th><th>Jumlah (Rp)</th></tr></thead><tbody>
                 <tr><td><b>Total Pendapatan (Omzet Penjualan)</b></td><td style="color:var(--blue);"><b>Rp ${totalOmzet.toLocaleString()}</b></td></tr>
-                <tr><td><b>Total HPP (Modal Dasar Barang dari Tabel Barang)</b></td><td style="color:orange;"><b>Rp ${totalHpp.toLocaleString()}</b></td></tr>
-                <tr style="background:rgba(39,194,76,0.1);"><td><b>Laba Bersih</b></td><td style="color:var(--green);"><b><span class="link-nota" onclick='bukaRincianLabaRugi(${detailLabaRugiJson})'>Rp ${labaBersih.toLocaleString()}</span></b></td></tr>
+                <tr><td><b>Total HPP (Modal Bal)</b></td><td style="color:orange;"><b><span class="link-nota" onclick='bukaRincianLabaRugiItem(${detailLabaRugiJson})'>Rp ${totalHpp.toLocaleString()}</span></b></td></tr>
+                <tr style="background:rgba(39,194,76,0.1);"><td><b>Laba Bersih</b></td><td style="color:var(--green);"><b><span class="link-nota" onclick='bukaRincianLabaRugiItem(${detailLabaRugiJson})'>Rp ${labaBersih.toLocaleString()}</span></b></td></tr>
             </tbody></table>`;
         }
     }
@@ -809,71 +785,50 @@
         document.getElementById('modalNota').style.display = 'flex';
     }
 
-    function bukaRincianBahanBakuHarian(rekapItem) {
-        document.getElementById('modalTitle').innerText = `RINCIAN MONITORING BAHAN BAKU: ${rekapItem.tanggal}`;
-        let rowsHtml = '';
-        rekapItem.listBaku.forEach(s => {
-            let matchedBrg = carikanBarangDetail(s);
-            let namaBaku = matchedBrg ? matchedBrg.nama_barang : (s.nama_barang || 'Bahan Baku');
-            let saldoAkhirStok = matchedBrg ? Number(matchedBrg.stok_sekarang || 0) : 0;
-            let qty = Number(s.qty || s.jumlah || 0);
-            let kategori = s.kategori || 'PRODUKSI';
-            rowsHtml += `<tr>
-                <td>${kategori}</td>
-                <td><b>${namaBaku}</b></td>
-                <td style="color:var(--red); font-weight:bold;">-${qty.toLocaleString()}</td>
-                <td><b>${saldoAkhirStok.toLocaleString()} unit</b></td>
-                <td>${s.catatan || '-'}</td>
-            </tr>`;
-        });
-
-        document.getElementById('detailNotaContent').innerHTML = `
-            <b>Tanggal Rekap:</b> ${rekapItem.tanggal}<br>
-            <b>Total Catatan:</b> ${rekapItem.listBaku.length} Catatan<br>
-            <b>Total Qty Keluar:</b> ${rekapItem.totalQty.toLocaleString()} Unit<br>
-            <hr style="border:1px dashed var(--border-line);">
-            <table>
-                <thead>
-                    <tr><th>Kategori</th><th>Nama Bahan Baku</th><th>Qty Keluar</th><th>Saldo Akhir (Stok)</th><th>Catatan</th></tr>
-                </thead>
-                <tbody>${rowsHtml}</tbody>
-            </table>
-        `;
-        document.getElementById('modalNota').style.display = 'flex';
-    }
-
-    function bukaRincianLabaRugi(rincianLabaRugi) {
-        const totalOmzet = (rincianLabaRugi || []).reduce((sum, item) => sum + Number(item.omzet || 0), 0);
-        const totalHpp = (rincianLabaRugi || []).reduce((sum, item) => sum + Number(item.hpp || 0), 0);
+    function bukaRincianLabaRugiItem(rincianItem) {
+        const totalOmzet = (rincianItem || []).reduce((sum, item) => sum + Number(item.totalOmzet || 0), 0);
+        const totalHpp = (rincianItem || []).reduce((sum, item) => sum + Number(item.totalHpp || 0), 0);
         const labaBersih = totalOmzet - totalHpp;
 
-        document.getElementById('modalTitle').innerText = 'RINCIAN LABA RUGI';
+        document.getElementById('modalTitle').innerText = 'AUDIT RINCIAN HPP & LABA RUGI PER ITEM BARANG';
         document.getElementById('detailNotaContent').innerHTML = `
+            <p style="margin-top:0; color:var(--text-muted);">💡 <i>Catatan: HPP adalah harga beli per Bal. Total Terjual dikonversi ke Bal untuk menghitung Total HPP.</i></p>
             <table style="width:100%; border-collapse:collapse; font-size:12px;">
                 <thead>
                     <tr>
-                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">No Nota</th>
-                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Tanggal</th>
-                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Omzet</th>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Nama Barang</th>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Total Terjual (Pcs / Bal)</th>
                         <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">HPP</th>
-                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Laba</th>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Total HPP</th>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">H. Jual</th>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Total Jual</th>
+                        <th style="border:1px solid #ddd; padding:6px; background:#f5f5f5; color:#000;">Laba Kotor</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${(rincianLabaRugi || []).length === 0 ? '<tr><td colspan="5" style="padding:8px; text-align:center;">Tidak ada data</td></tr>' : (rincianLabaRugi || []).map(item => `
+                    ${(rincianItem || []).length === 0 ? '<tr><td colspan="7" style="padding:8px; text-align:center;">Tidak ada data item terjual</td></tr>' : (rincianItem || []).map(item => {
+                        let labaItem = item.totalOmzet - item.totalHpp;
+                        let warnaLaba = labaItem < 0 ? 'color:var(--red); font-weight:bold;' : 'color:var(--green); font-weight:bold;';
+                        let displayQty = formatQtyBarangDisplay(item.qtyPcs, 'pcs', item.barangObj);
+                        let hargaJualSatuan = item.qtyPcs > 0 ? (item.totalOmzet / item.qtyPcs) : 0;
+                        return `
                         <tr>
-                            <td style="border:1px solid #ddd; padding:6px; color:#000;">${item.noNota}</td>
-                            <td style="border:1px solid #ddd; padding:6px; color:#000;">${item.tanggal}</td>
-                            <td style="border:1px solid #ddd; padding:6px; color:#000; font-weight:bold;">Rp ${Number(item.omzet || 0).toLocaleString()}</td>
-                            <td style="border:1px solid #ddd; padding:6px; color:#000; font-weight:bold;">Rp ${Number(item.hpp || 0).toLocaleString()}</td>
-                            <td style="border:1px solid #ddd; padding:6px; color:#000; font-weight:bold;">Rp ${Number(item.laba || 0).toLocaleString()}</td>
+                            <td style="border:1px solid #ddd; padding:6px; color:#000;"><b>${item.nama}</b></td>
+                            <td style="border:1px solid #ddd; padding:6px; color:#000; text-align:center;">${displayQty}</td>
+                            <td style="border:1px solid #ddd; padding:6px; color:orange; font-weight:bold;">Rp ${Number(item.hargaBeliBal || 0).toLocaleString()}</td>
+                            <td style="border:1px solid #ddd; padding:6px; color:#000; font-weight:bold;">Rp ${Number(item.totalHpp || 0).toLocaleString()}</td>
+                            <td style="border:1px solid #ddd; padding:6px; color:var(--blue); font-weight:bold;">Rp ${Math.round(hargaJualSatuan).toLocaleString()}</td>
+                            <td style="border:1px solid #ddd; padding:6px; color:var(--blue); font-weight:bold;">Rp ${Number(item.totalOmzet || 0).toLocaleString()}</td>
+                            <td style="border:1px solid #ddd; padding:6px; ${warnaLaba}">Rp ${labaItem.toLocaleString()}</td>
                         </tr>
-                    `).join('')}
+                    `;
+                    }).join('')}
                     <tr style="background:#f7fff7;">
-                        <td style="border:1px solid #ddd; padding:8px; font-weight:bold; color:#000;" colspan="2">TOTAL</td>
-                        <td style="border:1px solid #ddd; padding:8px; font-weight:bold; color:#000;">Rp ${totalOmzet.toLocaleString()}</td>
+                        <td style="border:1px solid #ddd; padding:8px; font-weight:bold; color:#000;" colspan="3">TOTAL KESELURUHAN</td>
                         <td style="border:1px solid #ddd; padding:8px; font-weight:bold; color:#000;">Rp ${totalHpp.toLocaleString()}</td>
-                        <td style="border:1px solid #ddd; padding:8px; font-weight:bold; color:#000;">Rp ${labaBersih.toLocaleString()}</td>
+                        <td style="border:1px solid #ddd; padding:8px; font-weight:bold; color:var(--blue);">-</td>
+                        <td style="border:1px solid #ddd; padding:8px; font-weight:bold; color:var(--blue);">Rp ${totalOmzet.toLocaleString()}</td>
+                        <td style="border:1px solid #ddd; padding:8px; font-weight:bold; color:var(--green);">Rp ${labaBersih.toLocaleString()}</td>
                     </tr>
                 </tbody>
             </table>
@@ -941,7 +896,7 @@
 
         dbStokKeluarBahan.forEach(s => {
             let tglS = s.tanggal || s.created_at;
-            let tglStr = tglS ? new Date(tglS).toISOString().split('T')[0] : '';
+            let tglStr = tglS ? new Date(s.tanggal).toISOString().split('T')[0] : '';
             if (tglMulai && tglStr < tglMulai) return;
             if (tglSelesai && tglStr > tglSelesai) return;
 

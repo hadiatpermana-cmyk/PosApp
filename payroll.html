@@ -69,30 +69,24 @@
         .rincian-calc { color: var(--text-muted); font-size: 12px; }
         .rincian-subtotal { color: var(--p-color); font-weight: bold; float: right; }
 
+        /* PANEL BLUETOOTH */
+        .bt-panel { margin-bottom: 20px; text-align: center; background: var(--bg-main); padding: 14px; border-radius: 8px; border: 1px solid var(--border-line); }
+        #btnConnect { width: 100%; padding: 12px; background: var(--blue); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        #statusBT { font-size: 12px; font-weight: bold; margin-top: 8px; display: block; color: var(--red); }
+
         /* MODAL PREVIEW STRUK */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-card { background: var(--bg-card); width: 420px; max-width: 95%; max-height: 90vh; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .modal-card { background: var(--bg-card); width: 450px; max-width: 95%; max-height: 90vh; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
         .modal-header { padding: 15px 20px; background: var(--p-color); color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .modal-body { padding: 20px; overflow-y: auto; background: #eee; display: flex; flex-direction: column; align-items: center; }
         .modal-footer { padding: 15px 20px; border-top: 1px solid var(--border-line); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-card); }
         
-        /* KERTAS THERMAL DINAMIS & PAGE BREAK */
-        .thermal-receipt { background: #fff; color: #000; padding: 8mm; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; line-height: 1.3; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin: 0 auto 20px auto; page-break-after: always; break-after: page; }
+        .thermal-receipt { background: #fff; color: #000; padding: 6mm; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; line-height: 1.2; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin: 0 auto 20px auto; }
         .thermal-receipt.w80 { width: 80mm; font-size: 12px; }
         .thermal-receipt.w58 { width: 58mm; font-size: 10px; }
         .receipt-center { text-align: center; }
-        .receipt-line { border-bottom: 1px dashed #000; margin: 6px 0; }
+        .receipt-line { border-bottom: 1px dashed #000; margin: 5px 0; }
         .receipt-row { display: flex; justify-content: space-between; }
-
-        @media print {
-            body * { visibility: hidden; }
-            #modalPreview, #modalPreview * { visibility: visible; }
-            #modalPreview { position: absolute; left: 0; top: 0; width: 100%; background: none; display: block !important; }
-            .modal-card { width: 100% !important; max-width: 100% !important; border: none !important; box-shadow: none !important; }
-            .modal-header, .modal-footer { display: none !important; }
-            .modal-body { padding: 0 !important; background: none !important; }
-            .thermal-receipt { box-shadow: none !important; margin: 0 auto !important; page-break-after: always; break-after: page; }
-        }
     </style>
 </head>
 <body>
@@ -102,7 +96,7 @@
         <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
         <a href="dashboard.html" class="store-brand">
             <div class="store-logo" id="logoTopbar">🏪</div>
-           <div class="store-info"><h3 id="txtNamaTokoTop">Memuat...</h3><p>Admin</p></div>
+            <div class="store-info"><h3 id="txtNamaTokoTop">Memuat...</h3><p id="txtRoleUser">Admin</p></div>
         </a>
     </div>
     <div class="topbar-right">
@@ -133,6 +127,12 @@
         <div class="main-card">
             <div class="main-card-header">👷‍♂️ Manajemen Payroll & Produksi Harian</div>
 
+            <!-- PANEL KONEKSI PRINTER BLUETOOTH -->
+            <div class="bt-panel">
+                <button id="btnConnect" onclick="connectBT()">🔗 HUBUNGKAN PRINTER BLUETOOTH</button>
+                <small id="statusBT">Status: Terputus</small>
+            </div>
+
             <!-- TAB NAVIGASI -->
             <div class="tab-container">
                 <button class="tab-btn active" onclick="switchTab('input', event)">1. Input Harian Produksi</button>
@@ -160,84 +160,11 @@
             <!-- KONTEN TAB 1: INPUT HARIAN -->
             <div id="tab-input" class="tab-content active">
                 <div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 15px;">
-                    <div class="form-group">
-                        <label>Tanggal Produksi</label>
-                        <input type="date" id="inTanggal">
-                    </div>
-                    <div class="form-group">
-                        <label>Nama Karyawan</label>
-                        <select id="inKaryawan"><option value="">-- Pilih Karyawan --</option></select>
-                    </div>
+                    <div class="form-group"><label>Tanggal Produksi</label><input type="date" id="inTanggal"></div>
+                    <div class="form-group"><label>Nama Karyawan</label><select id="inKaryawan"><option value="">-- Pilih Karyawan --</option></select></div>
                 </div>
-
                 <div style="font-weight: bold; margin: 15px 0 10px; color: var(--p-color); text-transform: uppercase; font-size: 14px;">Masukkan Jumlah Hasil Produksi:</div>
-                
-                <div class="production-grid">
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">1. GORENG</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_goreng" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_goreng" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">2. KEMAS MIE PENDEK</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_kemas_pendek" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_kemas_pendek" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">3. KEMAS MIE PANJANG</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_kemas_panjang" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_kemas_panjang" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">4. PACK OPP 10</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_pack_opp10" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_pack_opp10" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">5. PACK OPP 12</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_pack_opp12" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_pack_opp12" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">6. PACK TOPLES</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_pack_toples" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_pack_toples" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">7. PACK KARAKTER</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_pack_karakter" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_pack_karakter" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">8. REPACK MAKARONI</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_repack_makaroni" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_repack_makaroni" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">9. PRESS</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Hasil Normal</label><input type="number" id="q_press" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                            <div class="prod-col"><label>Hasil Lembur</label><input type="number" id="l_press" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
-                        </div>
-                    </div>
-                </div>
-
+                <div class="production-grid" id="containerInputProduksi"></div>
                 <button class="btn-action" style="margin-top: 15px;" onclick="simpanInputHarian()">Simpan Hasil Produksi</button>
             </div>
 
@@ -247,75 +174,8 @@
                     <label>Pilih Karyawan</label>
                     <select id="settingKaryawan" onchange="muatDropdownSettingKaryawan()"><option value="">-- Pilih Karyawan --</option></select>
                 </div>
-
                 <div style="font-weight: bold; margin: 15px 0 10px; color: var(--p-color); text-transform: uppercase; font-size: 14px;">Atur Tarif per Jenis Pekerjaan (Rp):</div>
-
-                <div class="production-grid">
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">1. GORENG</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_goreng" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_goreng" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">2. KEMAS MIE PENDEK</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_kemas_pendek" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_kemas_pendek" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">3. KEMAS MIE PANJANG</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_kemas_panjang" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_kemas_panjang" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">4. PACK OPP 10</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_pack_opp10" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_pack_opp10" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">5. PACK OPP 12</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_pack_opp12" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_pack_opp12" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">6. PACK TOPLES</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_pack_toples" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_pack_toples" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">7. PACK KARAKTER</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_pack_karakter" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_pack_karakter" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">8. REPACK MAKARONI</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_repack_makaroni" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_repack_makaroni" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                        </div>
-                    </div>
-                    <div class="prod-item-box">
-                        <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">9. PRESS</label>
-                        <div class="prod-row">
-                            <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_press" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                            <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_press" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
-                        </div>
-                    </div>
-                </div>
-
+                <div class="production-grid" id="containerSettingTarif"></div>
                 <button class="btn-action" style="background: var(--blue); margin-top: 15px;" onclick="simpanSettingHarga()">Simpan Tarif Khusus Karyawan</button>
             </div>
 
@@ -346,28 +206,22 @@
             <!-- KONTEN TAB 4: CETAK SLIP GAJI -->
             <div id="tab-slip" class="tab-content">
                 <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr auto; align-items: end;">
+                    <div class="form-group"><label>Pilih Karyawan</label><select id="slipKaryawan"><option value="">-- Pilih Karyawan --</option></select></div>
+                    <div class="form-group"><label>Rentang Tanggal Slip</label><div style="display: flex; gap: 5px;"><input type="date" id="slipMulai"><input type="date" id="slipSelesai"></div></div>
                     <div class="form-group">
-                        <label>Pilih Karyawan</label>
-                        <select id="slipKaryawan"><option value="">-- Pilih Karyawan --</option></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Rentang Tanggal Slip</label>
-                        <div style="display: flex; gap: 5px;">
-                            <input type="date" id="slipMulai">
-                            <input type="date" id="slipSelesai">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Ukuran Kertas</label>
+                        <label>Ukuran Kertas Thermal</label>
                         <select id="slipUkuranKertas">
-                            <option value="80">Thermal 80 mm</option>
-                            <option value="58">Thermal 58 mm</option>
+                            <option value="80">Thermal 80 mm (48 Karakter)</option>
+                            <option value="58" selected>Thermal 58 mm (32 Karakter)</option>
                         </select>
                     </div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn-action" style="background: var(--p-color); height: 42px;" onclick="previewSlipGaji()">👁️ Preview</button>
-                        <button class="btn-action" style="background: #2563eb; height: 42px;" onclick="cetakSlipGaji()">🖨️ Cetak</button>
+                        <button class="btn-action" style="background: #2563eb; height: 42px;" onclick="cetakBluetoothDirect()">🖨️ Cetak Bluetooth</button>
                     </div>
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <button class="btn-action" id="btnReprint" style="background: #f59e0b;" onclick="reprintLast()" disabled>🔄 REPRINT SLIP TERAKHIR</button>
                 </div>
             </div>
 
@@ -382,12 +236,10 @@
             <span id="modalTitle">Preview Slip Gaji</span>
             <button onclick="document.getElementById('modalPreview').style.display='none'" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
         </div>
-        <div class="modal-body" id="modalPreviewBody">
-            <!-- Konten Struk Di Sini -->
-        </div>
+        <div class="modal-body" id="modalPreviewBody"></div>
         <div class="modal-footer">
             <button class="btn-action" style="background: var(--text-muted); padding: 8px 15px;" onclick="document.getElementById('modalPreview').style.display='none'">Tutup</button>
-            <button class="btn-action" style="background: #2563eb; padding: 8px 15px;" onclick="window.print()">🖨️ Cetak Fisik</button>
+            <button class="btn-action" style="background: #2563eb; padding: 8px 15px;" onclick="cetakBluetoothDirect()">🖨️ Cetak Bluetooth</button>
         </div>
     </div>
 </div>
@@ -397,11 +249,46 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
+    let namaTokoGlobal = "Toko Saya";
+    let btCharacteristic = null;
+    let connectedDeviceId = null;
+    let lastPrintCommands = [];
+
     const ITEM_LABELS = {
         'goreng': 'Goreng', 'kemas_pendek': 'Kemas Pendek', 'kemas_panjang': 'Kemas Panjang',
         'pack_opp10': 'Pack OPP 10', 'pack_opp12': 'Pack OPP 12', 'pack_toples': 'Pack Toples',
         'pack_karakter': 'Pack Karakter', 'repack_makaroni': 'Repack Makaroni', 'press': 'Press'
     };
+
+    function renderFormDinamis() {
+        let keys = Object.keys(ITEM_LABELS);
+        let htmlInput = '';
+        let htmlSetting = '';
+
+        keys.forEach((k, idx) => {
+            let labelName = `${idx + 1}. ${ITEM_LABELS[k].toUpperCase()}`;
+            htmlInput += `
+                <div class="prod-item-box">
+                    <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">${labelName}</label>
+                    <div class="prod-row">
+                        <div class="prod-col"><label>Normal</label><input type="number" id="q_${k}" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                        <div class="prod-col"><label>Lembur</label><input type="number" id="l_${k}" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)"></div>
+                    </div>
+                </div>`;
+            
+            htmlSetting += `
+                <div class="prod-item-box">
+                    <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">${labelName}</label>
+                    <div class="prod-row">
+                        <div class="prod-col"><label>Tarif Normal</label><input type="text" id="h_${k}" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                        <div class="prod-col"><label>Tarif Lembur</label><input type="text" id="hl_${k}" value="0" onfocus="autoSelect(this)" onblur="autoZero(this)" oninput="formatRibuan(this)"></div>
+                    </div>
+                </div>`;
+        });
+
+        document.getElementById('containerInputProduksi').innerHTML = htmlInput;
+        document.getElementById('containerSettingTarif').innerHTML = htmlSetting;
+    }
 
     function autoSelect(input) { setTimeout(() => input.select(), 50); }
     function autoZero(input) { if (input.value.trim() === '') { input.value = '0'; } }
@@ -429,15 +316,45 @@
     document.getElementById('slipSelesai').value = tglHariIni;
 
     async function initData() {
-        const { data: karyawan } = await _supabase.from('karyawan').select('*');
-        if(karyawan) {
-            let opt = '<option value="ALL">🌟 SEMUA KARYAWAN</option>';
-            karyawan.forEach(k => { opt += `<option value="${k.id}">${k.nama_karyawan || k.nama}</option>`; });
-            document.getElementById('inKaryawan').innerHTML = '<option value="">-- Pilih Karyawan --</option>' + opt.replace('<option value="ALL">🌟 SEMUA KARYAWAN</option>', '');
-            document.getElementById('slipKaryawan').innerHTML = opt;
-            document.getElementById('settingKaryawan').innerHTML = '<option value="">-- Pilih Karyawan --</option>' + opt.replace('<option value="ALL">🌟 SEMUA KARYAWAN</option>', '');
+        renderFormDinamis();
+        try {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session) return window.location.replace("index.html");
+
+            let userMeta = session.user.user_metadata;
+            if (userMeta && userMeta.full_name) {
+                document.getElementById('txtNamaUser').innerText = userMeta.full_name.split(' ')[0];
+            } else {
+                document.getElementById('txtNamaUser').innerText = session.user.email.split('@')[0];
+            }
+
+            const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', session.user.id).single();
+            if (profile) {
+                if (profile.nama_lengkap) document.getElementById('txtNamaUser').innerText = profile.nama_lengkap.split(' ')[0];
+                if (profile.toko_id) {
+                    const { data: toko } = await _supabase.from('toko').select('nama_toko, logo_url').eq('id', profile.toko_id).single();
+                    if (toko) {
+                        namaTokoGlobal = toko.nama_toko || "Toko Saya";
+                        document.getElementById('txtNamaTokoTop').innerText = namaTokoGlobal;
+                        if(toko.logo_url) document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
+                    }
+                }
+            }
+
+            const { data: karyawan } = await _supabase.from('karyawan').select('*');
+            if(karyawan) {
+                let opt = '<option value="ALL">🌟 SEMUA KARYAWAN</option>';
+                karyawan.forEach(k => { opt += `<option value="${k.id}">${k.nama_karyawan || k.nama}</option>`; });
+                document.getElementById('inKaryawan').innerHTML = '<option value="">-- Pilih Karyawan --</option>' + opt.replace('<option value="ALL">🌟 SEMUA KARYAWAN</option>', '');
+                document.getElementById('slipKaryawan').innerHTML = opt;
+                document.getElementById('settingKaryawan').innerHTML = '<option value="">-- Pilih Karyawan --</option>' + opt.replace('<option value="ALL">🌟 SEMUA KARYAWAN</option>', '');
+            }
+
+            muatStatistikHariIni();
+        } catch (e) {
+            console.error("Gagal memuat data awal:", e);
+            document.getElementById('txtNamaTokoTop').innerText = "Toko Saya";
         }
-        muatStatistikHariIni();
     }
 
     async function muatStatistikHariIni() {
@@ -447,9 +364,8 @@
             let totalSesi = data.length;
             let totalUpah = data.reduce((acc, curr) => acc + Number(curr.total_upah || 0), 0);
             let totalLembur = data.reduce((acc, curr) => {
-                return acc + Number(curr.l_goreng || 0) + Number(curr.l_kemas_pendek || 0) + Number(curr.l_kemas_panjang || 0) + 
-                             Number(curr.l_pack_opp10 || 0) + Number(curr.l_pack_opp12 || 0) + Number(curr.l_pack_toples || 0) + 
-                             Number(curr.l_pack_karakter || 0) + Number(curr.l_repack_makaroni || 0) + Number(curr.l_press || 0);
+                let keys = Object.keys(ITEM_LABELS);
+                return acc + keys.reduce((subAcc, k) => subAcc + Number(curr['l_' + k] || 0), 0);
             }, 0);
             document.getElementById('statTotalInput').innerText = totalSesi + " Sesi";
             document.getElementById('statTotalUpah').innerText = "Rp " + totalUpah.toLocaleString('id-ID');
@@ -459,7 +375,7 @@
 
     async function muatDropdownSettingKaryawan() {
         let kId = document.getElementById('settingKaryawan').value;
-        let items = ['goreng', 'kemas_pendek', 'kemas_panjang', 'pack_opp10', 'pack_opp12', 'pack_toples', 'pack_karakter', 'repack_makaroni', 'press'];
+        let items = Object.keys(ITEM_LABELS);
         
         items.forEach(k => {
             if(document.getElementById('h_' + k)) document.getElementById('h_' + k).value = 0;
@@ -487,7 +403,7 @@
         let kId = document.getElementById('settingKaryawan').value;
         if(!kId) { alert("Silakan pilih karyawan terlebih dahulu!"); return; }
 
-        let items = ['goreng', 'kemas_pendek', 'kemas_panjang', 'pack_opp10', 'pack_opp12', 'pack_toples', 'pack_karakter', 'repack_makaroni', 'press'];
+        let items = Object.keys(ITEM_LABELS);
         let payloads = [];
         
         for(let k of items) {
@@ -499,7 +415,7 @@
         }
 
         await _supabase.from('tarif_karyawan').upsert(payloads, { onConflict: 'karyawan_id,kategori' });
-        alert("Tarif Khusus (Normal & Lembur) untuk karyawan ini berhasil disimpan!");
+        alert("Tarif Khusus berhasil disimpan!");
     }
 
     async function simpanInputHarian() {
@@ -508,7 +424,7 @@
 
         if(!tanggal || !karyawan_id) { alert("Tanggal dan Karyawan wajib dipilih!"); return; }
 
-        let items = ['goreng', 'kemas_pendek', 'kemas_panjang', 'pack_opp10', 'pack_opp12', 'pack_toples', 'pack_karakter', 'repack_makaroni', 'press'];
+        let items = Object.keys(ITEM_LABELS);
         let q = {}; let l = {};
 
         items.forEach(item => {
@@ -527,21 +443,17 @@
             total_upah += (q[item] * h_normal) + (l[item] * h_lembur);
         });
 
-        let payload = {
-            tanggal, karyawan_id, total_upah,
-            q_goreng: q.goreng, q_kemas_pendek: q.kemas_pendek, q_kemas_panjang: q.kemas_panjang,
-            q_pack_opp10: q.pack_opp10, q_pack_opp12: q.pack_opp12, q_pack_toples: q.pack_toples,
-            q_pack_karakter: q.pack_karakter, q_repack_makaroni: q.repack_makaroni, q_press: q.press,
-            l_goreng: l.goreng, l_kemas_pendek: l.kemas_pendek, l_kemas_panjang: l.kemas_panjang,
-            l_pack_opp10: l.pack_opp10, l_pack_opp12: l.pack_opp12, l_pack_toples: l.pack_toples,
-            l_pack_karakter: l.pack_karakter, l_repack_makaroni: l.repack_makaroni, l_press: l.press
-        };
+        let payload = { tanggal, karyawan_id, total_upah };
+        items.forEach(item => {
+            payload['q_' + item] = q[item];
+            payload['l_' + item] = l[item];
+        });
 
         const { error } = await _supabase.from('produksi_harian').insert([payload]);
         if(error) {
             alert("Gagal menyimpan: " + error.message);
         } else {
-            alert("Sukses! Hasil produksi & upah personal tersimpan.");
+            alert("Sukses! Hasil produksi tersimpan.");
             muatStatistikHariIni();
             items.forEach(item => {
                 document.getElementById('q_' + item).value = 0;
@@ -579,65 +491,100 @@
             return;
         }
 
-        let items = ['goreng', 'kemas_pendek', 'kemas_panjang', 'pack_opp10', 'pack_opp12', 'pack_toples', 'pack_karakter', 'repack_makaroni', 'press'];
+        let items = Object.keys(ITEM_LABELS);
 
         data.forEach(row => {
             let kId = row.karyawan_id;
-            let kName = row.karyawan?.nama_karyawan || row.karyawan?.nama || row.karyawan?.nama_lengkap || 'Karyawan (ID: ' + kId + ')';
+            let kName = row.karyawan?.nama_karyawan || row.karyawan?.nama || 'Karyawan';
             let t = tarifMap[kId] || {};
 
-            let detailProduksiHTML = '';
-            let detailLemburHTML = '';
-            let totalPcsProd = 0, totalPcsLembur = 0, totalRupiahProd = 0, totalRupiahLembur = 0;
+            let detailProd = '', detailLemb = '';
+            let totRP = 0, totRL = 0;
 
             items.forEach(i => {
                 let qty = Number(row['q_' + i] || 0);
                 let lmb = Number(row['l_' + i] || 0);
-                
                 if (qty > 0) {
-                    let hrg = t[i] || 0;
-                    let sub = qty * hrg;
-                    totalPcsProd += qty; totalRupiahProd += sub;
-                    detailProduksiHTML += `<div class="rincian-item"><span class="rincian-title">${ITEM_LABELS[i]}</span><br><span class="rincian-calc">${qty.toLocaleString('id-ID')} Pcs x Rp ${hrg.toLocaleString('id-ID')}</span><span class="rincian-subtotal">Rp ${sub.toLocaleString('id-ID')}</span></div>`;
+                    let sub = qty * (t[i] || 0);
+                    totRP += sub;
+                    detailProd += `<div class="rincian-item"><span class="rincian-title">${ITEM_LABELS[i]}</span><br>${qty}x @Rp ${t[i]||0}<span class="rincian-subtotal">Rp ${sub.toLocaleString('id-ID')}</span></div>`;
                 }
                 if (lmb > 0) {
-                    let hrgLmb = t['lembur_' + i] || 0;
-                    let subLmb = lmb * hrgLmb;
-                    totalPcsLembur += lmb; totalRupiahLembur += subLmb;
-                    detailLemburHTML += `<div class="rincian-item"><span class="rincian-title">${ITEM_LABELS[i]}</span><br><span class="rincian-calc">${lmb.toLocaleString('id-ID')} Pcs x Rp ${hrgLmb.toLocaleString('id-ID')}</span><span class="rincian-subtotal">Rp ${subLmb.toLocaleString('id-ID')}</span></div>`;
+                    let subL = lmb * (t['lembur_' + i] || 0);
+                    totRL += subL;
+                    detailLemb += `<div class="rincian-item"><span class="rincian-title">${ITEM_LABELS[i]}</span><br>${lmb}x @Rp ${t['lembur_'+i]||0}<span class="rincian-subtotal">Rp ${subL.toLocaleString('id-ID')}</span></div>`;
                 }
             });
 
-            if (detailProduksiHTML === '') detailProduksiHTML = '<span style="color:var(--text-muted);">-</span>';
-            else detailProduksiHTML += `<div style="margin-top:6px; font-weight:bold; font-size: 12px; border-top: 1px solid var(--border-line); padding-top: 4px; display: flex; justify-content: space-between;"><span>Total Normal: ${totalPcsProd.toLocaleString('id-ID')} Pcs</span><span style="color:var(--p-color);">Rp ${totalRupiahProd.toLocaleString('id-ID')}</span></div>`;
-
-            if (detailLemburHTML === '') detailLemburHTML = '<span style="color:var(--text-muted);">-</span>';
-            else detailLemburHTML += `<div style="margin-top:6px; font-weight:bold; font-size: 12px; border-top: 1px solid var(--border-line); padding-top: 4px; display: flex; justify-content: space-between;"><span>Total Lembur: ${totalPcsLembur.toLocaleString('id-ID')} Pcs</span><span style="color:var(--p-color);">Rp ${totalRupiahLembur.toLocaleString('id-ID')}</span></div>`;
+            if(!detailProd) detailProd = '-';
+            if(!detailLemb) detailLemb = '-';
 
             tbody.innerHTML += `
                 <tr>
-                    <td style="text-align: center; vertical-align: middle;"><b style="color:var(--p-color);">${row.tanggal}</b><br><b>${kName}</b></td>
-                    <td style="background: var(--bg-main); border-right: 2px solid white; border-radius: 6px;">${detailProduksiHTML}</td>
-                    <td style="background: var(--bg-main); border-radius: 6px;">${detailLemburHTML}</td>
-                    <td style="text-align: center; vertical-align: middle;"><b style="color:var(--green); font-size: 15px;">Rp ${Number(row.total_upah || (totalRupiahProd + totalRupiahLembur)).toLocaleString('id-ID')}</b></td>
-                </tr>
-            `;
+                    <td style="text-align: center;"><b>${row.tanggal}</b><br><b>${kName}</b></td>
+                    <td style="background: var(--bg-main);">${detailProd}</td>
+                    <td style="background: var(--bg-main);">${detailLemb}</td>
+                    <td style="text-align: center;"><b style="color:var(--green);">Rp ${Number(row.total_upah || (totRP + totRL)).toLocaleString('id-ID')}</b></td>
+                </tr>`;
         });
     }
 
-    async function previewSlipGaji() {
+    async function connectBT() {
+        try {
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', '0000ff00-0000-1000-8000-00805f9b34fb', '49535343-fe7d-4ae5-8fa9-9fafd205e455', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2']
+            });
+            const server = await device.gatt.connect();
+            const services = await server.getPrimaryServices();
+            let targetCharacteristic = null;
+
+            for (let service of services) {
+                try {
+                    const characteristics = await service.getCharacteristics();
+                    targetCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
+                    if (targetCharacteristic) break;
+                } catch (err) {
+                    console.warn("Lewati service terkunci:", err);
+                }
+            }
+
+            if (!targetCharacteristic) throw new Error("Karakteristik write printer tidak ditemukan.");
+            
+            btCharacteristic = targetCharacteristic;
+            connectedDeviceId = device.id;
+            document.getElementById('statusBT').innerText = "Status: Terhubung (" + device.name + ")";
+            document.getElementById('statusBT').style.color = "#10b981";
+            alert("✅ Printer Bluetooth Berhasil Terhubung!");
+        } catch (e) { 
+            alert("Koneksi Bluetooth Gagal: " + e.message); 
+        }
+    }
+
+    async function printToBT(textCommands) {
+        if (!btCharacteristic) throw new Error("Printer belum terhubung! Silakan klik Hubungkan Printer Bluetooth.");
+        let encoder = new TextEncoder();
+        let bytes = encoder.encode(textCommands);
+        for (let i = 0; i < bytes.length; i += 20) {
+            let chunk = bytes.slice(i, i + 20);
+            await btCharacteristic.writeValue(chunk);
+            await new Promise(r => setTimeout(r, 30));
+        }
+    }
+
+    async function generateSlipTextData() {
         let kId = document.getElementById('slipKaryawan').value;
         let mulai = document.getElementById('slipMulai').value;
         let selesai = document.getElementById('slipSelesai').value;
         let ukuran = document.getElementById('slipUkuranKertas').value;
 
-        if(!kId) { alert("Silakan pilih karyawan terlebih dahulu!"); return; }
+        if(!kId) { alert("Silakan pilih karyawan terlebih dahulu!"); return null; }
 
         let query = _supabase.from('produksi_harian').select(`*, karyawan:karyawan_id (*)`).gte('tanggal', mulai).lte('tanggal', selesai);
         if(kId !== 'ALL') { query = query.eq('karyawan_id', kId); }
 
-        let { data, error } = await query;
-        if(error || !data || data.length === 0) { alert("Tidak ada data slip gaji pada rentang tanggal tersebut."); return; }
+        let { data } = await query;
+        if(!data || data.length === 0) { alert("Tidak ada data slip gaji pada rentang tanggal tersebut."); return null; }
 
         const { data: tarifData } = await _supabase.from('tarif_karyawan').select('*');
         let tarifMap = {};
@@ -648,9 +595,7 @@
             });
         }
 
-        let items = ['goreng', 'kemas_pendek', 'kemas_panjang', 'pack_opp10', 'pack_opp12', 'pack_toples', 'pack_karakter', 'repack_makaroni', 'press'];
-        let htmlContent = '';
-
+        let items = Object.keys(ITEM_LABELS);
         let grouped = {};
         data.forEach(row => {
             let kid = row.karyawan_id;
@@ -658,58 +603,140 @@
             grouped[kid].rows.push(row);
         });
 
+        let htmlPreview = '';
+        let allRawCommands = "";
+
+        const ESC = '\x1B';
+        const GS = '\x1D';
+        const INIT = ESC + '@';
+        const ALIGN_CENTER = ESC + 'a' + '\x01';
+        const ALIGN_LEFT = ESC + 'a' + '\x00';
+        const BOLD_ON = ESC + 'E' + '\x01';
+        const BOLD_OFF = ESC + 'E' + '\x00';
+        const CUT_PAPER = GS + 'V' + '\x41' + '\x03';
+
+        let maxChar = (ukuran === '58') ? 32 : 48;
+        let lineDashed = '-'.repeat(maxChar);
+
+        function padRow(left, right, maxLen) {
+            let spaces = maxLen - (left.length + right.length);
+            if (spaces < 1) spaces = 1;
+            return left + ' '.repeat(spaces) + right;
+        }
+
         for (let kid in grouped) {
             let emp = grouped[kid];
             let t = tarifMap[kid] || {};
             let grandTotal = 0;
             let detailHtml = '';
+            let textBuffer = '';
+
+            textBuffer += INIT + ALIGN_CENTER + BOLD_ON + namaTokoGlobal + '\n';
+            textBuffer += 'SLIP GAJI PRODUKSI (' + ukuran + 'mm)\n';
+            textBuffer += 'Periode: ' + mulai + ' s/d ' + selesai + '\n' + BOLD_OFF;
+            textBuffer += lineDashed + '\n';
+            textBuffer += ALIGN_LEFT + 'Karyawan: ' + emp.nama + '\n';
+            textBuffer += lineDashed + '\n';
 
             emp.rows.forEach(r => {
+                textBuffer += 'Tgl: ' + r.tanggal + '\n';
                 detailHtml += `<div style="font-weight:bold; margin-top:4px;">Tgl: ${r.tanggal}</div>`;
+                
                 items.forEach(i => {
                     let q = Number(r['q_' + i] || 0);
                     let l = Number(r['l_' + i] || 0);
                     if(q > 0) {
                         let sub = q * (t[i] || 0);
                         grandTotal += sub;
-                        detailHtml += `<div class="receipt-row"><span>- ${ITEM_LABELS[i]} (${q}x)</span><span>Rp ${sub.toLocaleString('id-ID')}</span></div>`;
+                        let lineStr = `- ${ITEM_LABELS[i]} (${q}x)`;
+                        let priceStr = `Rp ${sub.toLocaleString('id-ID')}`;
+                        textBuffer += padRow(lineStr, priceStr, maxChar) + '\n';
+                        detailHtml += `<div class="receipt-row"><span>${lineStr}</span><span>${priceStr}</span></div>`;
                     }
                     if(l > 0) {
                         let subL = l * (t['lembur_' + i] || 0);
                         grandTotal += subL;
-                        detailHtml += `<div class="receipt-row" style="color:#b45309;"><span>  [Lembur] ${ITEM_LABELS[i]} (${l}x)</span><span>Rp ${subL.toLocaleString('id-ID')}</span></div>`;
+                        let lineStr = `  [Lembur] ${ITEM_LABELS[i]} (${l}x)`;
+                        let priceStr = `Rp ${subL.toLocaleString('id-ID')}`;
+                        textBuffer += padRow(lineStr, priceStr, maxChar) + '\n';
+                        detailHtml += `<div class="receipt-row" style="color:#b45309;"><span>${lineStr}</span><span>${priceStr}</span></div>`;
                     }
                 });
             });
 
-            htmlContent += `
+            let totalStr = `Rp ${grandTotal.toLocaleString('id-ID')}`;
+            textBuffer += lineDashed + '\n';
+            textBuffer += BOLD_ON + padRow('TOTAL GAJI', totalStr, maxChar) + '\n' + BOLD_OFF;
+            textBuffer += lineDashed + '\n';
+            textBuffer += ALIGN_CENTER + 'Terima Kasih!\n\n\n' + CUT_PAPER;
+
+            allRawCommands += textBuffer;
+
+            htmlPreview += `
             <div class="thermal-receipt w${ukuran}">
-                <div class="receipt-center"><b>TOKO MADINAH</b></div>
-                <div class="receipt-center" style="font-size:9px;">SLIP GAJI PRODUKSI (${ukuran}mm)</div>
+                <div class="receipt-center"><b>${namaTokoGlobal}</b></div>
+                <div class="receipt-center" style="font-size:9px;">SLIP GAJI (${ukuran}mm)</div>
                 <div class="receipt-center" style="font-size:9px;">Periode: ${mulai} s/d ${selesai}</div>
                 <div class="receipt-line"></div>
                 <div><b>Karyawan: ${emp.nama}</b></div>
                 <div class="receipt-line"></div>
                 ${detailHtml}
                 <div class="receipt-line"></div>
-                <div class="receipt-row" style="font-size:11px;"><b>TOTAL GAJI</b><b>Rp ${grandTotal.toLocaleString('id-ID')}</b></div>
+                <div class="receipt-row"><b>TOTAL GAJI</b><b>Rp ${grandTotal.toLocaleString('id-ID')}</b></div>
                 <div class="receipt-line"></div>
-                <div class="receipt-center" style="font-size:9px; margin-top:8px;">Terima Kasih!</div>
-            </div>
-            `;
+                <div class="receipt-center" style="font-size:9px;">Terima Kasih!</div>
+            </div>`;
         }
 
+        return { htmlPreview, rawCommands: allRawCommands };
+    }
+
+    async function previewSlipGaji() {
+        let res = await generateSlipTextData();
+        if(!res) return;
+        let ukuran = document.getElementById('slipUkuranKertas').value;
         document.getElementById('modalTitle').innerText = `Preview Slip Gaji (${ukuran}mm Thermal)`;
-        document.getElementById('modalPreviewBody').innerHTML = htmlContent;
+        document.getElementById('modalPreviewBody').innerHTML = res.htmlPreview;
         document.getElementById('modalPreview').style.display = 'flex';
     }
 
-    function cetakSlipGaji() {
-        previewSlipGaji();
-        setTimeout(() => { window.print(); }, 500);
+    async function cetakBluetoothDirect() {
+        let res = await generateSlipTextData();
+        if(!res) return;
+
+        try {
+            if (!btCharacteristic) {
+                await connectBT();
+                if (!btCharacteristic) return;
+            }
+
+            await printToBT(res.rawCommands);
+            lastPrintCommands = res.rawCommands;
+            document.getElementById('btnReprint').disabled = false;
+            alert("✅ Berhasil dicetak via Printer Bluetooth!");
+            document.getElementById('modalPreview').style.display = 'none';
+        } catch (error) {
+            console.error("Gagal cetak bluetooth:", error);
+            alert("Gagal mencetak: " + error.message);
+        }
+    }
+
+    async function reprintLast() {
+        if (!lastPrintCommands) return alert("Belum ada data cetak terakhir!");
+        try {
+            if (!btCharacteristic) {
+                await connectBT();
+                if (!btCharacteristic) return;
+            }
+            await printToBT(lastPrintCommands);
+            alert("✅ Berhasil Reprint Slip Gaji!");
+        } catch (e) {
+            alert("Reprint Gagal: " + e.message);
+        }
     }
 
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
+    
     initData();
 </script>
 </body>

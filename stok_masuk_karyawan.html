@@ -246,7 +246,7 @@
             let queryBarang = _supabase.from('barang').select('*').order('nama_barang');
             if(tokoIdGlobal) queryBarang = queryBarang.eq('toko_id', tokoIdGlobal);
             const { data: barang } = await queryBarang;
-            listBarang = barang || [];
+            listBarang = barang || []; 
 
             // Muat Data Agen / Supplier
             let queryAgen = _supabase.from('agen').select('*');
@@ -331,31 +331,57 @@
         
         if(!brgId) return;
 
-        let hargaDitemukan = 0;
+        let hargaBal = 0;
+        let hargaPack = 0;
+        let hargaPcs = 0;
 
         // Cari data agen/supplier berdasarkan nama
-        const dataAgen = listAgenSupplier.find(a => (a.nama_agen === namaSup || a.nama === namaSup));
+        const dataAgen = listAgenSupplier.find(a => {
+            const nAgen = (a.nama_agen || a.nama || a.nama_supplier || '').toLowerCase();
+            return nAgen === namaSup.toLowerCase();
+        });
         
         if (dataAgen) {
             // Cari setting harga khusus di tabel harga_agen berdasarkan agen_id dan barang_id
-            const settingHarga = listHargaAgen.find(h => h.agen_id === dataAgen.id && h.barang_id === brgId);
+            const settingHarga = listHargaAgen.find(h => 
+                String(h.agen_id).trim() === String(dataAgen.id).trim() && 
+                String(h.barang_id).trim() === String(brgId).trim()
+            );
             if (settingHarga) {
-                if (satuanDipilih.includes('bal')) {
-                    hargaDitemukan = Number(settingHarga.harga_bal) || 0;
-                } else if (satuanDipilih.includes('pack')) {
-                    hargaDitemukan = Number(settingHarga.harga_pack) || 0;
-                } else {
-                    hargaDitemukan = Number(settingHarga.harga_pcs) || 0;
-                }
+                hargaBal = Number(settingHarga.harga_bal) || 0;
+                hargaPack = Number(settingHarga.harga_pack) || 0;
+                hargaPcs = Number(settingHarga.harga_pcs) || 0;
             }
         }
 
-        // Jika tidak ketemu di tabel harga_agen, fallback ke harga beli dasar master barang
-        if (hargaDitemukan === 0) {
-            const brg = listBarang.find(b => b.id === brgId);
-            if (brg && brg.harga_beli_dasar) {
-                hargaDitemukan = Number(brg.harga_beli_dasar) || 0;
+        // Ambil data master barang untuk fallback atau isi konversi
+        const brg = listBarang.find(b => String(b.id) === String(brgId));
+        if (brg) {
+            if (hargaBal === 0) hargaBal = Number(brg.harga_bal) || Number(brg.harga_beli_dasar) || 0;
+            if (hargaPack === 0) hargaPack = Number(brg.harga_pack) || Number(brg.harga_beli_pack) || 0;
+            if (hargaPcs === 0) hargaPcs = Number(brg.harga_pcs) || Number(brg.harga_beli_pcs) || 0;
+
+            const isiPack = Number(brg.isi_pack) || 1;
+            const isiPcs = Number(brg.isi_pcs) || 1;
+
+            // Fallback otomatis jika harga pack/pcs di database masih 0
+            if (hargaPack === 0 && hargaBal > 0 && isiPack > 0) {
+                hargaPack = Math.round(hargaBal / isiPack);
             }
+            if (hargaPcs === 0 && hargaBal > 0 && isiPack > 0 && isiPcs > 0) {
+                hargaPcs = Math.round(hargaBal / (isiPack * isiPcs));
+            } else if (hargaPcs === 0 && hargaPack === 0 && isiPcs > 0) {
+                hargaPcs = Math.round(hargaPack / isiPcs);
+            }
+        }
+
+        let hargaDitemukan = 0;
+        if (satuanDipilih.includes('bal')) {
+            hargaDitemukan = hargaBal;
+        } else if (satuanDipilih.includes('pack')) {
+            hargaDitemukan = hargaPack;
+        } else {
+            hargaDitemukan = hargaPcs;
         }
 
         document.getElementById('modalHarga').value = hargaDitemukan > 0 ? hargaDitemukan.toLocaleString('id-ID') : '0';

@@ -427,8 +427,12 @@
         // ... (lanjutan kode lainnya tetap sama)
 
 
-        // 2. Muat Master Barang (Barang Jadi)
-        const { data: listBrg } = await _supabase.from('barang').select('*');
+        // 2. Muat Master Barang (Barang Jadi) - Difilter berdasarkan toko_id aktif
+        const { data: listBrg } = await _supabase
+            .from('barang')
+            .select('*')
+            .eq('toko_id', tokoIdGlobal); // <-- Tambahkan filter toko_id di sini
+
         if(listBrg) {
             barangStokList = listBrg.filter(b => {
                 const kat = (b.kategori || '').toLowerCase();

@@ -298,14 +298,19 @@
             // ... (lanjutan kode lainnya tetap sama)
 
 
-            const { data: listBrg } = await _supabase.from('barang').select('*');
-            if(listBrg) {
-                barangStokList = listBrg.filter(b => {
-                    const kat = (b.kategori || '').toLowerCase();
-                    const stat = (b.status_barang || '').toLowerCase();
-                    return kat.includes('barang jadi') || stat.includes('barang jadi') || kat.includes('jadi') || stat.includes('jadi');
-                });
-            }
+        const { data: listBrg } = await _supabase
+            .from('barang')
+            .select('*')
+            .eq('toko_id', tokoIdGlobal); // <-- Tambahkan filter toko_id di sini
+
+        if(listBrg) {
+            barangStokList = listBrg.filter(b => {
+                const kat = (b.kategori || '').toLowerCase();
+                const stat = (b.status_barang || '').toLowerCase();
+                return kat.includes('barang jadi') || stat.includes('barang jadi') || kat.includes('jadi') || stat.includes('jadi');
+            });
+            renderBarangDropdown();
+        }
 
             const { data: hargaAgen } = await _supabase.from('harga_agen').select('*');
             if(hargaAgen) {

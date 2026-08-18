@@ -51,7 +51,6 @@
         .form-group select, .form-group input { width: 100%; padding: 11px; border: 1.5px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 16px; font-weight: 600; }
         
         .sub-display { background: #f8fafc; padding: 10px 14px; font-size: 15px; font-weight: 800; text-align: right; border: 1.5px solid #e2e8f0; border-top: none; display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; color: #334155; }
-        .input-manual { width: 100%; padding: 10px; border: 1.5px solid #94a3b8; border-radius: 8px; font-weight: 800; text-align: right; box-sizing: border-box; font-size: 18px; background: #fff; color: #0f172a; }
         
         .summary-box { background: #0f172a; padding: 16px; border-radius: 14px; margin-top: 15px; color: white; box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.1); }
         .sum-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 15px; font-weight: 600; color: #cbd5e1; }
@@ -155,7 +154,7 @@
         </div>
         <div class="form-group">
             <label>Satuan</label>
-            <select id="modalSatuan">
+            <select id="modalSatuan" onchange="autoFillHargaModal()">
                 <option value="Bal">Bal</option>
                 <option value="Pack">Pack</option>
                 <option value="Pcs">Pcs / Lembar / Kg</option>
@@ -196,7 +195,7 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
     let tokoIdGlobal = null, namaKasirGlobal = "", namaTokoGlobal = "TOKO SBR", alamatTokoGlobal = "-";
-    let listBarang = [], listSupplier = [];
+    let listBarang = [], listSupplier = [], listHargaAgen = [], listAgenSupplier = [];
     let itemsTerima = [], itemsRetur = []; 
     let currentMode = 'TERIMA', editIndex = -1;
     let btCharacteristic = null, connectedDeviceId = null;
@@ -249,17 +248,26 @@
             const { data: barang } = await queryBarang;
             listBarang = barang || [];
 
+            // Muat Data Agen / Supplier
+            let queryAgen = _supabase.from('agen').select('*');
+            if(tokoIdGlobal) queryAgen = queryAgen.eq('toko_id', tokoIdGlobal);
+            const { data: agen } = await queryAgen;
+            listAgenSupplier = agen || [];
+
+            // Muat Data Harga Agen
+            let queryHargaAgen = _supabase.from('harga_agen').select('*');
+            if(tokoIdGlobal) queryHargaAgen = queryHargaAgen.eq('toko_id', tokoIdGlobal);
+            const { data: hargaAgen } = await queryHargaAgen;
+            listHargaAgen = hargaAgen || [];
+
             // Muat Supplier
             let supplierSet = new Set();
             listBarang.forEach(b => { if(b.supplier) supplierSet.add(b.supplier); });
             
-            let queryAgen = _supabase.from('agen').select('*');
-            if(tokoIdGlobal) queryAgen = queryAgen.eq('toko_id', tokoIdGlobal);
-            const { data: agen } = await queryAgen;
-            if(agen) {
-                agen.forEach(a => {
+            if(listAgenSupplier) {
+                listAgenSupplier.forEach(a => {
                     const tipe = (a.type_agen || a.tipe_agen || '').toLowerCase();
-                    if(tipe.includes('supplier')) supplierSet.add(a.nama_agen);
+                    if(tipe.includes('supplier')) supplierSet.add(a.nama_agen || a.nama);
                 });
             }
 
@@ -276,7 +284,6 @@
     }
 
     function generateNoFaktur() {
-        const d = new Date();
         const uniqueId = Date.now().toString().slice(-6);
         return `PB-${uniqueId}`;
     }
@@ -314,15 +321,44 @@
         filtered.sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang)).forEach(b => {
             modalBarang.options.add(new Option(b.nama_barang, b.id));
         });
+        autoFillHargaModal();
     }
 
     function autoFillHargaModal() {
+        const namaSup = document.getElementById('pilihSupplier').value;
         const brgId = document.getElementById('modalBarang').value;
+        const satuanDipilih = (document.getElementById('modalSatuan').value || '').toLowerCase();
+        
         if(!brgId) return;
-        const brg = listBarang.find(b => b.id === brgId);
-        if(brg && brg.harga_beli_dasar) {
-            document.getElementById('modalHarga').value = Number(brg.harga_beli_dasar).toLocaleString('id-ID');
+
+        let hargaDitemukan = 0;
+
+        // Cari data agen/supplier berdasarkan nama
+        const dataAgen = listAgenSupplier.find(a => (a.nama_agen === namaSup || a.nama === namaSup));
+        
+        if (dataAgen) {
+            // Cari setting harga khusus di tabel harga_agen berdasarkan agen_id dan barang_id
+            const settingHarga = listHargaAgen.find(h => h.agen_id === dataAgen.id && h.barang_id === brgId);
+            if (settingHarga) {
+                if (satuanDipilih.includes('bal')) {
+                    hargaDitemukan = Number(settingHarga.harga_bal) || 0;
+                } else if (satuanDipilih.includes('pack')) {
+                    hargaDitemukan = Number(settingHarga.harga_pack) || 0;
+                } else {
+                    hargaDitemukan = Number(settingHarga.harga_pcs) || 0;
+                }
+            }
         }
+
+        // Jika tidak ketemu di tabel harga_agen, fallback ke harga beli dasar master barang
+        if (hargaDitemukan === 0) {
+            const brg = listBarang.find(b => b.id === brgId);
+            if (brg && brg.harga_beli_dasar) {
+                hargaDitemukan = Number(brg.harga_beli_dasar) || 0;
+            }
+        }
+
+        document.getElementById('modalHarga').value = hargaDitemukan > 0 ? hargaDitemukan.toLocaleString('id-ID') : '0';
     }
 
     function openModal(mode) { 
@@ -335,7 +371,7 @@
         document.getElementById('modalTitle').innerText = mode === 'TERIMA' ? "Tambah Barang Diterima" : "Tambah Retur Barang";
         filterBarangSupplier();
         document.getElementById('modalQty').value = "0";
-        document.getElementById('modalHarga').value = "0";
+        autoFillHargaModal();
         document.getElementById('modalInput').style.display = "block"; 
     }
 
@@ -361,13 +397,13 @@
 
         if (cfg.jenis === 'kg') return jml;
         if (cfg.jenis === 'lembar') {
-            if (unit === 'bal') return jml * (cfg.packPerBal * cfg.pcsPerPack);
-            if (unit === 'pack') return jml * cfg.pcsPerPack;
+            if (unit.includes('bal')) return jml * (cfg.packPerBal * cfg.pcsPerPack);
+            if (unit.includes('pack')) return jml * cfg.pcsPerPack;
             return jml;
         }
 
-        if (unit === 'bal') return jml * (cfg.packPerBal * cfg.pcsPerPack);
-        if (unit === 'pack') return jml * cfg.pcsPerPack;
+        if (unit.includes('bal')) return jml * (cfg.packPerBal * cfg.pcsPerPack);
+        if (unit.includes('pack')) return jml * cfg.pcsPerPack;
         return jml;
     }
 

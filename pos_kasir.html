@@ -406,11 +406,7 @@
         if(agen) {
             const agenFilter = agen.filter(a => {
                 const type = (a.tipe_agen || '').toLowerCase();
-                
-                // Pastikan hanya meloloskan yang bertipe 'agen' atau 'umum'
-                // Jika mengandung kata 'supplier', otomatis dibuang
                 if (type.includes('supplier')) return false;
-                
                 return type.includes('agen') || type.includes('umum');
             });
 
@@ -441,9 +437,9 @@
             hargaAgen.forEach(h => {
                 if(!databaseHarga[h.agen_id]) databaseHarga[h.agen_id] = {};
                 databaseHarga[h.agen_id][h.barang_id] = {
-                    'Bal': h.harga_bal || 0,
-                    'Pack': h.harga_pac || 0,
-                    'Pcs': h.harga_pcs || 0
+                    'Bal': Number(h.harga_bal) || 0,
+                    'Pack': Number(h.harga_pack) || Number(h.harga_pac) || 0,
+                    'Pcs': Number(h.harga_pcs) || 0
                 };
             });
         }
@@ -536,6 +532,16 @@
         let hrg = 0;
         if (databaseHarga[agenObj.id] && databaseHarga[agenObj.id][brgObj.id]) {
             hrg = databaseHarga[agenObj.id][brgObj.id][sat] || 0;
+        }
+
+        // Jika tidak ada di harga khusus agen, ambil harga jual dasar dari master barang
+        if (hrg === 0) {
+            const brgMaster = barangStokList.find(b => b.id === brgObj.id);
+            if (brgMaster) {
+                if (sat === 'Bal') hrg = Number(brgMaster.harga_jual_bal) || Number(brgMaster.harga_jual_dasar) || 0;
+                else if (sat === 'Pack') hrg = Number(brgMaster.harga_jual_pack) || 0;
+                else hrg = Number(brgMaster.harga_jual_pcs) || 0;
+            }
         }
 
         document.getElementById('inHarga').value = hrg > 0 ? hrg.toLocaleString('id-ID') : '';

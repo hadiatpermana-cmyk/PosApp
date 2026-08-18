@@ -327,22 +327,26 @@
         document.getElementById('loader').style.display = 'none';
     }
 
-    async function muatDataBarangDanSupplier() {
-        const { data: barang } = await _supabase.from('barang').select('*').eq('toko_id', tokoIdGlobal).order('nama_barang');
-        listBarang = barang || []; 
+ async function muatDataBarangDanSupplier() {
+    const { data: barang } = await _supabase.from('barang').select('*').eq('toko_id', tokoIdGlobal).order('nama_barang');
+    listBarang = barang || []; 
 
-        const { data: agen } = await _supabase.from('agen').select('*').eq('toko_id', tokoIdGlobal);
-        listAgenSupplier = agen || [];
+    const { data: agen } = await _supabase.from('agen').select('*').eq('toko_id', tokoIdGlobal);
+    listAgenSupplier = agen || [];
 
-        let supplierSet = new Set();
-        listBarang.forEach(b => { if(b.supplier) supplierSet.add(b.supplier); });
+    // Muat juga data harga khusus agen/supplier
+    const { data: hargaAgen } = await _supabase.from('harga_agen').select('*').eq('toko_id', tokoIdGlobal);
+    listHargaAgen = hargaAgen || [];
 
-        let dropdownHtml = '<option value="">-- Pilih Supplier --</option>';
-        supplierSet.forEach(sup => {
-            dropdownHtml += `<option value="${sup}">${sup}</option>`;
-        });
-        document.getElementById('inSupplier').innerHTML = dropdownHtml;
-    }
+    let supplierSet = new Set();
+    listBarang.forEach(b => { if(b.supplier) supplierSet.add(b.supplier); });
+
+    let dropdownHtml = '<option value="">-- Pilih Supplier --</option>';
+    supplierSet.forEach(sup => {
+        dropdownHtml += `<option value="${sup}">${sup}</option>`;
+    });
+    document.getElementById('inSupplier').innerHTML = dropdownHtml;
+}
 
     function filterBarangSupplier() {
         const namaSup = document.getElementById('inSupplier').value;
@@ -356,13 +360,42 @@
     }
 
     function autoFillHarga() {
-        const idB = document.getElementById('inBarang').value;
-        if (!idB) return;
-        const brg = listBarang.find(b => b.id === idB);
-        if (brg) {
-            document.getElementById('inHarga').value = brg.harga_beli_dasar ? Number(brg.harga_beli_dasar).toLocaleString('id-ID') : '';
+    const namaSup = document.getElementById('inSupplier').value;
+    const idB = document.getElementById('inBarang').value;
+    const satuanDipilih = (document.getElementById('inSatuan').value || '').toLowerCase();
+    
+    if (!idB) return;
+
+    let hargaDitemukan = 0;
+
+    // Cari data agen/supplier berdasarkan nama
+    const dataAgen = listAgenSupplier.find(a => a.nama_agen === namaSup || a.nama === namaSup);
+    
+    if (dataAgen) {
+        // Cari setting harga khusus di tabel harga_agen berdasarkan agen_id dan barang_id
+        const settingHarga = listHargaAgen.find(h => h.agen_id === dataAgen.id && h.barang_id === idB);
+        if (settingHarga) {
+            if (satuanDipilih === 'bal') {
+                hargaDitemukan = Number(settingHarga.harga_bal) || 0;
+            } else if (satuanDipilih === 'pack') {
+                hargaDitemukan = Number(settingHarga.harga_pack) || 0;
+            } else {
+                hargaDitemukan = Number(settingHarga.harga_pcs) || 0;
+            }
         }
     }
+
+    // Jika tidak ketemu di harga_agen, fallback ke harga dasar master barang
+    if (hargaDitemukan === 0) {
+        const brg = listBarang.find(b => b.id === idB);
+        if (brg) {
+            hargaDitemukan = Number(brg.harga_beli_dasar) || 0;
+        }
+    }
+
+    document.getElementById('inHarga').value = hargaDitemukan > 0 ? hargaDitemukan.toLocaleString('id-ID') : '';
+}
+
 
     function updateFakturInfo() {
         const sel = document.getElementById('inSupplier');

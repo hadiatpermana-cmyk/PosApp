@@ -159,7 +159,7 @@
         </div>
     </div>
     
-    <button class="btn-save" id="btnSimpan" onclick="simpanDanPrint()">SIMPAN & PRINT</button>
+    <button class="btn-save" id="btnSimpan" onclick="simpanAndPrint()">SIMPAN & PRINT</button>
 
     <div class="action-group">
         <button class="btn-reprint" id="btnReprint" onclick="reprintLast()" disabled>🔄 REPRINT</button>
@@ -171,8 +171,8 @@
 <div id="modalInput" class="modal">
     <div class="modal-content">
         <h3 style="margin-top:0; color:#0f172a; font-weight:800;">Tambah Item Barang</h3>
-        <div class="form-group"><label>Barang (Barang Jadi)</label><select id="modalBarang"></select></div>
-        <div class="form-group"><label>Satuan</label><select id="modalSatuan"><option value="Bal">Bal</option><option value="Pack">Pack</option><option value="Pcs">Pcs</option></select></div>
+        <div class="form-group"><label>Barang (Barang Jadi)</label><select id="modalBarang" onchange="autoFillHargaModal()"></select></div>
+        <div class="form-group"><label>Satuan</label><select id="modalSatuan" onchange="autoFillHargaModal()"><option value="Bal">Bal</option><option value="Pack">Pack</option><option value="Pcs">Pcs</option></select></div>
         <div class="form-group"><label>Qty</label><input type="number" id="modalQty" value="0" onfocus="clearZero(this)"></div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
             <button onclick="closeModal()" style="padding:12px; border-radius:8px; border:1.5px solid #cbd5e1; background:#fff; font-weight:700; cursor:pointer;">BATAL</button>
@@ -440,6 +440,36 @@
 
     function closeModal() { document.getElementById('modalInput').style.display = "none"; }
 
+    function autoFillHargaModal() {
+        const agRaw = document.getElementById('pilihAgen').value;
+        const brgRaw = document.getElementById('modalBarang').value;
+        const s = document.getElementById('modalSatuan').value;
+        
+        if (!agRaw || !brgRaw) return;
+
+        const agenObj = JSON.parse(agRaw);
+        const brgObj = JSON.parse(brgRaw);
+
+        let h = 0;
+        if (databaseHarga[agenObj.id] && databaseHarga[agenObj.id][brgObj.id]) {
+            const itemHargaAgen = databaseHarga[agenObj.id][brgObj.id];
+            h = itemHargaAgen[s] || itemHargaAgen['Pack'] || itemHargaAgen['Bal'] || itemHargaAgen['Pcs'] || 0;
+        } else if (databaseHarga[agenObj.nama]) {
+            h = databaseHarga[agenObj.nama][`${brgObj.nama}_${s}`] || databaseHarga[agenObj.nama][`${brgObj.nama}_Bal`] || 0;
+        }
+
+        if (h === 0) {
+            const foundMaster = barangStokList.find(b => b.id === brgObj.id);
+            if (foundMaster) {
+                if (s === 'Bal') h = foundMaster.harga_bal || foundMaster.harga_jual || 0;
+                else if (s === 'Pack') h = foundMaster.harga_pac || foundMaster.harga_pack || foundMaster.harga_jual || 0;
+                else h = foundMaster.harga_pcs || foundMaster.harga_jual || 0;
+            }
+        }
+        
+        // Bisa digunakan jika ingin menampilkan harga di interface modal jika diperlukan
+    }
+
     function addItem() {
         const agRaw = document.getElementById('pilihAgen').value;
         const brgRaw = document.getElementById('modalBarang').value;
@@ -683,7 +713,7 @@
         document.body.removeChild(downloadLink);
     }
 
-    async function simpanDanPrint() {
+    async function simpanAndPrint() {
         let errorList = [];
         const agRaw = document.getElementById('pilihAgen').value;
         const drv1 = document.getElementById('driver1').value;

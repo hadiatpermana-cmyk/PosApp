@@ -267,9 +267,14 @@
         }
     }
 
-    async function initData() {
+     async function initData() {
         try {
-            const { data: agen, error: errorAgen } = await _supabase.from('agen').select('*');
+            // 1. Muat Agen yang difilter berdasarkan toko_id user yang aktif
+            const { data: agen, error: errorAgen } = await _supabase
+                .from('agen')
+                .select('*')
+                .eq('toko_id', tokoIdGlobal); // <-- Tambahkan filter ini
+
             if (errorAgen) throw new Error("Gagal muat AGEN: " + errorAgen.message);
             
             if(agen) {
@@ -289,6 +294,9 @@
                     databaseHarga[a.nama_agen] = { "bon": a.saldo_bon || 0 };
                 });
             }
+
+            // ... (lanjutan kode lainnya tetap sama)
+
 
             const { data: listBrg } = await _supabase.from('barang').select('*');
             if(listBrg) {

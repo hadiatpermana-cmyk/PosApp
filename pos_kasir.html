@@ -401,8 +401,12 @@
     }
 
     async function muatDropdown() {
-        // 1. Muat Kontak (Hanya tampilkan jika tipe-nya mengandung 'agen' atau 'umum')
-        const { data: agen } = await _supabase.from('agen').select('*');
+        // 1. Muat Kontak (Difilter berdasarkan toko_id yang aktif)
+        const { data: agen } = await _supabase
+            .from('agen')
+            .select('*')
+            .eq('toko_id', tokoIdGlobal); // <-- Tambahkan filter ini
+
         if(agen) {
             const agenFilter = agen.filter(a => {
                 const type = (a.tipe_agen || '').toLowerCase();
@@ -419,6 +423,9 @@
                 databaseHarga[a.id] = { "bon": a.saldo_bon || 0 };
             });
         }
+        
+        // ... (lanjutan kode lainnya tetap sama)
+
 
         // 2. Muat Master Barang (Barang Jadi)
         const { data: listBrg } = await _supabase.from('barang').select('*');

@@ -2,12 +2,12 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pusat Laporan Keuangan</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+Prime&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --sidebar-width: 250px; --topbar-height: 60px; }
+        :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --orange: #ea580c; --sidebar-width: 250px; --topbar-height: 60px; }
         [data-theme="dark"] { --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333; }
         body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
         .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--p-color); z-index: 10; }
@@ -44,6 +44,10 @@
         .tab-btn { background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border-line); padding: 8px 12px; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: bold; font-size: 13px; }
         .tab-btn.active { background: var(--p-color); color: white; border-color: var(--p-color); }
         .link-nota { color: var(--blue); cursor: pointer; text-decoration: underline; font-weight: bold; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge-safe { background: #dcfce7; color: #166534; }
+        .badge-warning { background: #fef9c3; color: #854d0e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
         .modal-content { background: var(--bg-card); color: var(--text-main); padding: 20px; border-radius: 8px; width: min(95vw, 1150px); font-family: 'Courier Prime', monospace; border: 1px dashed var(--border-line); max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
     </style>
@@ -74,7 +78,6 @@
             <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
             <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
             <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
-            <a href="bon_karyawan.html" class="nav-item">📋 Bon Karyawan</a>
             <a href="laporan.html" class="nav-item active">📈 Pusat Laporan</a>
             <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
             <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
@@ -83,7 +86,7 @@
 
     <div class="content-area">
         <div class="card">
-            <h3>📈 Pusat Laporan Keuangan</h3>
+            <h3>📈 Pusat Laporan Keuangan & Kontrol Retur</h3>
             
             <div class="filter-section">
                 <div class="form-group">
@@ -102,8 +105,10 @@
                 </div>
             </div>
 
+            <!-- Navigasi Tab -->
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('salesHarian', this)">💵 Sales Harian</button>
+                <button class="tab-btn" onclick="switchTab('returKirimAmbil', this)">🔄 Retur & Kontrol</button>
                 <button class="tab-btn" onclick="switchTab('penerimaan', this)">📥 Penerimaan Barang</button>
                 <button class="tab-btn" onclick="switchTab('laporanDriver', this)">🚚 Laporan Driver</button>
                 <button class="tab-btn" onclick="switchTab('kartuStok', this)">📋 Kartu Stok</button>
@@ -138,7 +143,7 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
     let toko_id = null, activeTab = 'salesHarian';
-    let dbPbHeader = [], dbPbDetail = [], dbPengirimanHeader = [], dbPengirimanDetail = [], dbStokKeluarBahan = [], dbBarang = [], dbAgen = [], dbRekapDriver = [];
+    let dbPbHeader = [], dbPbDetail = [], dbPengirimanHeader = [], dbPengirimanDetail = [], dbStokKeluarBahan = [], dbBarang = [], dbAgen = [], dbRekapDriver = [], dbReturPembelian = [];
 
     function setDefaultDates() {
         const today = new Date();
@@ -172,6 +177,11 @@
         const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
         toko_id = profile ? profile.toko_id : null;
 
+        if (!toko_id) {
+            alert("ID Toko tidak ditemukan pada akun Anda.");
+            return;
+        }
+
         const { data: toko } = await _supabase.from('toko').select('*').eq('id', toko_id).single();
         if (toko) {
             if (toko.nama_toko) {
@@ -186,18 +196,22 @@
             document.getElementById('txtNamaUser').innerText = profile.nama_lengkap;
         }
 
-        const [pbHead, pbDet, kirimHead, kirimDet, brg, agn, driverRes] = await Promise.all([
-            _supabase.from('pembelian_header').select('*'),
-            _supabase.from('pembelian_detail').select('*'),
-            _supabase.from('transaksi_pengiriman').select('*'),
-            _supabase.from('transaksi_pengiriman_detail').select('*'),
-            _supabase.from('barang').select('*'),
-            _supabase.from('agen').select('*'),
-            _supabase.from('rekap_laporan_driver').select('*')
+        // AMBIL DATA DENGAN FILTER BERDASARKAN toko_id SUPAYA TIDAK BERTUMPUK DENGAN TOKO LAIN
+        const [pbHead, pbDet, kirimHead, kirimDet, brg, agn, driverRes, retSupRes] = await Promise.all([
+            _supabase.from('pembelian_header').select('*').eq('toko_id', toko_id),
+            _supabase.from('pembelian_detail').select('*').eq('toko_id', toko_id),
+            _supabase.from('transaksi_pengiriman').select('*').eq('toko_id', toko_id),
+            _supabase.from('transaksi_pengiriman_detail').select('*').eq('toko_id', toko_id),
+            _supabase.from('barang').select('*').eq('toko_id', toko_id),
+            _supabase.from('agen').select('*').eq('toko_id', toko_id),
+            _supabase.from('rekap_laporan_driver').select('*').eq('toko_id', toko_id),
+            _supabase.from('pembelian_detail').select('*').eq('toko_id', toko_id).eq('tipe', 'RETUR')
         ]);
 
         let stokKeluarBakuRes = { data: [] };
-        try { stokKeluarBakuRes = await _supabase.from('stok_keluar_bahan').select('*'); } catch (e) {}
+        try { 
+            stokKeluarBakuRes = await _supabase.from('stok_keluar_bahan').select('*').eq('toko_id', toko_id); 
+        } catch (e) {}
 
         dbPbHeader = pbHead.data || [];
         dbPbDetail = pbDet.data || [];
@@ -207,6 +221,7 @@
         dbBarang = brg.data || [];
         dbAgen = agn.data || [];
         dbRekapDriver = driverRes.data || [];
+        dbReturPembelian = retSupRes.data || [];
 
         const selSup = document.getElementById('filterSupplier');
         selSup.innerHTML = '<option value="">-- Semua Supplier --</option>';
@@ -333,10 +348,8 @@
 
             let totalCash = 0, totalTrf = 0;
             filteredKirim.forEach(k => {
-                let cashVal = Number(k.bayar_cash || 0);
-                let trfVal = Number(k.bayar_transfer || 0);
-                totalCash += cashVal;
-                totalTrf += trfVal;
+                totalCash += Number(k.bayar_cash || 0);
+                totalTrf += Number(k.bayar_transfer || 0);
             });
 
             let totalSalesAll = totalCash + totalTrf;
@@ -357,17 +370,13 @@
                     rekapMap[tglKey] = { tanggal: tglKey, cash: 0, trf: 0, total: 0, listNota: [] };
                 }
 
-                let cashVal = Number(k.bayar_cash || 0);
-                let trfVal = Number(k.bayar_transfer || 0);
-                let nominalTotal = Number(k.total_kirim || 0);
-
-                rekapMap[tglKey].cash += cashVal;
-                rekapMap[tglKey].trf += trfVal;
-                rekapMap[tglKey].total += nominalTotal;
+                rekapMap[tglKey].cash += Number(k.bayar_cash || 0);
+                rekapMap[tglKey].trf += Number(k.bayar_transfer || 0);
+                rekapMap[tglKey].total += Number(k.total_kirim || 0);
                 rekapMap[tglKey].listNota.push(k);
             });
 
-            let rekapArray = Object.values(rekapMap).sort((a,b) => new Date(b.tanggal) - new Date(b.tanggal));
+            let rekapArray = Object.values(rekapMap).sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
 
             area.innerHTML = `<table><thead><tr><th>Tanggal</th><th>Jumlah Transaksi</th><th>Total Cash (Tunai)</th><th>Total Transfer (TRF)</th><th>Total Omzet Hari Ini</th><th>Aksi Rincian</th></tr></thead><tbody>` +
                 (rekapArray.length === 0 ? `<tr><td colspan="6" align="center">Tidak ada data rekap sales harian pada periode ini</td></tr>` :
@@ -382,6 +391,119 @@
                         <td><span class="link-nota" onclick='bukaRincianHarian(${JSON.stringify(r)})'>Lihat Rincian Struk</span></td>
                     </tr>`;
                 }).join('')) + `</tbody></table>`;
+
+        } else if (activeTab === 'returKirimAmbil') {
+            boxSum.style.display = 'grid';
+            document.getElementById('lblSum1').innerText = "Total Nilai Retur Kirim";
+            document.getElementById('lblSum2').innerText = "Total Nilai Retur Ambil";
+            document.getElementById('lblSum3').innerText = "Status Kontrol Agen";
+
+            let filteredKirimIds = filteredKirim.map(k => String(k.id));
+            let filteredNoNotas = filteredKirim.map(k => String(k.no_nota));
+
+            let returKirimList = dbPengirimanDetail.filter(d => {
+                let pId = String(d.pengiriman_id || d.transaksi_pengiriman_id || d.id_pengiriman || '');
+                let nNota = String(d.no_nota || '');
+                let isMatchWaktu = filteredKirimIds.includes(pId) || filteredNoNotas.includes(nNota);
+                let isRetur = (d.tipe || '').toLowerCase() === 'retur';
+                return isMatchWaktu && isRetur;
+            });
+
+            let totalRpReturKirim = returKirimList.reduce((sum, item) => sum + Number(item.subtotal || (item.qty * item.harga_satuan) || 0), 0);
+            let totalRpReturAmbil = dbReturPembelian.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
+
+            document.getElementById('valSum1').innerText = `Rp ${totalRpReturKirim.toLocaleString()}`;
+            document.getElementById('valSum2').innerText = `Rp ${totalRpReturAmbil.toLocaleString()}`;
+            document.getElementById('valSum3').innerText = `Monitoring Aktif`;
+
+            let agenReturMap = {};
+            returKirimList.forEach(i => {
+                let parentTx = dbPengirimanHeader.find(t => String(t.id) === String(i.pengiriman_id || i.transaksi_pengiriman_id || i.id_pengiriman) || String(t.no_nota) === String(i.no_nota));
+                let namaAgen = parentTx?.nama_agen || 'Umum';
+                if (!agenReturMap[namaAgen]) agenReturMap[namaAgen] = { frekuensi: 0, totalRp: 0, barangCount: {} };
+                agenReturMap[namaAgen].frekuensi += 1;
+                agenReturMap[namaAgen].totalRp += Number(i.subtotal || (i.qty * i.harga_satuan) || 0);
+                
+                let bNama = i.nama_barang || 'Barang';
+                agenReturMap[namaAgen].barangCount[bNama] = (agenReturMap[namaAgen].barangCount[bNama] || 0) + Number(i.qty || 0);
+            });
+
+            let controlRowsHtml = '';
+            let agenKeys = Object.keys(agenReturMap);
+            if (agenKeys.length === 0) {
+                controlRowsHtml = `<tr><td colspan="5" align="center">Belum ada data retur agen untuk dianalisis</td></tr>`;
+            } else {
+                agenKeys.forEach(agen => {
+                    let dData = agenReturMap[agen];
+                    let topBrg = '-';
+                    let maxQ = 0;
+                    for (let [b, q] of Object.entries(dData.barangCount)) {
+                        if (q > maxQ) { maxQ = q; topBrg = b; }
+                    }
+
+                    let badge = '<span class="badge badge-safe">🟢 Aman</span>';
+                    if (dData.frekuensi >= 3 || dData.totalRp > 250000) badge = '<span class="badge badge-warning">🟡 Waspada (Cek Display)</span>';
+                    if (dData.frekuensi >= 6 || dData.totalRp > 600000) badge = '<span class="badge badge-danger">🔴 Bahaya (Tarik Segera)</span>';
+
+                    controlRowsHtml += `<tr>
+                        <td><b>${agen}</b></td>
+                        <td align="right">${dData.frekuensi}x Retur</td>
+                        <td align="right" style="color:var(--orange); font-weight:bold;">Rp ${dData.totalRp.toLocaleString()}</td>
+                        <td>${topBrg} (${maxQ} unit)</td>
+                        <td>${badge}</td>
+                    </tr>`;
+                });
+            }
+
+            let returKirimRows = returKirimList.length === 0 ? `<tr><td colspan="5" align="center">Tidak ada data retur kirim</td></tr>` :
+                returKirimList.map(i => {
+                    let parentTx = dbPengirimanHeader.find(t => String(t.id) === String(i.pengiriman_id || i.transaksi_pengiriman_id || i.id_pengiriman) || String(t.no_nota) === String(i.no_nota));
+                    let matchedBrg = carikanBarangDetail(i);
+                    let qtyText = formatQtyBarangDisplay(Number(i.qty || 0), i.satuan, matchedBrg);
+                    return `<tr>
+                        <td>${parentTx?.tanggal || '-'}</td>
+                        <td><b>${i.no_nota || parentTx?.no_nota || '-'}</b></td>
+                        <td>${parentTx?.nama_agen || '-'}</td>
+                        <td>${i.nama_barang || 'Barang'}</td>
+                        <td align="right" style="color:var(--red); font-weight:bold;">${qtyText} (Rp ${Number(i.subtotal || 0).toLocaleString()})</td>
+                    </tr>`;
+                }).join('');
+
+            let returAmbilRows = dbReturPembelian.length === 0 ? `<tr><td colspan="5" align="center">Tidak ada data retur ambil / ke supplier</td></tr>` :
+                dbReturPembelian.map(i => {
+                    let matchedBrg = carikanBarangDetail(i);
+                    let qtyText = formatQtyBarangDisplay(Number(i.qty || 0), i.satuan, matchedBrg);
+                    return `<tr>
+                        <td>-</td>
+                        <td><b>${i.no_pb || '-'}</b></td>
+                        <td>${i.supplier || 'Supplier'}</td>
+                        <td>${i.nama_barang || 'Barang'}</td>
+                        <td align="right" style="color:var(--orange); font-weight:bold;">${qtyText} (Rp ${Number(i.subtotal || 0).toLocaleString()})</td>
+                    </tr>`;
+                }).join('');
+
+            area.innerHTML = `
+                <h4 style="margin-top:0; color:var(--p-color);">🚨 TABEL KONTROL & EARLY WARNING RETUR AGEN</h4>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:-5px;">Digunakan untuk memantau agen yang sering meretur barang agar bad stock tidak menumpuk.</p>
+                <table>
+                    <thead><tr><th>Nama Agen</th><th align="right">Frekuensi Retur</th><th align="right">Akumulasi Nilai Retur</th><th>Top 1 Barang Sering Retur</th><th>Status Kontrol</th></tr></thead>
+                    <tbody>${controlRowsHtml}</tbody>
+                </table>
+
+                <br>
+                <h4 style="color:var(--p-color);">🔄 1. RETUR KIRIM (BARANG DITARIK DARI AGEN SAAT SALES)</h4>
+                <table>
+                    <thead><tr><th>Tanggal</th><th>No Nota</th><th>Nama Agen</th><th>Nama Barang</th><th align="right">Qty & Nilai Retur</th></tr></thead>
+                    <tbody>${returKirimRows}</tbody>
+                </table>
+
+                <br>
+                <h4 style="color:var(--p-color);">📥 2. RETUR AMBIL (BARANG DIBALIKKAN KE SUPPLIER SAAT RESTOCK)</h4>
+                <table>
+                    <thead><tr><th>Tanggal</th><th>No PB / Faktur</th><th>Supplier</th><th>Nama Barang</th><th align="right">Qty & Nilai Retur</th></tr></thead>
+                    <tbody>${returAmbilRows}</tbody>
+                </table>
+            `;
 
         } else if (activeTab === 'penerimaan') {
             boxSum.style.display = 'grid';
@@ -421,12 +543,11 @@
                     rekapPbMap[tglKey] = { tanggal: tglKey, totalRp: 0, listPb: [] };
                 }
 
-                let nominal = Number(p.total_rupiah || 0);
-                rekapPbMap[tglKey].totalRp += nominal;
+                rekapPbMap[tglKey].totalRp += Number(p.total_rupiah || 0);
                 rekapPbMap[tglKey].listPb.push(p);
             });
 
-            let rekapPbArray = Object.values(rekapPbMap).sort((a,b) => new Date(b.tanggal) - new Date(b.tanggal));
+            let rekapPbArray = Object.values(rekapPbMap).sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
 
             area.innerHTML = `<table><thead><tr><th>Tanggal</th><th>Jumlah Nota PB</th><th>Total Rupiah Pembelian</th><th>Aksi Rincian</th></tr></thead><tbody>` +
                 (rekapPbArray.length === 0 ? `<tr><td colspan="4" align="center">Tidak ada data rekap penerimaan barang pada periode ini</td></tr>` :

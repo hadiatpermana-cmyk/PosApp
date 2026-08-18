@@ -95,6 +95,15 @@
             </div>
             
             <div id="tabProfil" class="tab-content active">
+                <!-- CARD KODE TOKO / TOKEN PENDAFTARAN -->
+                <div style="background: var(--bg-main); border: 1px solid var(--border-line); border-left: 4px solid var(--blue); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <label style="margin:0; font-size:13px; color:var(--text-muted);">🔑 Kode Toko Unik (Bagikan ke Karyawan untuk Pendaftaran)</label>
+                    <div style="display: flex; gap: 10px; margin-top: 8px; align-items: center;">
+                        <input type="text" id="inputKodeToko" readonly style="background:var(--bg-card); font-family: monospace; font-size: 15px;" />
+                        <button class="btn-action" style="background:var(--blue); color:white; padding: 12px 16px;" onclick="salinKodeToko()">Salin Kode</button>
+                    </div>
+                </div>
+
                 <div class="form-group"><label>Nama Toko / Grosir</label><input type="text" id="inputNamaToko"></div>
                 <div class="form-group"><label>Kontak Utama (No HP / WA)</label><input type="text" id="inputKontak"></div>
                 <div class="form-group"><label>Alamat Lengkap</label><textarea id="inputAlamat" rows="3"></textarea></div>
@@ -201,12 +210,23 @@
         } 
     }
 
+    function salinKodeToko() {
+        const copyText = document.getElementById("inputKodeToko");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(copyText.value);
+        alert("📋 Kode Toko berhasil disalin ke clipboard!");
+    }
+
     async function verifikasiSesi() {
         const { data: sessionData } = await _supabase.auth.getSession();
         if (!sessionData.session) return window.location.replace("index.html");
         const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
         tokoIdGlobal = profile.toko_id;
         
+        // Tampilkan Kode Toko
+        document.getElementById('inputKodeToko').value = tokoIdGlobal || '';
+
         const { data: toko } = await _supabase.from('toko').select('*').eq('id', tokoIdGlobal).single();
         document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
         document.getElementById('inputNamaToko').value = toko.nama_toko || '';
@@ -282,24 +302,23 @@
         `).join('');
     }
 
-async function tambahKendaraan() {
-    const plat = document.getElementById('inputPlatNomor').value.trim();
-    const jenis = document.getElementById('inputJenisKendaraan').value;
-    if (!plat) return alert("Plat nomor / nama armada wajib diisi!");
+    async function tambahKendaraan() {
+        const plat = document.getElementById('inputPlatNomor').value.trim();
+        const jenis = document.getElementById('inputJenisKendaraan').value;
+        if (!plat) return alert("Plat nomor / nama armada wajib diisi!");
 
-    try {
-        const { error } = await _supabase.from('kendaraan').insert([{
-            toko_id: tokoIdGlobal,
-            plat_nomor: plat,
-            jenis_kendaraan: jenis
-        }]);
-        if (error) throw error;
-        alert("✅ Kendaraan Berhasil Ditambahkan!");
-        document.getElementById('inputPlatNomor').value = '';
-        muatDataKendaraan();
-    } catch(e) { alert("Gagal menambah kendaraan: " + e.message); }
-}
-
+        try {
+            const { error } = await _supabase.from('kendaraan').insert([{
+                toko_id: tokoIdGlobal,
+                plat_nomor: plat,
+                jenis_kendaraan: jenis
+            }]);
+            if (error) throw error;
+            alert("✅ Kendaraan Berhasil Ditambahkan!");
+            document.getElementById('inputPlatNomor').value = '';
+            muatDataKendaraan();
+        } catch(e) { alert("Gagal menambah kendaraan: " + e.message); }
+    }
 
     async function hapusKendaraan(id) {
         if (confirm("Yakin ingin menghapus data kendaraan ini?")) {

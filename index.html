@@ -45,12 +45,12 @@
 
     <!-- FORM PENDAFTARAN KARYAWAN -->
     <div id="formDaftar" style="display: none;">
-        <!-- Bagian Input ID Toko Otomatis / Readonly -->
+        <!-- Bagian Input ID Toko -->
         <div id="boxFormKaryawan">
             <div class="form-group">
-                <label>ID Toko (Terisi Otomatis)</label>
-                <input type="text" id="regIdToko" readonly style="background: #e9ecef; color: #495057; font-weight: bold;" placeholder="Memuat ID Toko...">
-                <small style="color: #6c757d; font-size: 11px; margin-top: 3px; display: block;">*ID toko terdeteksi otomatis dari sesi login aktif.</small>
+                <label>ID / Kode Toko</label>
+                <input type="text" id="regIdToko" placeholder="Masukkan ID Toko dari Admin..." style="font-weight: bold; text-transform: uppercase;">
+                <small style="color: #6c757d; font-size: 11px; margin-top: 3px; display: block;">*Minta Kode/ID Toko dari Admin utama Anda jika belum terisi otomatis.</small>
             </div>
             <hr style="border: 0; border-top: 1px dashed #ddd; margin: 15px 0;">
         </div>
@@ -91,8 +91,7 @@
             if (sessionData && sessionData.session) {
                 const { data: profile } = await _supabase.from('profiles').select('toko_id').eq('id', sessionData.session.user.id).single();
                 if (profile && profile.toko_id) {
-                    const inputToko = document.getElementById('regIdToko');
-                    inputToko.value = profile.toko_id;
+                    document.getElementById('regIdToko').value = profile.toko_id;
                 }
             }
         } catch (e) {
@@ -106,7 +105,7 @@
             document.getElementById('formLogin').style.display = 'none';
             document.getElementById('formDaftar').style.display = 'block';
             document.getElementById('authTitle').innerHTML = "DAFTAR<span>KARYAWAN BARU</span>";
-            muatIdTokoOtomatis(); // Panggil fungsi untuk mengisi ID toko saat form daftar dibuka
+            muatIdTokoOtomatis(); 
         } else {
             document.getElementById('formLogin').style.display = 'block';
             document.getElementById('formDaftar').style.display = 'none';
@@ -118,7 +117,7 @@
         const namaLengkap = document.getElementById('regNamaLengkap').value.trim();
         const email = document.getElementById('regEmail').value.trim();
         const password = document.getElementById('regPassword').value;
-        const idTokoFinal = document.getElementById('regIdToko').value.trim().toUpperCase();
+        const idTokoFinal = document.getElementById('regIdToko').value.trim();
 
         if (!namaLengkap || !email || !password || !idTokoFinal) {
             return tampilkanPesan("Semua kolom wajib harus diisi termasuk ID Toko!", "error");
@@ -130,7 +129,7 @@
                 .select('id')
                 .eq('id', idTokoFinal)
                 .single();
-            if (errCek || !cekToko) throw new Error("ID Toko aktif tidak valid atau tidak ditemukan.");
+            if (errCek || !cekToko) throw new Error("ID Toko aktif tidak valid atau tidak ditemukan di database.");
 
             // Daftarkan Akun ke Supabase Auth
             const { data: dataAuth, error: errAuth } = await _supabase.auth.signUp({ email, password });

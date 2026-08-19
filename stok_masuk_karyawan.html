@@ -689,24 +689,27 @@
             if (errHeader) throw new Error("Header: " + errHeader.message);
 
             // 2. Simpan Details & Update Stok Barang
+// 2. Simpan Details & Update Stok Barang
             let counter = 1;
             
             // Proses Barang Terima (Stok +)
             for (const item of itemsTerima) {
                 const uniqueDetailId = `${noFaktur}-D${counter++}`;
                 
-                await _supabase.from('pembelian_detail').insert([{
+                // Tambahkan penangkap error (const { error }) dan hapus kolom yang tidak ada di database
+                const { error: errDetail } = await _supabase.from('pembelian_detail').insert([{
                     id: uniqueDetailId,
                     toko_id: tokoIdGlobal,
                     no_pb: noFaktur,
                     barang_id: item.id_barang,
-                    nama_barang: item.barang,
                     qty: item.qty_base || item.qty,
-                    satuan: item.satuan,
+                    satuan: item.satuan, // atau gunakan 'pcs' sesuai versi desktop Anda
                     harga_satuan: item.harga,
-                    subtotal: item.total,
-                    tipe: 'TERIMA'
+                    subtotal: item.total
                 }]);
+                
+                // Jika gagal, hentikan dan munculkan peringatan
+                if (errDetail) throw new Error("Gagal menyimpan detail (Terima): " + errDetail.message);
 
                 const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();
                 const stokBaru = (Number(brg?.stok_sekarang) || 0) + (Number(item.qty_base) || Number(item.qty));
@@ -717,18 +720,18 @@
             for (const item of itemsRetur) {
                 const uniqueDetailId = `${noFaktur}-R${counter++}`;
                 
-                await _supabase.from('pembelian_detail').insert([{
+                const { error: errRetur } = await _supabase.from('pembelian_detail').insert([{
                     id: uniqueDetailId,
                     toko_id: tokoIdGlobal,
                     no_pb: noFaktur,
                     barang_id: item.id_barang,
-                    nama_barang: item.barang,
                     qty: item.qty_base || item.qty,
-                    satuan: item.satuan,
+                    satuan: item.satuan, 
                     harga_satuan: item.harga,
-                    subtotal: item.total,
-                    tipe: 'RETUR'
+                    subtotal: item.total
                 }]);
+                
+                if (errRetur) throw new Error("Gagal menyimpan detail (Retur): " + errRetur.message);
 
                 const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();
                 const stokBaru = (Number(brg?.stok_sekarang) || 0) - (Number(item.qty_base) || Number(item.qty));

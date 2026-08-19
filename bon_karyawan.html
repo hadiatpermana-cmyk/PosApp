@@ -831,6 +831,7 @@
 
         try {
             const { error: errTx } = await _supabase.from('transaksi_pengiriman').insert([{
+                toko_id: tokoIdGlobal, // <-- INI YANG DITAMBAHKAN
                 no_nota: noNota, nama_agen: ag, tanggal: tglInput,
                 driver_1: drv1, driver_2: drv2 || null, plat_nomor: mobil || null, 
                 total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
@@ -839,8 +840,8 @@
             if (errTx) throw new Error(errTx.message);
 
             const details = [
-                ...itemsKirim.map(i => ({ no_nota: noNota, nama_barang: i.barang, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
-                ...itemsRetur.map(i => ({ no_nota: noNota, nama_barang: i.barang, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
+                ...itemsKirim.map(i => ({ toko_id: tokoIdGlobal, no_nota: noNota, nama_barang: i.barang, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })), // <-- DITAMBAHKAN
+                ...itemsRetur.map(i => ({ toko_id: tokoIdGlobal, no_nota: noNota, nama_barang: i.barang, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total })) // <-- DITAMBAHKAN
             ];
             await _supabase.from('transaksi_pengiriman_detail').insert(details);
             

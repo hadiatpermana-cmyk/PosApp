@@ -250,6 +250,7 @@
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
     let namaTokoGlobal = "Toko Saya";
+    let tokoIdGlobal = null; // <-- TAMBAHKAN INI
     let btCharacteristic = null;
     let connectedDeviceId = null;
     let lastPrintCommands = [];
@@ -328,9 +329,14 @@
                 document.getElementById('txtNamaUser').innerText = session.user.email.split('@')[0];
             }
 
-            const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', session.user.id).single();
+            const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
+            // Catatan: Di file versi desktop, kodenya menggunakan 'session.user.id', sesuaikan saja.
+            
             if (profile) {
-                if (profile.nama_lengkap) document.getElementById('txtNamaUser').innerText = profile.nama_lengkap.split(' ')[0];
+                tokoIdGlobal = profile.toko_id; // <-- TAMBAHKAN BARIS INI
+                
+                if (profile.nama_lengkap) {
+                    document.getElementById('txtNamaUser').innerText = profile.nama_lengkap;
                 if (profile.toko_id) {
                     const { data: toko } = await _supabase.from('toko').select('nama_toko, logo_url').eq('id', profile.toko_id).single();
                     if (toko) {
@@ -399,23 +405,22 @@
         }
     }
 
-    async function simpanSettingHarga() {
+   async function simpanSettingHarga() {
         let kId = document.getElementById('settingKaryawan').value;
         if(!kId) { alert("Silakan pilih karyawan terlebih dahulu!"); return; }
 
-        let items = Object.keys(ITEM_LABELS);
         let payloads = [];
-        
-        for(let k of items) {
+        for(let k in ITEM_LABELS) {
             let valNormal = bersihFormat(document.getElementById('h_' + k).value);
             let valLembur = bersihFormat(document.getElementById('hl_' + k).value);
-
-            payloads.push({ karyawan_id: kId, kategori: k, tarif: valNormal });
-            payloads.push({ karyawan_id: kId, kategori: 'lembur_' + k, tarif: valLembur });
+            
+            // <-- TAMBAHKAN toko_id DI SINI
+            payloads.push({ toko_id: tokoIdGlobal, karyawan_id: kId, kategori: k, tarif: valNormal });
+            payloads.push({ toko_id: tokoIdGlobal, karyawan_id: kId, kategori: 'lembur_' + k, tarif: valLembur });
         }
 
         await _supabase.from('tarif_karyawan').upsert(payloads, { onConflict: 'karyawan_id,kategori' });
-        alert("Tarif Khusus berhasil disimpan!");
+        alert("✅ Tarif Khusus berhasil disimpan!");
     }
 
     async function simpanInputHarian() {
@@ -424,41 +429,41 @@
 
         if(!tanggal || !karyawan_id) { alert("Tanggal dan Karyawan wajib dipilih!"); return; }
 
-        let items = Object.keys(ITEM_LABELS);
         let q = {}; let l = {};
-
-        items.forEach(item => {
+        for(let item in ITEM_LABELS) {
             q[item] = parseInt(document.getElementById('q_' + item).value) || 0;
             l[item] = parseInt(document.getElementById('l_' + item).value) || 0;
-        });
+        }
 
         const { data: setTarif } = await _supabase.from('tarif_karyawan').select('*').eq('karyawan_id', karyawan_id);
         let tarif = {};
         if(setTarif) { setTarif.forEach(s => { tarif[s.kategori] = Number(s.tarif); }); }
 
         let total_upah = 0;
-        items.forEach(item => {
+        for(let item in ITEM_LABELS) {
             let h_normal = tarif[item] || 0;
             let h_lembur = tarif['lembur_' + item] || 0; 
             total_upah += (q[item] * h_normal) + (l[item] * h_lembur);
-        });
+        }
 
-        let payload = { tanggal, karyawan_id, total_upah };
-        items.forEach(item => {
+        // <-- TAMBAHKAN toko_id DI PAYLOAD AWAL INI
+        let payload = { toko_id: tokoIdGlobal, tanggal, karyawan_id, total_upah };
+        
+        for(let item in ITEM_LABELS) {
             payload['q_' + item] = q[item];
             payload['l_' + item] = l[item];
-        });
+        }
 
         const { error } = await _supabase.from('produksi_harian').insert([payload]);
         if(error) {
             alert("Gagal menyimpan: " + error.message);
         } else {
-            alert("Sukses! Hasil produksi tersimpan.");
+            alert("✅ Sukses! Hasil produksi & upah tersimpan.");
             muatStatistikHariIni();
-            items.forEach(item => {
+            for(let item in ITEM_LABELS) {
                 document.getElementById('q_' + item).value = 0;
                 document.getElementById('l_' + item).value = 0;
-            });
+            }
         }
     }
 

@@ -207,7 +207,8 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-    let namaTokoGlobal = "SBR Putra Food";
+    let namaTokoGlobal = "Toko Saya";
+    let tokoIdGlobal = null; // <-- TAMBAHKAN INI
     let btCharacteristic = null;
 
     const ITEM_LABELS = {
@@ -302,10 +303,13 @@
         const { data: sessionData } = await _supabase.auth.getSession();
         if (sessionData && sessionData.session) {
             const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
+            // Catatan: Di file versi desktop, kodenya menggunakan 'session.user.id', sesuaikan saja.
+            
             if (profile) {
+                tokoIdGlobal = profile.toko_id; // <-- TAMBAHKAN BARIS INI
+                
                 if (profile.nama_lengkap) {
                     document.getElementById('txtNamaUser').innerText = profile.nama_lengkap;
-                    localStorage.setItem('cache_nama_user', profile.nama_lengkap);
                 }
                 
                 if (profile.toko_id) {
@@ -384,8 +388,10 @@
         for(let k in ITEM_LABELS) {
             let valNormal = bersihFormat(document.getElementById('h_' + k).value);
             let valLembur = bersihFormat(document.getElementById('hl_' + k).value);
-            payloads.push({ karyawan_id: kId, kategori: k, tarif: valNormal });
-            payloads.push({ karyawan_id: kId, kategori: 'lembur_' + k, tarif: valLembur });
+            
+            // <-- TAMBAHKAN toko_id DI SINI
+            payloads.push({ toko_id: tokoIdGlobal, karyawan_id: kId, kategori: k, tarif: valNormal });
+            payloads.push({ toko_id: tokoIdGlobal, karyawan_id: kId, kategori: 'lembur_' + k, tarif: valLembur });
         }
 
         await _supabase.from('tarif_karyawan').upsert(payloads, { onConflict: 'karyawan_id,kategori' });
@@ -415,7 +421,9 @@
             total_upah += (q[item] * h_normal) + (l[item] * h_lembur);
         }
 
-        let payload = { tanggal, karyawan_id, total_upah };
+        // <-- TAMBAHKAN toko_id DI PAYLOAD AWAL INI
+        let payload = { toko_id: tokoIdGlobal, tanggal, karyawan_id, total_upah };
+        
         for(let item in ITEM_LABELS) {
             payload['q_' + item] = q[item];
             payload['l_' + item] = l[item];

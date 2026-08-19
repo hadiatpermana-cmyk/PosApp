@@ -770,7 +770,7 @@
         document.body.removeChild(downloadLink);
     }
 
-    async function simpanTransaksi() {
+async function simpanTransaksi() {
         let errorList = [];
         const agRaw = document.getElementById('inPelanggan').value;
         if (!agRaw) return alert("Pilih agen/umum terlebih dahulu!");
@@ -866,6 +866,7 @@
         try {
             // 1. Simpan Header Transaksi Pengiriman
             const { error: errTx } = await _supabase.from('transaksi_pengiriman').insert([{
+                toko_id: tokoIdGlobal, // <-- INI YANG DITAMBAHKAN
                 no_nota: noStrukAktif, nama_agen: ag, tanggal: tglInput,
                 driver_1: kasirVal, driver_2: checkerVal, plat_nomor: mobil, 
                 total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
@@ -875,8 +876,8 @@
 
             // 2. Simpan Detail Transaksi
             const details = [
-                ...keranjangKirim.map(i => ({ no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
-                ...keranjangRetur.map(i => ({ no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
+                ...keranjangKirim.map(i => ({ toko_id: tokoIdGlobal, no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })), // <-- DITAMBAHKAN
+                ...keranjangRetur.map(i => ({ toko_id: tokoIdGlobal, no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total })) // <-- DITAMBAHKAN
             ];
             await _supabase.from('transaksi_pengiriman_detail').insert(details);
             

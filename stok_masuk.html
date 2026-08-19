@@ -124,7 +124,7 @@
             <div class="bon-divider" style="border-top:2px dashed #999;"></div>
             <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span>GRAND TOTAL</span><span id="grandTotal">0</span></div>
 
-            <div style="margin-top: 20px;">
+            <div style="margin-top: 20px;" data-html2canvas-ignore="true">
                 <button class="btn-action" style="background:var(--green); color:white;" id="btnSimpan" onclick="validasiSimpan()">Simpan & Update Stok</button>
             </div>
         </div>
@@ -181,7 +181,20 @@
         </div>
     </div>
 </div>
-
+<!-- Modal Preview Struk Digital -->
+<div id="modalPreviewStruk" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2000; justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:20px; border-radius:12px; width:95%; max-width:400px; text-align:center; position:relative;">
+        <h3 style="color:#27ae60; margin-top:0;">✅ Transaksi Berhasil!</h3>
+        <p style="font-size:13px; color:#555;">Struk digital telah diunduh otomatis. Silakan klik tombol WA di bawah dan lampirkan gambarnya.</p>
+        
+        <img id="imgPreviewLaporan" style="width:100%; border:1px solid #ccc; border-radius:8px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1);" />
+        
+        <div style="display:flex; gap:10px;">
+            <button class="btn-action" style="background:#25d366; color:white; flex:1;" id="btnKirimWA">Kirim WhatsApp</button>
+            <button class="btn-action" style="background:var(--blue); color:white; flex:1;" onclick="tutupModalDanReset()">Selesai / Nota Baru</button>
+        </div>
+    </div>
+</div>
 <script>
     const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
@@ -519,15 +532,61 @@
                 await _supabase.from('barang').update({ stok_sekarang: Number(brg?.stok_sekarang || 0) - totalPcsKonversi }).eq('id', item.id_barang);
             }
 
-            cartTerima = []; cartRetur = [];
-            buatNoFaktur(); renderBon();
-            alert("Transaksi Berhasil Disimpan!");
+            // Memicu pembuatan struk digital sebelum form direset
+            btn.innerText = "MEMBUAT STRUK DIGITAL...";
+            const savedSupplier = namaSupplier;
+            const savedFaktur = noFakturAktif;
+            const savedTgl = document.getElementById('lblTanggal').innerText;
+            
+            await buatGambarLaporan(savedSupplier, savedFaktur, savedTgl);
+
         } catch (e) { 
             console.error(e);
             alert("Gagal menyimpan: " + e.message); 
-        } finally { 
             btn.disabled = false; btn.innerText = "Simpan & Update Stok"; 
-        }
+        } 
+    }
+
+    async function buatGambarLaporan(supplier, faktur, tgl) {
+        const area = document.getElementById('areaBon');
+        
+        // Render UI struk menjadi canvas gambar
+        const canvas = await html2canvas(area, { scale: 2, backgroundColor: "#fffdf5", logging: false });
+        const imgUrl = canvas.toDataURL("image/jpeg", 0.9);
+        
+        // Tampilkan hasil di modal preview
+        document.getElementById('imgPreviewLaporan').src = imgUrl;
+        document.getElementById('modalPreviewStruk').style.display = 'flex';
+
+        // Auto download ke file gambar perangkat user
+        const downloadLink = document.createElement("a");
+        downloadLink.href = imgUrl;
+        downloadLink.download = `Struk_Penerimaan_${faktur}.jpg`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+
+        // Siapkan Teks Pengantar WhatsApp (User tinggal klik)
+        let pesanWA = `Halo admin ${supplier},\nBerikut adalah bukti penerimaan barang & update stok dengan No. Faktur *${faktur}* pada tanggal *${tgl}*.\n\n_Mohon lampirkan gambar struk penerimaan yang baru saja diunduh._`;
+        let waUrl = `https://wa.me/?text=${encodeURIComponent(pesanWA)}`;
+        
+        document.getElementById('btnKirimWA').onclick = function() {
+            window.open(waUrl, '_blank');
+        };
+    }
+
+    function tutupModalDanReset() {
+        document.getElementById('modalPreviewStruk').style.display = 'none';
+        
+        // Reset form keranjang dan kembali keadaan awal
+        cartTerima = []; 
+        cartRetur = [];
+        buatNoFaktur(); 
+        renderBon();
+        
+        const btn = document.getElementById('btnSimpan');
+        btn.disabled = false; 
+        btn.innerText = "Simpan & Update Stok"; 
     }
 
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }

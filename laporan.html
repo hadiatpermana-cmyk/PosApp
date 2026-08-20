@@ -1071,9 +1071,11 @@
         document.getElementById('modalNota').style.display = 'flex';
     }
 
+    // MENAMPILKAN MODAL NOTA / STRUK DETAIL
     function bukaNotaPengiriman(kirim) {
         document.getElementById('modalTitle').innerText = "NOTA PENGIRIMAN & RINCIAN BARANG";
         let itemsHtml = '';
+        
         let details = dbPengirimanDetail.filter(d => {
             let pId = String(d.pengiriman_id || d.transaksi_pengiriman_id || d.id_pengiriman || '');
             let nNota = String(d.no_nota || '');
@@ -1081,25 +1083,39 @@
         });
         
         details.forEach(d => {
-            let matchedBrg = carikanBarangDetail(d);
-            let namaBrg = matchedBrg ? matchedBrg.nama_barang : (d.nama_barang || 'Barang');
+            let namaBrg = d.nama_barang || 'Barang';
             let sub = parseFloat(d.subtotal || (d.qty * d.harga_satuan) || 0);
-            let qtyText = formatQtyBarangDisplay(Number(d.qty || d.jumlah || 0), 'pcs', matchedBrg);
-            itemsHtml += `<li>${qtyText} - ${namaBrg} = <b>Rp ${sub.toLocaleString()}</b></li>`;
+            let qty = Number(d.qty || d.jumlah || 0);
+            let satuan = d.satuan || 'Pcs';
+            
+            // Cek tipe barang (Kirim / Retur)
+            let tipeBrg = (d.tipe || 'Kirim').toUpperCase();
+            
+            if (tipeBrg === 'RETUR') {
+                // Tampilan khusus untuk Retur (Merah dan ada tanda minus pada harga)
+                let badgeRetur = `<span style="background: var(--red); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-right: 5px;">RETUR</span>`;
+                itemsHtml += `<li style="color: var(--red); margin-bottom: 5px;">${badgeRetur} ${qty} ${satuan} - ${namaBrg} = <b>-Rp ${sub.toLocaleString('id-ID')}</b></li>`;
+            } else {
+                // Tampilan untuk Kirim (Hijau)
+                let badgeKirim = `<span style="background: var(--green); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-right: 5px;">KIRIM</span>`;
+                itemsHtml += `<li style="margin-bottom: 5px;">${badgeKirim} ${qty} ${satuan} - ${namaBrg} = <b>Rp ${sub.toLocaleString('id-ID')}</b></li>`;
+            }
         });
 
         document.getElementById('detailNotaContent').innerHTML = `
             <b>No Nota:</b> ${kirim.no_nota || '-'}<br>
             <b>Nama Agen:</b> ${kirim.nama_agen || '-'}<br>
-            <b>Pembayaran Cash:</b> Rp ${Number(kirim.bayar_cash || 0).toLocaleString()}<br>
-            <b>Pembayaran Transfer:</b> Rp ${Number(kirim.bayar_transfer || 0).toLocaleString()}<br>
-            <b>Driver:</b> ${kirim.driver_1 || '-'}<br>
+            <b>Pembayaran Cash:</b> Rp ${Number(kirim.bayar_cash || 0).toLocaleString('id-ID')}<br>
+            <b>Pembayaran Transfer:</b> Rp ${Number(kirim.bayar_transfer || 0).toLocaleString('id-ID')}<br>
+            <b>Driver / Kurir:</b> ${kirim.driver_1 || '-'}<br>
             <hr style="border:1px dashed var(--border-line);">
-            <ul style="padding-left:15px; margin:0; line-height:1.6;">${itemsHtml.length > 0 ? itemsHtml : '<li>Tidak ada rincian detail barang</li>'}</ul>
+            <ul style="padding-left:15px; margin:0; line-height:1.6; list-style-type: none;">
+                ${itemsHtml.length > 0 ? itemsHtml : '<li>Tidak ada rincian detail barang</li>'}
+            </ul>
             <hr style="border:1px dashed var(--border-line);">
-            <b>Total Kirim:</b> Rp ${parseFloat(kirim.total_kirim || 0).toLocaleString()}<br>
-            <b>Total Retur:</b> Rp ${parseFloat(kirim.total_retur || 0).toLocaleString()}<br>
-            <b>Sisa Akhir:</b> Rp ${parseFloat(kirim.sisa_akhir || 0).toLocaleString()}
+            <b>Total Kirim:</b> Rp ${parseFloat(kirim.total_kirim || 0).toLocaleString('id-ID')}<br>
+            <b style="color: var(--red);">Total Retur:</b> Rp ${parseFloat(kirim.total_retur || 0).toLocaleString('id-ID')}<br>
+            <b>Sisa / Piutang Akhir:</b> Rp ${parseFloat(kirim.sisa_akhir || 0).toLocaleString('id-ID')}
         `;
         document.getElementById('modalNota').style.display = 'flex';
     }

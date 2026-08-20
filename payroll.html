@@ -107,7 +107,7 @@
 </div>
 
 <div class="main-container">
-    <div class="sidebar" id="sidebar">
+     <div class="sidebar collapsed" id="sidebar">
         <div class="nav-menu">
             <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
             <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
@@ -220,11 +220,43 @@
                         <button class="btn-action" style="background: #2563eb; height: 42px;" onclick="cetakBluetoothDirect()">🖨️ Cetak Bluetooth</button>
                     </div>
                 </div>
+                
+<!-- TAMBAHAN FORM PENDAPATAN LAIN / BONUS (DINAMIS) -->
+                <div style="margin-top: 15px; background: rgba(27, 160, 226, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed var(--blue);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong style="color: var(--blue); font-size: 14px;">Pendapatan Lain-lain (Opsional)</strong>
+                        <button class="btn-action" style="background: var(--blue); padding: 6px 12px; font-size: 11px;" onclick="tambahBarisBonus()">+ Tambah Baris</button>
+                    </div>
+                    <div id="bonusContainer">
+                        <!-- Baris input bonus pertama (bawaan) -->
+                        <div class="form-grid bonus-row" style="grid-template-columns: 2fr 1fr auto; align-items: end; margin-bottom: 10px;">
+                            <div class="form-group">
+                                <label style="color: var(--blue);">Keterangan</label>
+                                <input type="text" class="in-bonus-desc" placeholder="Contoh: Bonus Target">
+                            </div>
+                            <div class="form-group">
+                                <label style="color: var(--blue);">Nominal (Rp)</label>
+                                <input type="text" class="in-bonus-amount" placeholder="0" oninput="formatRibuan(this)">
+                            </div>
+                            <button class="btn-action" style="background: var(--red); height: 42px; width: 42px; display: flex; justify-content: center; align-items: center;" onclick="hapusBarisBonus(this)">✕</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div style="margin-top: 15px; display: flex; gap: 10px;">
                     <button class="btn-action" id="btnReprint" style="background: #f59e0b;" onclick="reprintLast()" disabled>🔄 REPRINT SLIP TERAKHIR</button>
                 </div>
             </div>
 
+<!-- MODAL RINCIAN HARIAN REKAP -->
+<div class="modal-overlay" id="modalRincian">
+    <div class="modal-card" style="width: 600px;">
+        <div class="modal-header">
+            <span id="modalRincianTitle">Rincian Harian Karyawan</span>
+            <button onclick="document.getElementById('modalRincian').style.display='none'" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+        </div>
+        <div class="modal-body" id="modalRincianBody" style="background: var(--bg-card); padding: 15px;">
+            <!-- Tabel rincian masuk sini -->
         </div>
     </div>
 </div>
@@ -243,16 +275,17 @@
         </div>
     </div>
 </div>
-
 <script>
     const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
     let namaTokoGlobal = "Toko Saya";
-    let tokoIdGlobal = null; // <-- TAMBAHKAN INI
+    let tokoIdGlobal = null; 
     let btCharacteristic = null;
     let connectedDeviceId = null;
+    let globalRekapKaryawan = {}; 
+    let globalTarifMap = {}; 
     let lastPrintCommands = [];
 
     const ITEM_LABELS = {
@@ -291,6 +324,30 @@
         document.getElementById('containerSettingTarif').innerHTML = htmlSetting;
     }
 
+    // FUNGSI UNTUK BONUS DINAMIS
+    function tambahBarisBonus() {
+        const container = document.getElementById('bonusContainer');
+        const newRow = document.createElement('div');
+        newRow.className = 'form-grid bonus-row';
+        newRow.style = 'grid-template-columns: 2fr 1fr auto; align-items: end; margin-bottom: 10px;';
+        newRow.innerHTML = `
+            <div class="form-group">
+                <label style="color: var(--blue);">Keterangan</label>
+                <input type="text" class="in-bonus-desc" placeholder="Contoh: Bonus / Lembur Khusus">
+            </div>
+            <div class="form-group">
+                <label style="color: var(--blue);">Nominal (Rp)</label>
+                <input type="text" class="in-bonus-amount" placeholder="0" oninput="formatRibuan(this)">
+            </div>
+            <button class="btn-action" style="background: var(--red); height: 42px; width: 42px; display: flex; justify-content: center; align-items: center;" onclick="hapusBarisBonus(this)">✕</button>
+        `;
+        container.appendChild(newRow);
+    }
+
+    function hapusBarisBonus(btnElement) {
+        btnElement.parentElement.remove();
+    }
+
     function autoSelect(input) { setTimeout(() => input.select(), 50); }
     function autoZero(input) { if (input.value.trim() === '') { input.value = '0'; } }
     function formatRibuan(input) { let val = input.value.replace(/[^0-9]/g, ''); input.value = val ? parseInt(val).toLocaleString('id-ID') : ''; }
@@ -309,7 +366,12 @@
         if(tabId === 'setting') muatDropdownSettingKaryawan();
     }
 
-    let tglHariIni = new Date().toISOString().split('T')[0];
+    function getLocalToday() {
+        let d = new Date();
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+    }
+
+    let tglHariIni = getLocalToday();
     document.getElementById('inTanggal').value = tglHariIni;
     document.getElementById('rekapMulai').value = tglHariIni;
     document.getElementById('rekapSelesai').value = tglHariIni;
@@ -319,26 +381,24 @@
     async function initData() {
         renderFormDinamis();
         try {
-            const { data: { session } } = await _supabase.auth.getSession();
-            if (!session) return window.location.replace("index.html");
+            const { data: sessionData } = await _supabase.auth.getSession();
+            if (!sessionData.session) return window.location.replace("index.html");
 
-            let userMeta = session.user.user_metadata;
+            let userMeta = sessionData.session.user.user_metadata;
             if (userMeta && userMeta.full_name) {
                 document.getElementById('txtNamaUser').innerText = userMeta.full_name.split(' ')[0];
             } else {
-                document.getElementById('txtNamaUser').innerText = session.user.email.split('@')[0];
+                document.getElementById('txtNamaUser').innerText = sessionData.session.user.email.split('@')[0];
             }
 
             const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
-            // Catatan: Di file versi desktop, kodenya menggunakan 'session.user.id', sesuaikan saja.
             
             if (profile) {
-                tokoIdGlobal = profile.toko_id; // <-- TAMBAHKAN BARIS INI
+                tokoIdGlobal = profile.toko_id; 
+                if (profile.nama_lengkap) document.getElementById('txtNamaUser').innerText = profile.nama_lengkap;
                 
-                if (profile.nama_lengkap) {
-                    document.getElementById('txtNamaUser').innerText = profile.nama_lengkap;
-                if (profile.toko_id) {
-                    const { data: toko } = await _supabase.from('toko').select('nama_toko, logo_url').eq('id', profile.toko_id).single();
+                if (tokoIdGlobal) {
+                    const { data: toko } = await _supabase.from('toko').select('nama_toko, logo_url').eq('id', tokoIdGlobal).single();
                     if (toko) {
                         namaTokoGlobal = toko.nama_toko || "Toko Saya";
                         document.getElementById('txtNamaTokoTop').innerText = namaTokoGlobal;
@@ -347,10 +407,10 @@
                 }
             }
 
-            const { data: karyawan } = await _supabase.from('karyawan').select('*');
+            const { data: karyawan } = await _supabase.from('karyawan').select('*').eq('toko_id', tokoIdGlobal).eq('aktif', true);
             if(karyawan) {
                 let opt = '<option value="ALL">🌟 SEMUA KARYAWAN</option>';
-                karyawan.forEach(k => { opt += `<option value="${k.id}">${k.nama_karyawan || k.nama}</option>`; });
+                karyawan.forEach(k => { opt += `<option value="${k.id}">${k.nama_karyawan}</option>`; });
                 document.getElementById('inKaryawan').innerHTML = '<option value="">-- Pilih Karyawan --</option>' + opt.replace('<option value="ALL">🌟 SEMUA KARYAWAN</option>', '');
                 document.getElementById('slipKaryawan').innerHTML = opt;
                 document.getElementById('settingKaryawan').innerHTML = '<option value="">-- Pilih Karyawan --</option>' + opt.replace('<option value="ALL">🌟 SEMUA KARYAWAN</option>', '');
@@ -364,17 +424,41 @@
     }
 
     async function muatStatistikHariIni() {
-        let tglHariIni = new Date().toISOString().split('T')[0];
-        const { data } = await _supabase.from('produksi_harian').select('*').eq('tanggal', tglHariIni);
-        if(data) {
-            let totalSesi = data.length;
-            let totalUpah = data.reduce((acc, curr) => acc + Number(curr.total_upah || 0), 0);
-            let totalLembur = data.reduce((acc, curr) => {
-                let keys = Object.keys(ITEM_LABELS);
-                return acc + keys.reduce((subAcc, k) => subAcc + Number(curr['l_' + k] || 0), 0);
-            }, 0);
+        let tglHariIni = getLocalToday();
+        
+        const [resProd, resTarif] = await Promise.all([
+            _supabase.from('produksi_harian').select('*').eq('tanggal', tglHariIni).eq('toko_id', tokoIdGlobal),
+            _supabase.from('tarif_karyawan').select('*').eq('toko_id', tokoIdGlobal)
+        ]);
+
+        let tarifMap = {};
+        if (resTarif.data) {
+            resTarif.data.forEach(t => {
+                if(!tarifMap[t.karyawan_id]) tarifMap[t.karyawan_id] = {};
+                tarifMap[t.karyawan_id][t.kategori] = Number(t.tarif);
+            });
+        }
+
+        if(resProd.data) {
+            let totalSesi = resProd.data.length;
+            let totalUpahDinamis = 0;
+            let totalLembur = 0;
+            let items = Object.keys(ITEM_LABELS);
+
+            resProd.data.forEach(curr => {
+                let kId = curr.karyawan_id;
+                let t = tarifMap[kId] || {};
+                
+                items.forEach(k => {
+                    let q = Number(curr['q_' + k] || 0);
+                    let l = Number(curr['l_' + k] || 0);
+                    totalLembur += l;
+                    totalUpahDinamis += (q * (t[k] || 0)) + (l * (t['lembur_' + k] || 0));
+                });
+            });
+
             document.getElementById('statTotalInput').innerText = totalSesi + " Sesi";
-            document.getElementById('statTotalUpah').innerText = "Rp " + totalUpah.toLocaleString('id-ID');
+            document.getElementById('statTotalUpah').innerText = "Rp " + totalUpahDinamis.toLocaleString('id-ID');
             document.getElementById('statTotalLembur').innerText = totalLembur.toLocaleString('id-ID') + " Pcs";
         }
     }
@@ -414,13 +498,13 @@
             let valNormal = bersihFormat(document.getElementById('h_' + k).value);
             let valLembur = bersihFormat(document.getElementById('hl_' + k).value);
             
-            // <-- TAMBAHKAN toko_id DI SINI
             payloads.push({ toko_id: tokoIdGlobal, karyawan_id: kId, kategori: k, tarif: valNormal });
             payloads.push({ toko_id: tokoIdGlobal, karyawan_id: kId, kategori: 'lembur_' + k, tarif: valLembur });
         }
 
         await _supabase.from('tarif_karyawan').upsert(payloads, { onConflict: 'karyawan_id,kategori' });
         alert("✅ Tarif Khusus berhasil disimpan!");
+        muatStatistikHariIni(); 
     }
 
     async function simpanInputHarian() {
@@ -446,9 +530,7 @@
             total_upah += (q[item] * h_normal) + (l[item] * h_lembur);
         }
 
-        // <-- TAMBAHKAN toko_id DI PAYLOAD AWAL INI
         let payload = { toko_id: tokoIdGlobal, tanggal, karyawan_id, total_upah };
-        
         for(let item in ITEM_LABELS) {
             payload['q_' + item] = q[item];
             payload['l_' + item] = l[item];
@@ -458,7 +540,7 @@
         if(error) {
             alert("Gagal menyimpan: " + error.message);
         } else {
-            alert("✅ Sukses! Hasil produksi & upah tersimpan.");
+            alert("✅ Sukses! Hasil produksi tersimpan.");
             muatStatistikHariIni();
             for(let item in ITEM_LABELS) {
                 document.getElementById('q_' + item).value = 0;
@@ -489,6 +571,7 @@
                 tarifMap[t.karyawan_id][t.kategori] = Number(t.tarif);
             });
         }
+        globalTarifMap = tarifMap;
 
         tbody.innerHTML = '';
         if (!data || data.length === 0) {
@@ -497,18 +580,38 @@
         }
 
         let items = Object.keys(ITEM_LABELS);
+        let grouped = {};
 
         data.forEach(row => {
             let kId = row.karyawan_id;
-            let kName = row.karyawan?.nama_karyawan || row.karyawan?.nama || 'Karyawan';
-            let t = tarifMap[kId] || {};
+            if(!grouped[kId]) {
+                grouped[kId] = {
+                    karyawan_id: kId,
+                    nama: row.karyawan?.nama_karyawan || row.karyawan?.nama || 'Karyawan',
+                    rows: [], 
+                    agg: {} 
+                };
+                items.forEach(i => { grouped[kId].agg['q_'+i] = 0; grouped[kId].agg['l_'+i] = 0; });
+            }
+            grouped[kId].rows.push(row);
+            
+            items.forEach(i => {
+                grouped[kId].agg['q_'+i] += Number(row['q_'+i]||0);
+                grouped[kId].agg['l_'+i] += Number(row['l_'+i]||0);
+            });
+        });
 
+        globalRekapKaryawan = grouped; 
+
+        for (let kId in grouped) {
+            let emp = grouped[kId];
+            let t = tarifMap[kId] || {};
             let detailProd = '', detailLemb = '';
             let totRP = 0, totRL = 0;
 
             items.forEach(i => {
-                let qty = Number(row['q_' + i] || 0);
-                let lmb = Number(row['l_' + i] || 0);
+                let qty = emp.agg['q_' + i];
+                let lmb = emp.agg['l_' + i];
                 if (qty > 0) {
                     let sub = qty * (t[i] || 0);
                     totRP += sub;
@@ -523,15 +626,69 @@
 
             if(!detailProd) detailProd = '-';
             if(!detailLemb) detailLemb = '-';
+            let grandTotalGaji = totRP + totRL;
 
             tbody.innerHTML += `
                 <tr>
-                    <td style="text-align: center;"><b>${row.tanggal}</b><br><b>${kName}</b></td>
+                    <td style="text-align: center;">
+                        <b style="font-size:15px; color:var(--p-color);">${emp.nama}</b><br>
+                        <span style="font-size:12px; color:var(--text-muted);">${mulai} s/d ${selesai}</span>
+                    </td>
                     <td style="background: var(--bg-main);">${detailProd}</td>
                     <td style="background: var(--bg-main);">${detailLemb}</td>
-                    <td style="text-align: center;"><b style="color:var(--green);">Rp ${Number(row.total_upah || (totRP + totRL)).toLocaleString('id-ID')}</b></td>
+                    <td style="text-align: center;">
+                        <b style="color:var(--green); font-size:16px;">Rp ${grandTotalGaji.toLocaleString('id-ID')}</b><br>
+                        <span style="color:var(--blue); font-size:12px; font-weight:bold; cursor:pointer; text-decoration:underline; display:inline-block; margin-top:5px;" onclick="bukaRincianRekap('${kId}')">👁️ Lihat Rincian</span>
+                    </td>
                 </tr>`;
+        }
+    }
+
+    function bukaRincianRekap(kId) {
+        let emp = globalRekapKaryawan[kId];
+        if(!emp) return;
+        
+        document.getElementById('modalRincianTitle').innerText = "Rincian Harian: " + emp.nama;
+        
+        let t = globalTarifMap[kId] || {}; 
+        let items = Object.keys(ITEM_LABELS);
+        let html = `
+            <table style="width:100%; font-size:13px; border-collapse: collapse;">
+                <thead><tr><th style="padding:8px;">Tanggal</th><th style="padding:8px;">Rincian Pekerjaan & Lembur</th><th style="padding:8px; text-align:right;">Subtotal Upah</th></tr></thead>
+                <tbody>
+        `;
+        
+        emp.rows.forEach(r => {
+            let detail = '';
+            let dayUpahDinamis = 0;
+
+            items.forEach(i => {
+                let qty = Number(r['q_' + i] || 0);
+                let lmb = Number(r['l_' + i] || 0);
+                if(qty > 0) {
+                    detail += `• ${ITEM_LABELS[i]}: ${qty}x<br>`;
+                    dayUpahDinamis += (qty * (t[i] || 0));
+                }
+                if(lmb > 0) {
+                    detail += `<span style="color:var(--p-color);">• [Lembur] ${ITEM_LABELS[i]}: ${lmb}x</span><br>`;
+                    dayUpahDinamis += (lmb * (t['lembur_' + i] || 0));
+                }
+            });
+            
+            if(!detail) detail = '-';
+            
+            html += `
+                <tr>
+                    <td style="border-bottom:1px solid #ccc; padding:8px; vertical-align:top;"><b>${r.tanggal}</b></td>
+                    <td style="border-bottom:1px solid #ccc; padding:8px; vertical-align:top;">${detail}</td>
+                    <td style="border-bottom:1px solid #ccc; padding:8px; vertical-align:top; text-align:right;"><b style="color:var(--green);">Rp ${dayUpahDinamis.toLocaleString('id-ID')}</b></td>
+                </tr>
+            `;
         });
+        
+        html += '</tbody></table>';
+        document.getElementById('modalRincianBody').innerHTML = html;
+        document.getElementById('modalRincian').style.display = 'flex';
     }
 
     async function connectBT() {
@@ -583,6 +740,16 @@
         let selesai = document.getElementById('slipSelesai').value;
         let ukuran = document.getElementById('slipUkuranKertas').value;
 
+        // Ambil Data Bonus Multibaris
+        let bonusArr = [];
+        document.querySelectorAll('.bonus-row').forEach(row => {
+            let desc = row.querySelector('.in-bonus-desc').value.trim() || 'Pendapatan Lain';
+            let amount = bersihFormat(row.querySelector('.in-bonus-amount').value);
+            if (amount !== 0) {
+                bonusArr.push({ desc: desc, amount: amount });
+            }
+        });
+
         if(!kId) { alert("Silakan pilih karyawan terlebih dahulu!"); return null; }
 
         let query = _supabase.from('produksi_harian').select(`*, karyawan:karyawan_id (*)`).gte('tanggal', mulai).lte('tanggal', selesai);
@@ -602,22 +769,25 @@
 
         let items = Object.keys(ITEM_LABELS);
         let grouped = {};
+        
         data.forEach(row => {
             let kid = row.karyawan_id;
-            if(!grouped[kid]) grouped[kid] = { nama: row.karyawan?.nama_karyawan || row.karyawan?.nama || 'Karyawan', rows: [] };
-            grouped[kid].rows.push(row);
+            if(!grouped[kid]) {
+                grouped[kid] = { nama: row.karyawan?.nama_karyawan || row.karyawan?.nama || 'Karyawan', agg: {} };
+                items.forEach(i => { grouped[kid].agg['q_'+i] = 0; grouped[kid].agg['l_'+i] = 0; });
+            }
+            items.forEach(i => {
+                grouped[kid].agg['q_'+i] += Number(row['q_'+i]||0);
+                grouped[kid].agg['l_'+i] += Number(row['l_'+i]||0);
+            });
         });
 
         let htmlPreview = '';
         let allRawCommands = "";
 
-        const ESC = '\x1B';
-        const GS = '\x1D';
-        const INIT = ESC + '@';
-        const ALIGN_CENTER = ESC + 'a' + '\x01';
-        const ALIGN_LEFT = ESC + 'a' + '\x00';
-        const BOLD_ON = ESC + 'E' + '\x01';
-        const BOLD_OFF = ESC + 'E' + '\x00';
+        const ESC = '\x1B', GS = '\x1D', INIT = ESC + '@';
+        const ALIGN_CENTER = ESC + 'a' + '\x01', ALIGN_LEFT = ESC + 'a' + '\x00';
+        const BOLD_ON = ESC + 'E' + '\x01', BOLD_OFF = ESC + 'E' + '\x00';
         const CUT_PAPER = GS + 'V' + '\x41' + '\x03';
 
         let maxChar = (ukuran === '58') ? 32 : 48;
@@ -643,31 +813,41 @@
             textBuffer += ALIGN_LEFT + 'Karyawan: ' + emp.nama + '\n';
             textBuffer += lineDashed + '\n';
 
-            emp.rows.forEach(r => {
-                textBuffer += 'Tgl: ' + r.tanggal + '\n';
-                detailHtml += `<div style="font-weight:bold; margin-top:4px;">Tgl: ${r.tanggal}</div>`;
+            items.forEach(i => {
+                let q = emp.agg['q_' + i];
+                let l = emp.agg['l_' + i];
                 
-                items.forEach(i => {
-                    let q = Number(r['q_' + i] || 0);
-                    let l = Number(r['l_' + i] || 0);
-                    if(q > 0) {
-                        let sub = q * (t[i] || 0);
-                        grandTotal += sub;
-                        let lineStr = `- ${ITEM_LABELS[i]} (${q}x)`;
-                        let priceStr = `Rp ${sub.toLocaleString('id-ID')}`;
-                        textBuffer += padRow(lineStr, priceStr, maxChar) + '\n';
-                        detailHtml += `<div class="receipt-row"><span>${lineStr}</span><span>${priceStr}</span></div>`;
-                    }
-                    if(l > 0) {
-                        let subL = l * (t['lembur_' + i] || 0);
-                        grandTotal += subL;
-                        let lineStr = `  [Lembur] ${ITEM_LABELS[i]} (${l}x)`;
-                        let priceStr = `Rp ${subL.toLocaleString('id-ID')}`;
-                        textBuffer += padRow(lineStr, priceStr, maxChar) + '\n';
-                        detailHtml += `<div class="receipt-row" style="color:#b45309;"><span>${lineStr}</span><span>${priceStr}</span></div>`;
-                    }
-                });
+                if(q > 0) {
+                    let sub = q * (t[i] || 0);
+                    grandTotal += sub;
+                    let lineStr = `- ${ITEM_LABELS[i]} (${q}x)`;
+                    let priceStr = `Rp ${sub.toLocaleString('id-ID')}`;
+                    textBuffer += padRow(lineStr, priceStr, maxChar) + '\n';
+                    detailHtml += `<div class="receipt-row"><span>${lineStr}</span><span>${priceStr}</span></div>`;
+                }
+                if(l > 0) {
+                    let subL = l * (t['lembur_' + i] || 0);
+                    grandTotal += subL;
+                    let lineStr = `  [Lembur] ${ITEM_LABELS[i]} (${l}x)`;
+                    let priceStr = `Rp ${subL.toLocaleString('id-ID')}`;
+                    textBuffer += padRow(lineStr, priceStr, maxChar) + '\n';
+                    detailHtml += `<div class="receipt-row" style="color:#b45309;"><span>${lineStr}</span><span>${priceStr}</span></div>`;
+                }
             });
+
+            // Sisipkan Pendapatan Lain-Lain / Bonus (Dinamis / Banyak Baris)
+            if (bonusArr.length > 0) {
+                textBuffer += lineDashed + '\n'; 
+                detailHtml += `<div class="receipt-line"></div>`;
+                
+                bonusArr.forEach(b => {
+                    grandTotal += b.amount;
+                    let lineStr = `+ ${b.desc}`;
+                    let priceStr = `Rp ${b.amount.toLocaleString('id-ID')}`;
+                    textBuffer += padRow(lineStr, priceStr, maxChar) + '\n';
+                    detailHtml += `<div class="receipt-row" style="color:var(--blue);"><span>${lineStr}</span><span>${priceStr}</span></div>`;
+                });
+            }
 
             let totalStr = `Rp ${grandTotal.toLocaleString('id-ID')}`;
             textBuffer += lineDashed + '\n';

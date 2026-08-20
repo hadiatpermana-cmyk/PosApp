@@ -140,12 +140,12 @@
 </div>
 
 <script>
-    const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
-    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
+const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
     let toko_id = null;
-    let dbKasManual = [], dbStokMasuk = [], dbSalesPos = [];
+    let dbKasManual = [];
 
     function setDefaultDates() {
         const today = new Date();
@@ -177,6 +177,7 @@
     async function initBukuKas() {
         const { data: sessionData } = await _supabase.auth.getSession();
         if (!sessionData.session) return window.location.replace("index.html");
+        
         const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', sessionData.session.user.id).single();
         toko_id = profile ? profile.toko_id : null;
 
@@ -198,16 +199,13 @@
     }
 
     async function muatSemuaDataKas() {
-        const [resKas, resStok, resSales] = await Promise.all([
-            _supabase.from('kas_manual').select('*').eq('toko_id', toko_id),
-            _supabase.from('pembelian_header').select('*').eq('toko_id', toko_id),
-            _supabase.from('transaksi_pengiriman').select('*')
-        ]);
+        // Karyawan HANYA mengambil data dari kas manual, tidak perlu data sales atau stok masuk
+        const { data: resKas } = await _supabase.from('kas_manual')
+            .select('*')
+            .eq('toko_id', toko_id)
+            .eq('kategori_kas', 'KARYAWAN'); // <-- Hanya tarik data kategori Karyawan
 
-        dbKasManual = resKas.data || [];
-        dbStokMasuk = resStok.data || [];
-        dbSalesPos = resSales.data || [];
-
+        dbKasManual = resKas || [];
         renderBukuKas();
     }
 
@@ -232,7 +230,8 @@
             tanggal: new Date(tanggal).toISOString(),
             jenis: jenis,
             jumlah: jumlah,
-            keterangan: keterangan
+            keterangan: keterangan,
+            kategori_kas: 'KARYAWAN' // <-- Otomatis tersimpan sebagai Kas Karyawan agar nyambung ke Admin
         }]);
 
         if (error) {
@@ -249,7 +248,7 @@
         const tglSelesai = document.getElementById('filterSampaiTanggal').value;
 
         return data.filter(item => {
-            let rawDate = item[dateKey] || item.created_at || item.tgl_transaksi;
+            let rawDate = item[dateKey] || item.created_at;
             if (!rawDate) return false;
             const d = new Date(rawDate);
             const year = d.getFullYear();
@@ -265,8 +264,6 @@
 
     function renderBukuKas() {
         let filteredKas = filterByWaktu(dbKasManual, 'tanggal');
-        let filteredStok = filterByWaktu(dbStokMasuk, 'tanggal');
-        let filteredSales = filterByWaktu(dbSalesPos, 'tanggal');
 
         let totalMasuk = 0;
         let totalKeluar = 0;
@@ -285,38 +282,6 @@
                 isManual: true,
                 sumber: 'Manual'
             });
-        });
-
-        filteredStok.forEach(st => {
-            let nominalPb = Number(st.total_rupiah || st.total || st.jumlah || 0);
-            totalKeluar += nominalPb;
-            listBuku.push({
-                id: st.id,
-                tanggal: st.tanggal || st.created_at,
-                keterangan: `Stok Masuk (No PB: ${st.no_pb || st.id} - ${st.supplier || 'Supplier'})`,
-                masuk: 0,
-                keluar: nominalPb,
-                isManual: false,
-                sumber: 'Otomatis'
-            });
-        });
-
-        filteredSales.forEach(sl => {
-            let nominalSales = Number(sl.total_kirim || sl.total || sl.grand_total || sl.jumlah || 0);
-            let tglSales = sl.tanggal || sl.created_at || sl.tgl_transaksi;
-            
-            if (nominalSales > 0) {
-                totalMasuk += nominalSales;
-                listBuku.push({
-                    id: sl.id,
-                    tanggal: tglSales,
-                    keterangan: `POS Kasir (Nota: ${sl.no_nota || '-'} - ${sl.nama_agen || 'Pelanggan'})`,
-                    masuk: nominalSales,
-                    keluar: 0,
-                    isManual: false,
-                    sumber: 'Otomatis'
-                });
-            }
         });
 
         let saldoAwal = 0;
@@ -341,9 +306,9 @@
                 
                 let warnaNominal = item.masuk > 0 ? 'var(--green)' : 'var(--red)';
                 let tandaNominal = item.masuk > 0 ? '+ Rp ' + item.masuk.toLocaleString('id-ID') : '- Rp ' + item.keluar.toLocaleString('id-ID');
-                let tagColor = item.isManual ? '#e0f2fe; color:#0369a1;' : '#f1f5f9; color:#475569;';
+                let tagColor = '#e0f2fe; color:#0369a1;';
                 
-                let tombolHapus = item.isManual ? `<span style="color:var(--red); cursor:pointer; font-size:11px; font-weight:800; margin-top:4px;" onclick="hapusKasManual('${item.id}')">🗑️ Hapus</span>` : `<span style="font-size:10px; color:var(--text-muted);">Sistem</span>`;
+                let tombolHapus = `<span style="color:var(--red); cursor:pointer; font-size:11px; font-weight:800; margin-top:4px;" onclick="hapusKasManual('${item.id}')">🗑️ Hapus</span>`;
 
                 cardsHtml += `
                     <div class="bon-card">
@@ -380,6 +345,7 @@
     }
 
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
+    
     initBukuKas();
 </script>
 </body>

@@ -46,7 +46,27 @@
         .stat-icon { position: absolute; right: -5px; bottom: -5px; font-size: 60px; opacity: 0.2; transform: rotate(-10deg); }
         
         .section-title { font-size: 13px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; flex-shrink: 0; }
-        .menu-grid { display: grid; grid-template-columns: repeat(5, minmax(160px, 1fr)); gap: 12px; flex-shrink: 0; }
+        .menu-grid { 
+    display: grid; 
+    /* Default untuk layar sedang/kecil (misal 2 atau 3 kolom) */
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 12px; 
+    flex-shrink: 0; 
+}
+
+/* Jika dibuka di layar laptop/komputer yang lebar (min-width: 1024px atau 1200px) */
+@media (min-width: 1200px) {
+    .menu-grid {
+        grid-template-columns: repeat(5, 1fr); /* Pas 5 atas, 5 bawah */
+    }
+}
+
+/* Jika dibuka di HP atau mode portrait yang sangat kecil */
+@media (max-width: 600px) {
+    .menu-grid {
+        grid-template-columns: repeat(2, 1fr); /* Jadi 2 kolom agar tidak terlalu kecil */
+    }
+}
         .menu-card { background: var(--bg-card); border-radius: 10px; padding: 12px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; border: 1px solid var(--border-line); text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
         .menu-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
         .icon-yellow { background: #fff8e1; color: #ffc107; } .icon-blue { background: #e3f2fd; color: #2196f3; } .icon-green { background: #e8f5e9; color: #4caf50; } .icon-pink { background: #fce4ec; color: #e91e63; } .icon-orange { background: #fff3e0; color: #ff9800; } .icon-purple { background: #f3e5f5; color: #9c27b0; }

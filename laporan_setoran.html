@@ -239,7 +239,7 @@
         const stringNamaAgen = calc.detail.map(d => d.agen).join(', ');
 
         try {
-            // Cek apakah data laporan dengan no_nota tersebut sudah pernah dibuat sebelumnya di database
+            // Cek apakah data laporan dengan no_nota tersebut sudah ada di database SEBELUM disimpan
             const { data: cekData, error: errCek } = await _sb
                 .from('rekap_laporan_driver')
                 .select('no_nota')
@@ -247,10 +247,10 @@
 
             if (errCek) throw errCek;
             
-            // Jika sudah ada sebelumnya, tandai sebagai revisi
+            // Jika data ditemukan sebelum insert, berarti ini adalah REVISI[span_1](start_span)[span_1](end_span)
             const isRevisi = cekData && cekData.length > 0;
 
-            // Simpan / update data rekap laporan ke Supabase (dipisah driver_1 & driver_2)
+            // Simpan / update data ke Supabase
             const { error: errorInsert } = await _sb.from('rekap_laporan_driver').upsert([{
                 no_nota: stringNoNota,
                 nama_agen: stringNamaAgen,
@@ -277,8 +277,9 @@
 
             const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
             
-            // Judul WhatsApp otomatis menyesuaikan: Ada tulisan REVISI jika sudah pernah dibuat sebelumnya[span_3](start_span)[span_3](end_span)
+            // Header & Footer menyesuaikan otomatis (Revisi atau Pertama)[span_2](start_span)[span_2](end_span)
             let judulHeader = isRevisi ? "*LAPORAN SETORAN DRIVER (REVISI)*" : "*LAPORAN SETORAN DRIVER*";
+            let footerPesan = isRevisi ? "_Data sukses diperbarui (replace) ke Supabase SBR_" : "_Data sudah sukses masuk ke database SBR_";
             
             let pesan = judulHeader + "\n";
             pesan += "----------------------------\n";
@@ -304,7 +305,7 @@
             pesan += "----------------------------\n";
             pesan += "- *Total Biaya:* Rp " + totalExp.toLocaleString('id-ID') + "\n";
             pesan += "- *SISA SETOR:* Rp " + sisaBersih.toLocaleString('id-ID') + "\n\n";
-            pesan += "_Data sukses diperbarui (replace) ke Supabase SBR_";
+            pesan += footerPesan;
 
             window.open("https://wa.me/?text=" + encodeURIComponent(pesan), '_blank');
             

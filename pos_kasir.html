@@ -6,62 +6,97 @@
     <title>POS Kasir - PosApp</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+Prime&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --sidebar-width: 250px; --topbar-height: 60px; }
-        [data-theme="dark"] { --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333; }
-        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
-        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--p-color); flex-shrink: 0; }
-        .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
-        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        :root {
+            --bg-main: #f4f6f9;
+            --bg-card: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border-line: #e2e8f0;
+            --p-color: #e67e22;
+            --p-hover: #d35400;
+            --blue: #3498db;
+            --red: #e74c3c;
+            --green: #2ecc71;
+            --sidebar-width: 250px;
+            --topbar-height: 60px;
+        }
+        [data-theme="dark"] {
+            --bg-main: #1a202c;
+            --bg-card: #2d3748;
+            --text-main: #f7fafc;
+            --text-muted: #a0aec0;
+            --border-line: #4a5568;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
+        
+        /* Topbar */
+        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-bottom: 2px solid var(--border-line); z-index: 10; flex-shrink: 0; }
+        .topbar-left, .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 18px; cursor: pointer; color: var(--text-main); border-radius: 8px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; }
         .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
-        .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
-        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
-        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
-        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; }
-        .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
+        .store-logo { width: 36px; height: 36px; background: var(--bg-main); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; overflow: hidden; }
+        .store-info h3 { margin: 0; font-size: 15px; font-weight: 700; color: var(--p-color); }
+        .store-info p { margin: 0; font-size: 11px; color: var(--text-muted); }
+        .btn-theme { background: none; border: none; font-size: 18px; cursor: pointer; }
+        .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: 700; font-size: 13px; text-decoration: none; }
+        .btn-logout:hover { text-decoration: underline; }
+
+        /* Layout Grid */
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; transition: width 0.3s; z-index: 100; }
         .sidebar.collapsed { width: 0; border: none; }
         .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
-        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); font-weight: bold; }
-        .nav-item:hover, .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
+        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 14px; border-bottom: 1px solid var(--border-line); font-weight: 600; }
+        .nav-item:hover, .nav-item.active { background: rgba(230, 126, 34, 0.1); color: var(--p-color); border-right: 4px solid var(--p-color); }
         
-        .content-area { padding: 25px; overflow-y: auto; flex: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: start; box-sizing: border-box; }
+        .content-area { padding: 20px; overflow-y: auto; flex: 1; display: grid; grid-template-columns: 3fr 1fr; gap: 20px; align-items: start; box-sizing: border-box; height: 100%; }
         #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: var(--text-muted); }
         
-        .card, .bon-container { background: var(--bg-card); border-radius: 12px; padding: 20px; border: 1px solid var(--border-line); box-sizing: border-box; }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-line); padding-bottom: 10px; }
+        /* Card Form */
+        .card { background: var(--bg-card); border-radius: 10px; padding: 20px; border: 1px solid var(--border-line); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-line); padding-bottom: 12px; }
         
-        .bon-container { background: #fffdf5; color: #000; font-family: 'Courier Prime', monospace; border: 1px dashed #ccc; font-size: 13px; max-height: 100%; overflow-y: auto; }
-        [data-theme="dark"] .bon-container { background: #2d2d2d; color: #f1f1f1; border-color: #555; }
+        /* Struk / Bon Layout */
+        .bon-container { background: #fffdf5; color: #111; font-family: 'Courier Prime', monospace; border: 1px dashed #bbb; font-size: 13px; padding: 20px; border-radius: 10px; max-height: 100%; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+        [data-theme="dark"] .bon-container { background: #242b35; color: #f1f1f1; border-color: #4a5568; }
         
         .form-grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
-        .form-group input, .form-group select { width: 100%; padding: 8px 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font-weight: bold; box-sizing: border-box; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border-line); border-radius: 8px; background: var(--bg-main); color: var(--text-main); font-weight: 600; font-size: 13px; outline: none; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--p-color); }
         
-        .btn-action { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; }
-        .toko-title { text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 5px; }
-        .bon-divider { border-bottom: 1px dashed #999; margin: 8px 0; }
+        .btn-action { padding: 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; width: 100%; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; transition: opacity 0.2s; }
+        .btn-action:hover { opacity: 0.9; }
+        
+        .toko-title { text-align: center; font-weight: 700; font-size: 18px; margin-bottom: 4px; }
+        .bon-divider { border-bottom: 1px dashed #aaa; margin: 10px 0; }
         .bon-header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
         .text-right { text-align: right; }
-        .input-bayar { width: 120px; padding: 6px; font-size: 14px; font-weight: bold; text-align: right; border: 1px solid #ccc; border-radius: 4px; background: transparent; color: inherit; }
+        .input-bayar { width: 110px; padding: 6px; font-size: 13px; font-weight: 700; text-align: right; border: 1px solid var(--border-line); border-radius: 6px; background: transparent; color: inherit; }
         
-        .link-kembali { color: var(--green); text-decoration: none; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 15px; }
+        .link-kembali { color: var(--green); text-decoration: none; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 15px; }
         .link-kembali:hover { text-decoration: underline; }
 
+        /* Modal */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; }
-        .modal-content { background: #222; padding: 20px; border-radius: 12px; width: 95%; max-width: 450px; text-align: center; box-shadow: 0 5px 30px rgba(0,0,0,0.5); position: relative; color: #fff; max-height: 90vh; overflow-y: auto; }
-        .modal-close { position: sticky; top: 0px; right: 20px; color: #fff; font-size: 22px; cursor: pointer; font-weight: bold; z-index: 10; }
+        .modal-content { background: #222; padding: 24px; border-radius: 12px; width: 95%; max-width: 420px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; color: #fff; max-height: 90vh; overflow-y: auto; }
+        .modal-close { position: sticky; top: 0; right: 10px; color: #fff; font-size: 24px; cursor: pointer; font-weight: bold; z-index: 10; text-align: right; }
         .struk-preview-box { background: #fffdf5; color: #000; font-family: 'Courier Prime', monospace; padding: 20px; border-radius: 6px; text-align: left; font-size: 13px; max-height: 380px; overflow-y: auto; margin-bottom: 15px; border: 1px dashed #999; }
         
-        #notifBon { display: none; background: #fff5f5; color: #c53030; padding: 10px; border-radius: 6px; border: 1px solid #feb2b2; text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 13px; }
+        #notifBon { display: none; background: #fff5f5; color: #c53030; padding: 10px; border-radius: 8px; border: 1px solid #feb2b2; text-align: center; font-weight: 700; margin-bottom: 15px; font-size: 12px; }
         .struk-visual-container { position: absolute; left: -9999px; top: 0; width: 400px; }
         .struk-visual { background: #fff; padding: 25px; color: #000; font-family: 'Courier New', Courier, monospace; font-size: 14px; border: 1px solid #ccc; line-height: 1.4; }
         .struk-visual .garis { border-top: 1px dashed #000; margin: 8px 0; }
         .struk-visual .garis-tebal { border-top: 2px dashed #000; margin: 8px 0; }
         .struk-visual .flex-row { display: flex; justify-content: space-between; }
+        
+        @media (max-width: 900px) {
+            .content-area { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -76,7 +111,7 @@
     </div>
     <div class="topbar-right">
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
-        <span id="txtNamaUser">User</span> 👋
+        <span id="txtNamaUser" style="font-weight:600;">User</span> 👋
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
     </div>
 </div>
@@ -103,75 +138,75 @@
 
         <!-- STRUK / BON DI SEBELAH KIRI -->
         <div class="bon-container" id="areaBon">
-            <div class="toko-title" id="lblTokoBon" style="font-weight:bold; text-align:center;">NAMA TOKO</div>
+            <div class="toko-title" id="lblTokoBon">NAMA TOKO</div>
             <div style="text-align:center; font-size:12px; margin-bottom:8px;" id="lblAlamatBon">Alamat...</div>
             <div class="bon-divider" style="border-bottom:2px dashed #000;"></div>
             <div class="bon-header-grid" style="font-size:12px;">
                 <div>NO: <strong id="lblFaktur">INV-000</strong></div>
                 <div class="text-right">TGL: <span id="lblTanggal">0000-00-00</span></div>
             </div>
-            <div style="text-align:center; font-weight:bold; font-size:15px; margin: 6px 0; text-transform:uppercase;" id="lblPelanggan">UMUM</div>
+            <div style="text-align:center; font-weight:700; font-size:15px; margin: 6px 0; text-transform:uppercase;" id="lblPelanggan">UMUM</div>
             <div style="text-align:center; font-size:12px; margin-bottom:6px; display:none;">KSR: <span id="lblPenerima">-</span> | CHK: <span id="lblCheckerBon">-</span></div>
             <div class="bon-divider" style="border-bottom:2px dashed #000;"></div>
             
             <div id="tbKeranjang"></div>
 
             <div class="bon-divider" style="border-bottom:2px dashed #000;"></div>
-            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span>Total Kirim:</span><span>Rp <span id="totalKirim">0</span></span></div>
+            <div style="display:flex; justify-content:space-between; font-weight:700; font-size:13px;"><span>Total Kirim:</span><span>Rp <span id="totalKirim">0</span></span></div>
             <div class="bon-divider"></div>
-            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span>Total Retur:</span><span style="color:red;">Rp <span id="totalRetur">0</span></span></div>
+            <div style="display:flex; justify-content:space-between; font-weight:700; font-size:13px;"><span>Total Retur:</span><span style="color:var(--red);">Rp <span id="totalRetur">0</span></span></div>
             <div class="bon-divider"></div>
             
             <div id="boxOngkir" style="display:none; margin-bottom:6px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:bold;">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:700;">
                     <span>ONGKIR:</span>
                     <input type="text" id="inputOngkir" class="input-bayar" value="0" oninput="formatRibuan(this); hitungKembalian()" onfocus="clearZero(this)">
                 </div>
                 <div class="bon-divider"></div>
             </div>
 
-            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span id="labelBonStruk">Bon Lama:</span><span>Rp <span id="lblBonLama">0</span></span></div>
+            <div style="display:flex; justify-content:space-between; font-weight:700; font-size:13px;"><span id="labelBonStruk">Bon Lama:</span><span>Rp <span id="lblBonLama">0</span></span></div>
             
             <div id="boxBonLama" style="display:none; margin-top:6px;">
                 <input type="text" id="inputBonLama" class="input-bayar" style="width:100%; text-align:right;" value="0" oninput="formatRibuan(this); hitungKembalian()" onfocus="clearZero(this)">
             </div>
 
             <div class="bon-divider"></div>
-            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:15px;"><span>TOTAL TAGIHAN:</span><span>Rp <span id="grandTotal">0</span></span></div>
+            <div style="display:flex; justify-content:space-between; font-weight:700; font-size:14px;"><span>TOTAL TAGIHAN:</span><span>Rp <span id="grandTotal">0</span></span></div>
             <div class="bon-divider"></div>
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:14px; font-weight:bold; margin-bottom:4px;"><span>Bayar CASH:</span> Rp <input type="text" id="inBayar" class="input-bayar" oninput="formatRibuan(this); hitungKembalian()" placeholder="0" onfocus="clearZero(this)"></div>
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:14px; font-weight:bold; margin-bottom: 6px;"><span>Bayar TRF:</span> Rp <input type="text" id="inTransfer" class="input-bayar" oninput="formatRibuan(this); hitungKembalian()" placeholder="0" onfocus="clearZero(this)"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:700; margin-bottom:6px;"><span>Bayar CASH:</span> <span>Rp <input type="text" id="inBayar" class="input-bayar" oninput="formatRibuan(this); hitungKembalian()" placeholder="0" onfocus="clearZero(this)"></span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:700; margin-bottom: 8px;"><span>Bayar TRF:</span> <span>Rp <input type="text" id="inTransfer" class="input-bayar" oninput="formatRibuan(this); hitungKembalian()" placeholder="0" onfocus="clearZero(this)"></span></div>
             
-            <div style="background: rgba(240, 80, 80, 0.08); padding: 6px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+            <div style="background: rgba(240, 80, 80, 0.08); padding: 8px; border-radius: 6px; margin-bottom: 8px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
                 <input type="checkbox" id="cbTidakTitip" style="transform: scale(1.2); cursor: pointer;" onchange="togglePembayaran()">
                 <label for="cbTidakTitip" style="cursor: pointer; margin: 0; color: var(--red);">TIDAK TITIP UANG (BON FULL)</label>
             </div>
 
             <div class="bon-divider"></div>
-            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px;"><span id="labelSisaStruk">SISA BON:</span><span>Rp <span id="lblKembali">0</span></span></div>
+            <div style="display:flex; justify-content:space-between; font-weight:700; font-size:15px;"><span id="labelSisaStruk">SISA BON:</span><span>Rp <span id="lblKembali">0</span></span></div>
             <div class="bon-divider" style="border-bottom:2px dashed #000; margin-bottom: 15px;"></div>
             
             <div style="text-align:center; font-size:12px; font-style:italic; margin-top: 15px;" id="lblFooterBon">Terima Kasih Atas Kunjungan Anda</div>
 
-            <div data-html2canvas-ignore="true" style="margin-top: 25px;">
+            <div data-html2canvas-ignore="true" style="margin-top: 20px;">
                 <button class="btn-action" style="background:var(--green); color:white; margin-bottom: 10px;" id="btnSimpan" onclick="simpanTransaksi()">Simpan & Print 💾</button>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 10px;" data-html2canvas-ignore="true">
-                <button class="btn-action" style="background:#e67e22; color:white; font-size:12px; flex:1;" id="btnReprint" onclick="reprintLast()" disabled>🔄 REPRINT</button>
+            <div style="display: flex; gap: 10px; margin-top: 5px;" data-html2canvas-ignore="true">
+                <button class="btn-action" style="background:var(--p-color); color:white; font-size:12px; flex:1;" id="btnReprint" onclick="reprintLast()" disabled>🔄 REPRINT</button>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; background: rgba(0,0,0,0.03); padding: 8px; border-radius: 6px;" data-html2canvas-ignore="true">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px;" data-html2canvas-ignore="true">
                 <div>
-                    <span style="font-size: 10px; color: var(--text-muted); display: block; font-weight: bold;">STATUS PRINTER:</span>
-                    <span id="lblStatusPrinter" style="font-size: 11px; font-weight: bold; color: var(--red);">❌ Belum Terhubung</span>
+                    <span style="font-size: 10px; color: var(--text-muted); display: block; font-weight: 700;">STATUS PRINTER:</span>
+                    <span id="lblStatusPrinter" style="font-size: 11px; font-weight: 700; color: var(--red);">❌ Belum Terhubung</span>
                 </div>
                 <button class="btn-action" style="background: var(--blue); color: white; width: auto; padding: 6px 12px; font-size: 11px;" onclick="connectBT()">🔗 Sambungkan</button>
             </div>
             
-            <div style="margin-top: 10px; padding: 6px; background: rgba(240,80,80,0.05); border-radius: 6px;" data-html2canvas-ignore="true">
-                <label style="display: flex; align-items: center; font-size: 11px; font-weight: bold; color: var(--red); cursor: pointer;">
-                    <input type="checkbox" id="cbTanpaPrinter" style="transform: scale(1.1); margin-right: 6px; cursor: pointer;">
+            <div style="margin-top: 10px; padding: 8px; background: rgba(240,80,80,0.05); border-radius: 8px;" data-html2canvas-ignore="true">
+                <label style="display: flex; align-items: center; font-size: 11px; font-weight: 700; color: var(--red); cursor: pointer;">
+                    <input type="checkbox" id="cbTanpaPrinter" style="transform: scale(1.1); margin-right: 8px; cursor: pointer;">
                     TANPA PRINTER (HANYA SIMPAN)
                 </label>
             </div>
@@ -183,34 +218,40 @@
         <div class="card">
             <div class="card-header">
                 <div>
-                    <h3 style="margin:0;">Keranjang Kasir</h3>
+                    <h3 style="margin:0; font-size:16px;">Keranjang Kasir</h3>
                 </div>
-                <button class="btn-action" style="background:#f39c12; color:white; width:auto; padding:5px 10px; font-size:11px;" onclick="tarikPesananPending()">📥 Tarik Pesanan</button>
+                <button class="btn-action" style="background:var(--p-color); color:white; width:auto; padding:6px 12px; font-size:11px;" onclick="tarikPesananPending()">📥 TARIK PESANAN</button>
             </div>
             <a href="dashboard.html" class="link-kembali">← Kembali ke Dashboard</a>
 
             <div id="notifBon">⚠️ AGEN INI PUNYA BON LAMA!</div>
 
+            <div class="form-group">
+                <label>Jenis Transaksi</label>
+                <select id="inJenis" onchange="toggleFormJenis()">
+                    <option value="BELI">PEMBELIAN (KIRIM)</option>
+                    <option value="RETUR">RETUR</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Pelanggan / Agen *</label>
+                <select id="inPelanggan" onchange="updateBonAgen(); autoFillHarga();">
+                    <option value="">-- Pilih Agen / Umum --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Nama Barang *</label>
+                <select id="inBarang" onchange="autoFillHarga()">
+                    <option value="">-- Pilih Barang (Barang Jadi) --</option>
+                </select>
+            </div>
+
             <div class="form-grid-container">
                 <div class="form-group">
-                    <label>Pelanggan / Agen *</label>
-                    <select id="inPelanggan" onchange="updateBonAgen(); autoFillHarga();">
-                        <option value="">-- Pilih Agen --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Jenis Transaksi</label>
-                    <select id="inJenis" onchange="toggleFormJenis()">
-                        <option value="BELI">PEMBELIAN (KIRIM)</option>
-                        <option value="RETUR">RETUR</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Nama Barang *</label>
-                    <select id="inBarang" onchange="autoFillHarga()">
-                        <option value="">-- Pilih Barang (Barang Jadi) --</option>
-                    </select>
+                    <label>Qty</label>
+                    <input type="number" id="inQty" min="0" value="0" onclick="this.value=''" onfocus="clearZero(this)">
                 </div>
                 <div class="form-group">
                     <label>Satuan</label>
@@ -220,18 +261,14 @@
                         <option value="Pcs">Pcs</option>
                     </select>
                 </div>
-
-                <div class="form-group">
-                    <label>Qty</label>
-                    <input type="number" id="inQty" min="0" value="0" onclick="this.value=''" onfocus="clearZero(this)">
-                </div>
-                <div class="form-group">
-                    <label>Harga Jual (Rp)</label>
-                    <input type="text" id="inHarga" placeholder="0" oninput="formatRibuan(this)" onfocus="clearZero(this)">
-                </div>
             </div>
 
-            <div class="form-grid-container" style="margin-top: 5px; display: none;">
+            <div class="form-group">
+                <label>Harga Jual (Rp)</label>
+                <input type="text" id="inHarga" placeholder="0" oninput="formatRibuan(this)" onfocus="clearZero(this)">
+            </div>
+
+            <div class="form-grid-container" style="display: none;">
                 <div class="form-group">
                     <label>Kasir (Auto)</label>
                     <input type="text" id="inKasir" readonly style="background:var(--bg-main); color:var(--text-muted);">
@@ -242,21 +279,21 @@
                 </div>
             </div>
 
-            <div class="form-group" style="display: none; margin-top: 5px;">
+            <div class="form-group" style="display: none;">
                 <label>Plat Nomor Mobil (Opsional)</label>
                 <select id="inMobil"><option value="">-- Pilih Mobil --</option></select>
             </div>
 
-            <button class="btn-action" style="background:var(--p-color); color:white; margin-top: 10px;" onclick="tambahKeKeranjang()">+ Tambah Ke Keranjang</button>
+            <button class="btn-action" style="background:var(--p-color); color:white; margin-top: 10px;" onclick="tambahKeKeranjang()">+ TAMBAH KE KERANJANG</button>
         </div>
     </div>
 </div>
 
 <!-- Modal Preview Struk / Laporan -->
 <div id="modalPreviewStruk" class="modal">
-    <div class="modal-content" style="text-align: center;">
+    <div class="modal-content">
         <span class="modal-close" onclick="tutupModalDanReset()">×</span>
-        <h3 style="color:#27ae60; margin-top:0; margin-bottom:15px; font-size:16px;">✅ Transaksi Berhasil!</h3>
+        <h3 style="color:#2ecc71; margin-top:0; margin-bottom:15px; font-size:16px;">✅ Transaksi Berhasil!</h3>
         <p style="font-size:13px; color:#cbd5e0; margin-bottom:10px;">Struk laporan digital tersimpan otomatis ke galeri HP Anda.</p>
         
         <div class="struk-preview-box" id="areaStrukPreview" style="display:none;"></div>
@@ -405,13 +442,13 @@
         const { data: agen } = await _supabase
             .from('agen')
             .select('*')
-            .eq('toko_id', tokoIdGlobal); // <-- Tambahkan filter ini
+            .eq('toko_id', tokoIdGlobal);
 
         if(agen) {
             const agenFilter = agen.filter(a => {
-                const type = (a.tipe_agen || '').toLowerCase();
+                const type = (a.tipe_agen || a.tipe || '').toLowerCase();
                 if (type.includes('supplier')) return false;
-                return type.includes('agen') || type.includes('umum');
+                return type.includes('agen') || type.includes('umum') || type.includes('konsumen');
             });
 
             agenFilter.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
@@ -423,15 +460,12 @@
                 databaseHarga[a.id] = { "bon": a.saldo_bon || 0 };
             });
         }
-        
-        // ... (lanjutan kode lainnya tetap sama)
 
-
-        // 2. Muat Master Barang (Barang Jadi) - Difilter berdasarkan toko_id aktif
+        // 2. Muat Master Barang (Barang Jadi)
         const { data: listBrg } = await _supabase
             .from('barang')
             .select('*')
-            .eq('toko_id', tokoIdGlobal); // <-- Tambahkan filter toko_id di sini
+            .eq('toko_id', tokoIdGlobal);
 
         if(listBrg) {
             barangStokList = listBrg.filter(b => {
@@ -455,7 +489,7 @@
             });
         }
 
-        // 4. Muat Kendaraan / Mobil (disembunyikan)
+        // 4. Muat Kendaraan / Mobil
         const { data: mobil } = await _supabase.from('kendaraan').select('*');
         const selMobil = document.getElementById('inMobil');
         if(mobil) {
@@ -463,7 +497,7 @@
             mobil.forEach(m => selMobil.options.add(new Option(m.plat_nomor, m.plat_nomor)));
         }
 
-        // 5. Muat Checker (disembunyikan)
+        // 5. Muat Checker
         const { data: karyawan } = await _supabase.from('karyawan').select('*').eq('aktif', true);
         const selChk = document.getElementById('inChecker');
         if(karyawan) {
@@ -545,7 +579,6 @@
             hrg = databaseHarga[agenObj.id][brgObj.id][sat] || 0;
         }
 
-        // Jika tidak ada di harga khusus agen, ambil harga jual dasar dari master barang
         if (hrg === 0) {
             const brgMaster = barangStokList.find(b => b.id === brgObj.id);
             if (brgMaster) {
@@ -770,7 +803,7 @@
         document.body.removeChild(downloadLink);
     }
 
-async function simpanTransaksi() {
+    async function simpanTransaksi() {
         let errorList = [];
         const agRaw = document.getElementById('inPelanggan').value;
         if (!agRaw) return alert("Pilih agen/umum terlebih dahulu!");
@@ -866,7 +899,7 @@ async function simpanTransaksi() {
         try {
             // 1. Simpan Header Transaksi Pengiriman
             const { error: errTx } = await _supabase.from('transaksi_pengiriman').insert([{
-                toko_id: tokoIdGlobal, // <-- INI YANG DITAMBAHKAN
+                toko_id: tokoIdGlobal,
                 no_nota: noStrukAktif, nama_agen: ag, tanggal: tglInput,
                 driver_1: kasirVal, driver_2: checkerVal, plat_nomor: mobil, 
                 total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
@@ -876,8 +909,8 @@ async function simpanTransaksi() {
 
             // 2. Simpan Detail Transaksi
             const details = [
-                ...keranjangKirim.map(i => ({ toko_id: tokoIdGlobal, no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })), // <-- DITAMBAHKAN
-                ...keranjangRetur.map(i => ({ toko_id: tokoIdGlobal, no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total })) // <-- DITAMBAHKAN
+                ...keranjangKirim.map(i => ({ toko_id: tokoIdGlobal, no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
+                ...keranjangRetur.map(i => ({ toko_id: tokoIdGlobal, no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
             ];
             await _supabase.from('transaksi_pengiriman_detail').insert(details);
             

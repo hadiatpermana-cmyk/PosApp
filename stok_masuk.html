@@ -8,51 +8,149 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+Prime&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #334155; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --sidebar-width: 250px; --topbar-height: 60px; }
-        [data-theme="dark"] { --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333; }
-        body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
-        .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--p-color); flex-shrink: 0; }
+        :root { 
+            --bg-main: #f4f6f9; 
+            --bg-card: #ffffff; 
+            --text-main: #2d3436; 
+            --text-muted: #6c757d; 
+            --border-line: #e2e8f0; 
+            --p-color: #334155; 
+            --blue: #1ba0e2; 
+            --red: #f05050; 
+            --green: #27c24c; 
+            --btn-add: #d97706;
+            --sidebar-width: 250px; 
+            --topbar-height: 60px; 
+        }
+        [data-theme="dark"] { 
+            --bg-main: #121212; 
+            --bg-card: #1e1e1e; 
+            --text-main: #f1f2f6; 
+            --text-muted: #aaaaaa; 
+            --border-line: #333333; 
+        }
+        body { 
+            font-family: 'Roboto Condensed', sans-serif; 
+            margin: 0; 
+            background: var(--bg-main); 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            overflow: hidden; 
+            color: var(--text-main); 
+        }
+
+        /* Topbar */
+        .topbar { 
+            height: var(--topbar-height); 
+            background: var(--bg-card); 
+            padding: 0 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            border-bottom: 3px solid #d97706; 
+            flex-shrink: 0; 
+        }
         .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
-        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 18px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
         .store-brand { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
-        .store-logo { width: 35px; height: 35px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
-        .store-info h3 { margin: 0; font-size: 16px; color: var(--p-color); }
-        .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
-        .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; }
-        .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
+        .store-logo { width: 32px; height: 32px; background: var(--bg-main); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 18px; overflow: hidden; }
+        .store-info h3 { margin: 0; font-size: 15px; color: #d97706; font-weight: bold; }
+        .store-info p { margin: 0; font-size: 11px; color: var(--text-muted); }
+        .btn-theme { background: none; border: none; font-size: 18px; cursor: pointer; }
+        .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: none; }
+        .btn-logout:hover { text-decoration: underline; }
+
+        /* Main Container & Grid Ratio (75% Kiri : 25% Kanan) */
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; transition: width 0.3s; }
         .sidebar.collapsed { width: 0; border: none; }
         .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
-        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); font-weight: bold; }
+        .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 14px; border-bottom: 1px solid var(--border-line); font-weight: bold; }
         .nav-item:hover, .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
         
-        .content-area { padding: 25px; overflow-y: auto; flex: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: start; box-sizing: border-box; }
+        .content-area { 
+            padding: 20px; 
+            overflow-y: auto; 
+            flex: 1; 
+            display: grid; 
+            grid-template-columns: 3fr 1fr; /* Ratio 75% : 25% */
+            gap: 20px; 
+            align-items: start; 
+            box-sizing: border-box; 
+        }
         #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: var(--text-muted); }
         
-        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid var(--border-line); }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-line); padding-bottom: 10px; }
+        /* Card Form (Sisi Kanan - 25%) */
+        .card { background: var(--bg-card); border-radius: 8px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid var(--border-line); }
+        .card-header { margin-bottom: 8px; }
+        .card-header h3 { margin: 0; font-size: 15px; font-weight: bold; color: #333; }
         
-        .form-grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
-        .form-group input, .form-group select { width: 100%; padding: 8px 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font-weight: bold; box-sizing: border-box; }
+        .form-container { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+        .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 11px; font-weight: bold; color: #6b7280; text-transform: uppercase; letter-spacing: 0.2px; }
+        .form-group input, .form-group select { 
+            width: 100%; 
+            padding: 8px 10px; 
+            border: 1px solid #d1d5db; 
+            border-radius: 6px; 
+            background: #f9fafb; 
+            color: #111827; 
+            font-weight: 600; 
+            font-size: 13px; 
+            box-sizing: border-box; 
+            outline: none;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: var(--green); background: #fff; }
         
-        .btn-action { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; font-family: inherit; }
-        .btn-icon { background: transparent; border: none; cursor: pointer; font-size: 14px; padding: 0 4px; }
+        .btn-action-add { 
+            background: var(--btn-add); 
+            color: white; 
+            border: none; 
+            padding: 10px 14px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            font-size: 12px; 
+            text-transform: uppercase; 
+            cursor: pointer; 
+            width: 100%;
+            margin-top: 8px;
+            text-align: center;
+        }
+        .btn-action-add:hover { background: #b45309; }
+
+        .btn-simpan {
+            background: var(--green); 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            font-size: 13px; 
+            text-transform: uppercase; 
+            width: 100%; 
+            cursor: pointer;
+            margin-top: 15px;
+            letter-spacing: 0.5px;
+        }
+        .btn-simpan:hover { background: #16a34a; }
+        .btn-icon { background: transparent; border: none; cursor: pointer; font-size: 13px; padding: 0 4px; }
         
-        .link-kembali { color: var(--green); text-decoration: none; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 15px; }
+        .link-kembali { color: var(--green); text-decoration: none; font-weight: bold; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; border-bottom: 1px solid #f0f0f0; padding-bottom: 6px; width: 100%; }
         .link-kembali:hover { text-decoration: underline; }
 
-        .bon-container { background: #fffdf5; color: #000; font-family: 'Courier Prime', monospace; padding: 15px; border-radius: 4px; border: 1px dashed #ccc; font-size: 13px; width: 100%; box-sizing: border-box; }
+        /* Area Bon / Faktur Penampil Data (Sisi Kiri - 75%) */
+        .bon-container { background: #ffffff; color: #000; font-family: 'Courier Prime', monospace; padding: 20px; border-radius: 8px; border: 1px solid var(--border-line); font-size: 13px; width: 100%; box-sizing: border-box; box-shadow: 0 2px 8px rgba(0,0,0,0.04); min-height: 480px; display: flex; flex-direction: column; justify-content: space-between; }
         [data-theme="dark"] .bon-container { background: #2d2d2d; color: #f1f1f1; border-color: #555; }
-        .toko-title { text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 5px; text-transform: uppercase; }
-        .bon-divider { border-bottom: 1px dashed #999; margin: 8px 0; }
+        .toko-title { text-align: center; font-weight: bold; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; }
+        .bon-divider { border-bottom: 1px dashed #777; margin: 8px 0; }
         .bon-header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
         .text-right { text-align: right; }
         .bon-table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 5px; }
-        .bon-table th, .bon-table td { padding: 3px 0; vertical-align: middle; }
-        .bon-table th { border-bottom: 1px dashed #999; }
+        .bon-table th, .bon-table td { padding: 4px 0; vertical-align: middle; }
+        .bon-table th { border-bottom: 1px dashed #777; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -62,12 +160,12 @@
         <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
         <a href="dashboard.html" class="store-brand">
             <div class="store-logo" id="logoTopbar">🏪</div>
-            <div class="store-info"><h3 id="txtNamaTokoTop">Memuat...</h3><p>Admin</p></div>
+            <div class="store-info"><h3 id="txtNamaTokoTop">Rian Snack</h3><p>Admin</p></div>
         </a>
     </div>
     <div class="topbar-right">
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
-        <span id="txtNamaUser">User</span> 👋
+        <span id="txtNamaUser">Deden</span> 👋
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
     </div>
 </div>
@@ -92,60 +190,72 @@
     <div class="content-area">
         <div id="loader"><h2 style="margin:0;">⏳ Menyiapkan Data...</h2></div>
         
+        <!-- Sisi Kiri: Penampil Data / Struk Faktur (75%) -->
         <div class="bon-container" id="areaBon">
-            <div class="toko-title" id="lblTokoBon">NAMA TOKO</div>
-            <div style="text-align:center; font-size:11px; margin-bottom:5px;" id="lblAlamatBon">Alamat...</div>
-            <div style="text-align:center; font-weight:bold; text-decoration:underline; font-size:13px; margin-bottom:10px;">FAKTUR PENERIMAAN BARANG</div>
-            <div class="bon-divider"></div>
-            <div class="bon-header-grid">
-                <div>No : <strong id="lblFaktur">PB-000</strong></div>
-                <div class="text-right">Tgl : <span id="lblTanggal">00/00/00</span></div>
-                <div>Spl: <span id="lblSupplier">-</span></div>
-                <div class="text-right">Opr: <span id="lblPenerima">-</span></div>
-            </div>
-            <div class="bon-divider"></div>
-            <div style="font-weight:bold;">DITERIMA</div>
-            <table class="bon-table">
-                <thead><tr><th>Qty</th><th>Barang</th><th class="text-right">Harga</th><th class="text-right">Total</th><th style="text-align:center;">Aksi</th></tr></thead>
-                <tbody id="tbTerima"></tbody>
-            </table>
-            <div class="bon-divider"></div>
-            <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Total Terima</span><span id="totTerima">0</span></div>
-            
-            <div id="areaRetur" style="display: none;">
-                <div style="font-weight:bold; margin-top:10px; color:red;">RETUR</div>
-                <table class="bon-table" style="color:red;">
-                    <thead><tr><th>Qty</th><th>Barang</th><th class="text-right">Harga</th><th class="text-right">Total</th><th style="text-align:center;">Aksi</th></tr></thead>
-                    <tbody id="tbRetur"></tbody>
+            <div>
+                <div class="toko-title" id="lblTokoBon">RIAN SNACK</div>
+                <div style="text-align:center; font-size:11px; margin-bottom:5px;" id="lblAlamatBon">Cijantung Purwakarta</div>
+                <div style="text-align:center; font-weight:bold; text-decoration:underline; font-size:13px; margin-bottom:10px;">FAKTUR PENERIMAAN BARANG</div>
+                <div class="bon-divider"></div>
+                <div class="bon-header-grid">
+                    <div>No : <strong id="lblFaktur">PB-000</strong></div>
+                    <div class="text-right">Tgl : <span id="lblTanggal">00/00/00</span></div>
+                    <div>Spl: <span id="lblSupplier">-</span></div>
+                    <div class="text-right">Opr: <span id="lblPenerima">-</span></div>
+                </div>
+                <div class="bon-divider"></div>
+                <div style="font-weight:bold;">DITERIMA</div>
+                <table class="bon-table">
+                    <thead>
+                        <tr>
+                            <th>Qty</th>
+                            <th>Barang</th>
+                            <th class="text-right">Harga</th>
+                            <th class="text-right">Total</th>
+                            <th style="text-align:center;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbTerima"></tbody>
                 </table>
-                <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Total Retur</span><span id="totRetur">0</span></div>
+                <div class="bon-divider"></div>
+                <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Total Terima</span><span id="totTerima">0</span></div>
+                
+                <div id="areaRetur" style="display: none;">
+                    <div style="font-weight:bold; margin-top:10px; color:red;">RETUR</div>
+                    <table class="bon-table" style="color:red;">
+                        <thead>
+                            <tr>
+                                <th>Qty</th>
+                                <th>Barang</th>
+                                <th class="text-right">Harga</th>
+                                <th class="text-right">Total</th>
+                                <th style="text-align:center;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbRetur"></tbody>
+                    </table>
+                    <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Total Retur</span><span id="totRetur">0</span></div>
+                </div>
+                
+                <div class="bon-divider"></div>
+                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span>GRAND TOTAL</span><span id="grandTotal">0</span></div>
             </div>
-            
-            <div class="bon-divider" style="border-top:2px dashed #999;"></div>
-            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span>GRAND TOTAL</span><span id="grandTotal">0</span></div>
 
-            <div style="margin-top: 20px;" data-html2canvas-ignore="true">
-                <button class="btn-action" style="background:var(--green); color:white;" id="btnSimpan" onclick="validasiSimpan()">Simpan & Update Stok</button>
+            <div style="margin-top: 15px;" data-html2canvas-ignore="true">
+                <button class="btn-simpan" id="btnSimpan" onclick="validasiSimpan()">SIMPAN & UPDATE STOK</button>
             </div>
         </div>
 
+        <!-- Sisi Kanan: Form Input Barang (25%) -->
         <div class="card">
             <div class="card-header">
-                <div>
-                    <h3 style="margin:0;">Input Barang Faktur</h3>
-                </div>
+                <h3>Input Barang Faktur</h3>
             </div>
             <a href="dashboard.html" class="link-kembali">← Kembali ke Dashboard</a>
 
-            <div class="form-grid-container">
+            <div class="form-container">
                 <div class="form-group">
-                    <label>Supplier / Pemasok *</label>
-                    <select id="inSupplier" onchange="filterBarangSupplier(); updateFakturInfo();">
-                        <option value="">-- Pilih Supplier --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Jenis Transaksi</label>
+                    <label>JENIS TRANSAKSI</label>
                     <select id="inJenis">
                         <option value="TERIMA">DITERIMA</option>
                         <option value="RETUR">RETUR</option>
@@ -153,34 +263,45 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Nama Barang *</label>
+                    <label>SUPPLIER / PEMASOK *</label>
+                    <select id="inSupplier" onchange="filterBarangSupplier(); updateFakturInfo();">
+                        <option value="">-- Pilih Supplier --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>NAMA BARANG *</label>
                     <select id="inBarang" onchange="autoFillHarga()">
                         <option value="">-- Pilih Supplier Dahulu --</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Satuan</label>
-                    <select id="inSatuan" onchange="autoFillHarga()">
-                        <option value="Bal" selected>Bal</option>
-                        <option value="Pack">Pack</option>
-                        <option value="Pcs">Pcs / Lembar / Kg</option>
-                    </select>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label>QTY (KEMASAN)</label>
+                        <input type="number" id="inQty" min="0" value="0" onclick="this.value=''">
+                    </div>
+                    <div class="form-group">
+                        <label>SATUAN</label>
+                        <select id="inSatuan" onchange="autoFillHarga()">
+                            <option value="Bal" selected>Bal</option>
+                            <option value="Pack">Pack</option>
+                            <option value="Pcs">Pcs / Lembar / Kg</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Qty (Kemasan)</label>
-                    <input type="number" id="inQty" min="0" value="0" onclick="this.value=''">
-                </div>
-                <div class="form-group">
-                    <label>Harga Beli Satuan (Rp)</label>
+                    <label>HARGA BELI SATUAN (RP)</label>
                     <input type="text" id="inHarga" placeholder="0" oninput="formatRibuan(this)">
                 </div>
-            </div>
 
-            <button class="btn-action" style="background:var(--p-color); color:white; margin-top: 15px;" onclick="tambahKeFaktur()">+ Tambahkan ke Faktur</button>
+                <button class="btn-action-add" onclick="tambahKeFaktur()">+ TAMBAHKAN KE FAKTUR</button>
+            </div>
         </div>
     </div>
 </div>
+
 <!-- Modal Preview Struk Digital -->
 <div id="modalPreviewStruk" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2000; justify-content:center; align-items:center;">
     <div style="background:#fff; padding:20px; border-radius:12px; width:95%; max-width:400px; text-align:center; position:relative;">
@@ -190,11 +311,12 @@
         <img id="imgPreviewLaporan" style="width:100%; border:1px solid #ccc; border-radius:8px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1);" />
         
         <div style="display:flex; gap:10px;">
-            <button class="btn-action" style="background:#25d366; color:white; flex:1;" id="btnKirimWA">Kirim WhatsApp</button>
-            <button class="btn-action" style="background:var(--blue); color:white; flex:1;" onclick="tutupModalDanReset()">Selesai / Nota Baru</button>
+            <button class="btn-action-add" style="background:#25d366; flex:1;" id="btnKirimWA">Kirim WhatsApp</button>
+            <button class="btn-action-add" style="background:var(--blue); flex:1;" onclick="tutupModalDanReset()">Selesai / Nota Baru</button>
         </div>
     </div>
 </div>
+
 <script>
     const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
@@ -264,7 +386,6 @@
         document.getElementById('txtNamaTokoTop').innerText = namaTokoGlobal;
         document.getElementById('lblTokoBon').innerText = namaTokoGlobal; 
         document.getElementById('lblAlamatBon').innerText = alamatTokoGlobal;
-        if(toko.warna_tema) document.documentElement.style.setProperty('--p-color', toko.warna_tema);
         if(toko.logo_url) document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
         
         document.getElementById('txtNamaUser').innerText = namaKasirGlobal;
@@ -411,21 +532,6 @@
         renderBon();
     }
 
-    function editItemFaktur(jenis, idx) {
-        let targetCart = jenis === 'TERIMA' ? cartTerima : cartRetur;
-        let item = targetCart[idx];
-
-        document.getElementById('inJenis').value = jenis;
-        document.getElementById('inBarang').value = item.id_barang;
-        document.getElementById('inSatuan').value = item.satuan;
-        document.getElementById('inQty').value = item.qty;
-        document.getElementById('inHarga').value = item.harga.toLocaleString('id-ID');
-
-        // Hapus item lama dari cart agar bisa diperbarui saat diklik tambah lagi
-        targetCart.splice(idx, 1);
-        renderBon();
-    }
-
     function hapusItemFaktur(jenis, idx) {
         let targetCart = jenis === 'TERIMA' ? cartTerima : cartRetur;
         targetCart.splice(idx, 1);
@@ -446,7 +552,7 @@
                 </td>
             </tr>`;
         });
-        document.getElementById('tbTerima').innerHTML = htmlTrm || '<tr><td colspan="5" style="color:#aaa; text-align:center;">Kosong</td></tr>';
+        document.getElementById('tbTerima').innerHTML = htmlTrm || '<tr><td colspan="5" style="color:#aaa; text-align:center; padding:10px 0;">Kosong</td></tr>';
         document.getElementById('totTerima').innerText = sumTrm.toLocaleString();
 
         let sumRtr = 0, htmlRtr = '';
@@ -532,7 +638,6 @@
                 await _supabase.from('barang').update({ stok_sekarang: Number(brg?.stok_sekarang || 0) - totalPcsKonversi }).eq('id', item.id_barang);
             }
 
-            // Memicu pembuatan struk digital sebelum form direset
             btn.innerText = "MEMBUAT STRUK DIGITAL...";
             const savedSupplier = namaSupplier;
             const savedFaktur = noFakturAktif;
@@ -543,22 +648,19 @@
         } catch (e) { 
             console.error(e);
             alert("Gagal menyimpan: " + e.message); 
-            btn.disabled = false; btn.innerText = "Simpan & Update Stok"; 
+            btn.disabled = false; btn.innerText = "SIMPAN & UPDATE STOK"; 
         } 
     }
 
     async function buatGambarLaporan(supplier, faktur, tgl) {
         const area = document.getElementById('areaBon');
         
-        // Render UI struk menjadi canvas gambar
-        const canvas = await html2canvas(area, { scale: 2, backgroundColor: "#fffdf5", logging: false });
+        const canvas = await html2canvas(area, { scale: 2, backgroundColor: "#ffffff", logging: false });
         const imgUrl = canvas.toDataURL("image/jpeg", 0.9);
         
-        // Tampilkan hasil di modal preview
         document.getElementById('imgPreviewLaporan').src = imgUrl;
         document.getElementById('modalPreviewStruk').style.display = 'flex';
 
-        // Auto download ke file gambar perangkat user
         const downloadLink = document.createElement("a");
         downloadLink.href = imgUrl;
         downloadLink.download = `Struk_Penerimaan_${faktur}.jpg`;
@@ -566,7 +668,6 @@
         downloadLink.click();
         document.body.removeChild(downloadLink);
 
-        // Siapkan Teks Pengantar WhatsApp (User tinggal klik)
         let pesanWA = `Halo admin ${supplier},\nBerikut adalah bukti penerimaan barang & update stok dengan No. Faktur *${faktur}* pada tanggal *${tgl}*.\n\n_Mohon lampirkan gambar struk penerimaan yang baru saja diunduh._`;
         let waUrl = `https://wa.me/?text=${encodeURIComponent(pesanWA)}`;
         
@@ -578,7 +679,6 @@
     function tutupModalDanReset() {
         document.getElementById('modalPreviewStruk').style.display = 'none';
         
-        // Reset form keranjang dan kembali keadaan awal
         cartTerima = []; 
         cartRetur = [];
         buatNoFaktur(); 
@@ -586,7 +686,7 @@
         
         const btn = document.getElementById('btnSimpan');
         btn.disabled = false; 
-        btn.innerText = "Simpan & Update Stok"; 
+        btn.innerText = "SIMPAN & UPDATE STOK"; 
     }
 
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }

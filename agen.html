@@ -60,11 +60,64 @@
         .badge-tipe { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; text-transform: uppercase; }
         .bg-agen { background: rgba(27, 160, 226, 0.1); color: var(--blue); border: 1px solid var(--blue); }
         .bg-supplier { background: rgba(39, 194, 76, 0.1); color: var(--green); border: 1px solid var(--green); }
-    </style>
+    /* --- GAYA INDIKATOR JARINGAN --- */
+.network-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 15px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: #f1f5f9; /* Background tipis agar terlihat */
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.network-status .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Jika Online (Konek) */
+.network-status.online .dot {
+    background-color: #10b981; /* Hijau */
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: pulse-green 1.5s infinite;
+}
+.network-status.online .status-text {
+    color: #10b981;
+}
+
+/* Jika Offline (Error) */
+.network-status.offline .dot {
+    background-color: #ef4444; /* Merah */
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    animation: pulse-red 1.5s infinite;
+}
+.network-status.offline .status-text {
+    color: #ef4444;
+}
+
+/* Animasi Denyut Hijau */
+@keyframes pulse-green {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Animasi Denyut Merah */
+@keyframes pulse-red {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+	</style>
 </head>
 <body>
 
-<div class="topbar">
+<<div class="topbar">
     <div class="topbar-left">
         <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
         <a href="dashboard.html" class="store-brand">
@@ -73,6 +126,13 @@
         </a>
     </div>
     <div class="topbar-right">
+        
+        <!-- TAMBAHAN INDIKATOR JARINGAN DI SINI -->
+        <div class="network-status" id="networkStatus">
+            <span class="dot"></span>
+            <span class="status-text" id="networkText">Connected</span>
+        </div>
+        
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
         <span id="txtNamaUser">User</span> 👋
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
@@ -111,7 +171,8 @@
                         <option value="">-- Semua Tipe --</option>
                         <option value="Agen">Grosir / Agen</option>
                         <option value="Supplier">Pemasok / Supplier</option>
-                        <option value="Umum">Pelanggan Umum</option>
+                        <option value="Umum">Motoris</option>
+						<option value="Umum">Pelanggan Umum</option>
                     </select>
                     <button class="btn-action" style="background:var(--p-color); color:white;" onclick="bukaModal()">+ Tambah Kontak</button>
                 </div>
@@ -161,7 +222,11 @@
         </div>
         <div class="form-group"><label>Nama Lengkap / Toko *</label><input type="text" id="inNama" placeholder="Contoh: Budi Santoso"></div>
         <div class="form-group"><label>Tipe Kontak *</label>
-            <select id="inTipe"><option value="Agen">Grosir / Agen</option><option value="Supplier">Pemasok / Supplier</option><option value="Umum">Pelanggan Umum</option></select>
+            <select id="inTipe">
+			<option value="Agen">Grosir / Agen</option>
+			<option value="Supplier">Pemasok / Supplier</option>
+			<option value="Umum">Motoris</option></select>
+			<option value="Umum">Pelanggan Umum</option></select>
         </div>
         <div class="form-group"><label>Nomor HP / WhatsApp</label><input type="text" id="inHp" placeholder="08123456789"></div>
         <div class="form-group"><label>Alamat Lengkap</label><textarea id="inAlamat" rows="3"></textarea></div>
@@ -325,6 +390,30 @@
 
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
     verifikasiSesi();
+	// Fungsi untuk mengubah status UI Jaringan
+function updateNetworkStatus() {
+    const statusContainer = document.getElementById('networkStatus');
+    const statusText = document.getElementById('networkText');
+    
+    if (navigator.onLine) {
+        // Jika terhubung internet
+        statusContainer.classList.remove('offline');
+        statusContainer.classList.add('online');
+        statusText.innerText = 'Connected';
+    } else {
+        // Jika terputus internet
+        statusContainer.classList.remove('online');
+        statusContainer.classList.add('offline');
+        statusText.innerText = 'Error';
+    }
+}
+
+// Cek pertama kali saat web dibuka
+window.addEventListener('load', updateNetworkStatus);
+
+// Cek otomatis saat koneksi berubah di tengah jalan
+window.addEventListener('online', updateNetworkStatus);
+window.addEventListener('offline', updateNetworkStatus);
 </script>
 </body>
 </html>

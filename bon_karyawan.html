@@ -269,11 +269,11 @@
 
      async function initData() {
         try {
-            // 1. Muat Agen yang difilter berdasarkan toko_id user yang aktif
+            // 1. Muat Agen yang difilter berdasarkan toko_id user yang aktif[cite: 3]
             const { data: agen, error: errorAgen } = await _supabase
                 .from('agen')
                 .select('*')
-                .eq('toko_id', tokoIdGlobal); // <-- Tambahkan filter ini
+                .eq('toko_id', tokoIdGlobal);
 
             if (errorAgen) throw new Error("Gagal muat AGEN: " + errorAgen.message);
             
@@ -295,14 +295,11 @@
                 });
             }
 
-            // ... (lanjutan kode lainnya tetap sama)
-
-
-                       // Muat Master Barang yang difilter berdasarkan toko_id yang aktif
+            // Muat Master Barang yang difilter berdasarkan toko_id yang aktif[cite: 3]
             const { data: listBrg } = await _supabase
                 .from('barang')
                 .select('*')
-                .eq('toko_id', tokoIdGlobal); // <-- Tambahkan filter toko_id di sini
+                .eq('toko_id', tokoIdGlobal);
 
             if(listBrg) {
                 barangStokList = listBrg.filter(b => {
@@ -311,7 +308,6 @@
                     return kat.includes('barang jadi') || stat.includes('barang jadi') || kat.includes('jadi') || stat.includes('jadi');
                 });
             }
-
 
             const { data: hargaAgen } = await _supabase.from('harga_agen').select('*');
             if(hargaAgen) {
@@ -333,7 +329,13 @@
                 });
             }
 
-            const { data: karyawan } = await _supabase.from('karyawan').select('*').eq('aktif', true);
+            // Muat Karyawan yang difilter berdasarkan toko_id yang aktif
+            const { data: karyawan } = await _supabase
+                .from('karyawan')
+                .select('*')
+                .eq('aktif', true)
+                .eq('toko_id', tokoIdGlobal); // <-- Tambahan filter toko_id
+            
             const d2 = document.getElementById('driver2');
             d2.innerHTML = '<option value="">-- CHECKER / DRIVER 2 --</option>';
             if(karyawan) {
@@ -343,7 +345,12 @@
                 });
             }
 
-            const { data: mobil } = await _supabase.from('kendaraan').select('*');
+            // Muat Kendaraan yang difilter berdasarkan toko_id yang aktif
+            const { data: mobil } = await _supabase
+                .from('kendaraan')
+                .select('*')
+                .eq('toko_id', tokoIdGlobal); // <-- Tambahan filter toko_id
+            
             const selMobil = document.getElementById('pilihMobil');
             if(mobil) {
                 selMobil.innerHTML = '<option value="">-- PILIH MOBIL --</option>';
@@ -359,6 +366,7 @@
             console.error("Init Error:", e); 
         }
     }
+    
     // Fungsi dummy untuk mencegah error "renderBarangDropdown is not defined"
     function renderBarangDropdown() {
         // Ditangani langsung oleh openModal di file ini
@@ -485,7 +493,6 @@
             }
         }
         
-        // Bisa digunakan jika ingin menampilkan harga di interface modal jika diperlukan
     }
 
     function addItem() {
@@ -831,7 +838,7 @@
 
         try {
             const { error: errTx } = await _supabase.from('transaksi_pengiriman').insert([{
-                toko_id: tokoIdGlobal, // <-- INI YANG DITAMBAHKAN
+                toko_id: tokoIdGlobal,
                 no_nota: noNota, nama_agen: ag, tanggal: tglInput,
                 driver_1: drv1, driver_2: drv2 || null, plat_nomor: mobil || null, 
                 total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
@@ -840,8 +847,8 @@
             if (errTx) throw new Error(errTx.message);
 
             const details = [
-                ...itemsKirim.map(i => ({ toko_id: tokoIdGlobal, no_nota: noNota, nama_barang: i.barang, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })), // <-- DITAMBAHKAN
-                ...itemsRetur.map(i => ({ toko_id: tokoIdGlobal, no_nota: noNota, nama_barang: i.barang, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total })) // <-- DITAMBAHKAN
+                ...itemsKirim.map(i => ({ toko_id: tokoIdGlobal, no_nota: noNota, nama_barang: i.barang, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
+                ...itemsRetur.map(i => ({ toko_id: tokoIdGlobal, no_nota: noNota, nama_barang: i.barang, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
             ];
             await _supabase.from('transaksi_pengiriman_detail').insert(details);
             

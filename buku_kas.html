@@ -48,60 +48,59 @@
         /* Style untuk Tab */
         .tab-btn { background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border-line); padding: 10px 15px; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: bold; font-size: 14px; margin-right: 5px; transition: all 0.2s; }
         .tab-btn.active { background: var(--p-color); color: white; border-color: var(--p-color); }
-    /* --- GAYA INDIKATOR JARINGAN --- */
-.network-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-right: 15px;
-    padding: 6px 12px;
-    border-radius: 20px;
-    background: #f1f5f9; /* Background tipis agar terlihat */
-    font-size: 13px;
-    font-weight: 800;
-}
+        
+        /* --- GAYA INDIKATOR JARINGAN --- */
+        .network-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 15px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: #f1f5f9;
+            font-size: 13px;
+            font-weight: 800;
+        }
 
-.network-status .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-}
+        .network-status .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
 
-/* Jika Online (Konek) */
-.network-status.online .dot {
-    background-color: #10b981; /* Hijau */
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-    animation: pulse-green 1.5s infinite;
-}
-.network-status.online .status-text {
-    color: #10b981;
-}
+        /* Jika Online (Konek) */
+        .network-status.online .dot {
+            background-color: #10b981; 
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-green 1.5s infinite;
+        }
+        .network-status.online .status-text {
+            color: #10b981;
+        }
 
-/* Jika Offline (Error) */
-.network-status.offline .dot {
-    background-color: #ef4444; /* Merah */
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-    animation: pulse-red 1.5s infinite;
-}
-.network-status.offline .status-text {
-    color: #ef4444;
-}
+        /* Jika Offline (Error) */
+        .network-status.offline .dot {
+            background-color: #ef4444; 
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            animation: pulse-red 1.5s infinite;
+        }
+        .network-status.offline .status-text {
+            color: #ef4444;
+        }
 
-/* Animasi Denyut Hijau */
-@keyframes pulse-green {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
 
-/* Animasi Denyut Merah */
-@keyframes pulse-red {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
-	</style>
+        @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    </style>
 </head>
 <body>
 
@@ -131,14 +130,14 @@
     <div class="sidebar collapsed" id="sidebar">
         <div class="nav-menu">
             <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
-            <a href="agen.html" class="nav-item active">👥 Master Agen & Supplier</a>
+            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
             <a href="barang.html" class="nav-item">📦 Master Barang</a>
             <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
             <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
             <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
             <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
             <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
-            <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
+            <a href="buku_kas.html" class="nav-item active">📖 Buku Kas</a>
             <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
             <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
         </div>
@@ -303,10 +302,11 @@
     }
 
     async function muatSemuaDataKas() {
+        // PERBAIKAN: Menambahkan filter .eq('toko_id', toko_id) untuk transaksi_pengiriman
         const [resKas, resStok, resSales] = await Promise.all([
             _supabase.from('kas_manual').select('*').eq('toko_id', toko_id),
             _supabase.from('pembelian_header').select('*').eq('toko_id', toko_id),
-            _supabase.from('transaksi_pengiriman').select('*') 
+            _supabase.from('transaksi_pengiriman').select('*').eq('toko_id', toko_id) 
         ]);
 
         dbKasManual = resKas.data || [];
@@ -491,31 +491,26 @@
 
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
     initBukuKas();
-	
-	// Fungsi untuk mengubah status UI Jaringan
-function updateNetworkStatus() {
-    const statusContainer = document.getElementById('networkStatus');
-    const statusText = document.getElementById('networkText');
     
-    if (navigator.onLine) {
-        // Jika terhubung internet
-        statusContainer.classList.remove('offline');
-        statusContainer.classList.add('online');
-        statusText.innerText = 'Connected';
-    } else {
-        // Jika terputus internet
-        statusContainer.classList.remove('online');
-        statusContainer.classList.add('offline');
-        statusText.innerText = 'Error';
+    // Fungsi untuk mengubah status UI Jaringan
+    function updateNetworkStatus() {
+        const statusContainer = document.getElementById('networkStatus');
+        const statusText = document.getElementById('networkText');
+        
+        if (navigator.onLine) {
+            statusContainer.classList.remove('offline');
+            statusContainer.classList.add('online');
+            statusText.innerText = 'Connected';
+        } else {
+            statusContainer.classList.remove('online');
+            statusContainer.classList.add('offline');
+            statusText.innerText = 'Error';
+        }
     }
-}
 
-// Cek pertama kali saat web dibuka
-window.addEventListener('load', updateNetworkStatus);
-
-// Cek otomatis saat koneksi berubah di tengah jalan
-window.addEventListener('online', updateNetworkStatus);
-window.addEventListener('offline', updateNetworkStatus);
+    window.addEventListener('load', updateNetworkStatus);
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
 </script>
 </body>
 </html>

@@ -322,7 +322,7 @@
             
             const { data: toko } = await _supabase.from('toko').select('*').eq('id', profileTokoId).single();
 
-            document.getElementById('txtNamaToko').innerText = toko.nama_toko;
+            document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
             if (toko.warna_tema) document.documentElement.style.setProperty('--p-color', toko.warna_tema);
             if (toko.logo_url) document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
             document.getElementById('txtNamaUser').innerText = profile.nama_lengkap.split(' ')[0];

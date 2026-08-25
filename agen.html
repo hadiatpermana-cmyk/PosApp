@@ -171,7 +171,7 @@
                         <option value="">-- Semua Tipe --</option>
                         <option value="Agen">Grosir / Agen</option>
                         <option value="Supplier">Pemasok / Supplier</option>
-                        <option value="Umum">Motoris</option>
+                        <option value="Motoris">Motoris</option>
 						<option value="Umum">Pelanggan Umum</option>
                     </select>
                     <button class="btn-action" style="background:var(--p-color); color:white;" onclick="bukaModal()">+ Tambah Kontak</button>
@@ -225,7 +225,7 @@
             <select id="inTipe">
 			<option value="Agen">Grosir / Agen</option>
 			<option value="Supplier">Pemasok / Supplier</option>
-			<option value="Umum">Motoris</option></select>
+			<option value="Motoris">Motoris</option></select>
 			<option value="Umum">Pelanggan Umum</option></select>
         </div>
         <div class="form-group"><label>Nomor HP / WhatsApp</label><input type="text" id="inHp" placeholder="08123456789"></div>
@@ -312,7 +312,10 @@
         if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data kontak.</td></tr>'; return; }
         
         tbody.innerHTML = data.map(a => {
-            let badgeClass = a.tipe_agen === 'Agen' ? 'bg-agen' : (a.tipe_agen === 'Supplier' ? 'bg-supplier' : '');
+            let badgeClass = '';
+if(a.tipe_agen === 'Agen') badgeClass = 'bg-agen';
+else if(a.tipe_agen === 'Supplier') badgeClass = 'bg-supplier';
+else if(a.tipe_agen === 'Motoris') badgeClass = 'bg-motoris'; // Kelas baru untuk Motoris
             return `<tr>
                 <td style="font-weight:bold;">${a.nama_agen}</td>
                 <td><span class="badge-tipe ${badgeClass}">${a.tipe_agen || 'Agen'}</span></td>

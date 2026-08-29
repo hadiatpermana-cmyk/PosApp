@@ -66,7 +66,6 @@
         .rincian-item { font-size: 13px; border-bottom: 1px dashed var(--border-line); padding: 4px 0; margin-bottom: 4px; }
         .rincian-item:last-child { border-bottom: none; margin-bottom: 0; }
         .rincian-title { font-weight: bold; color: var(--text-main); }
-        .rincian-calc { color: var(--text-muted); font-size: 12px; }
         .rincian-subtotal { color: var(--p-color); font-weight: bold; float: right; }
 
         /* PANEL BLUETOOTH */
@@ -74,11 +73,11 @@
         #btnConnect { width: 100%; padding: 12px; background: var(--blue); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
         #statusBT { font-size: 12px; font-weight: bold; margin-top: 8px; display: block; color: var(--red); }
 
-        /* MODAL PREVIEW STRUK */
+        /* MODAL UMUM & PREVIEW */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
         .modal-card { background: var(--bg-card); width: 450px; max-width: 95%; max-height: 90vh; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
         .modal-header { padding: 15px 20px; background: var(--p-color); color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .modal-body { padding: 20px; overflow-y: auto; background: #eee; display: flex; flex-direction: column; align-items: center; }
+        .modal-body { padding: 20px; overflow-y: auto; background: var(--bg-main); display: flex; flex-direction: column; }
         .modal-footer { padding: 15px 20px; border-top: 1px solid var(--border-line); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-card); }
         
         .thermal-receipt { background: #fff; color: #000; padding: 6mm; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; line-height: 1.2; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin: 0 auto 20px auto; }
@@ -87,59 +86,17 @@
         .receipt-center { text-align: center; }
         .receipt-line { border-bottom: 1px dashed #000; margin: 5px 0; }
         .receipt-row { display: flex; justify-content: space-between; }
-    /* --- GAYA INDIKATOR JARINGAN --- */
-.network-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-right: 15px;
-    padding: 6px 12px;
-    border-radius: 20px;
-    background: #f1f5f9; /* Background tipis agar terlihat */
-    font-size: 13px;
-    font-weight: 800;
-}
 
-.network-status .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-}
+        /* INDIKATOR JARINGAN */
+        .network-status { display: inline-flex; align-items: center; gap: 8px; margin-right: 15px; padding: 6px 12px; border-radius: 20px; background: #f1f5f9; font-size: 13px; font-weight: 800; }
+        .network-status .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .network-status.online .dot { background-color: #10b981; animation: pulse-green 1.5s infinite; }
+        .network-status.online .status-text { color: #10b981; }
+        .network-status.offline .dot { background-color: #ef4444; animation: pulse-red 1.5s infinite; }
+        .network-status.offline .status-text { color: #ef4444; }
 
-/* Jika Online (Konek) */
-.network-status.online .dot {
-    background-color: #10b981; /* Hijau */
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-    animation: pulse-green 1.5s infinite;
-}
-.network-status.online .status-text {
-    color: #10b981;
-}
-
-/* Jika Offline (Error) */
-.network-status.offline .dot {
-    background-color: #ef4444; /* Merah */
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-    animation: pulse-red 1.5s infinite;
-}
-.network-status.offline .status-text {
-    color: #ef4444;
-}
-
-/* Animasi Denyut Hijau */
-@keyframes pulse-green {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-/* Animasi Denyut Merah */
-@keyframes pulse-red {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
+        @keyframes pulse-green { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        @keyframes pulse-red { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 	</style>
 </head>
 <body>
@@ -153,13 +110,10 @@
         </a>
     </div>
     <div class="topbar-right">
-        
-        <!-- TAMBAHAN INDIKATOR JARINGAN DI SINI -->
         <div class="network-status" id="networkStatus">
             <span class="dot"></span>
             <span class="status-text" id="networkText">Connected</span>
         </div>
-        
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
         <span id="txtNamaUser">User</span> 👋
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
@@ -187,13 +141,11 @@
         <div class="main-card">
             <div class="main-card-header">👷‍♂️ Manajemen Payroll & Produksi Harian</div>
 
-            <!-- PANEL KONEKSI PRINTER BLUETOOTH -->
             <div class="bt-panel">
                 <button id="btnConnect" onclick="connectBT()">🔗 HUBUNGKAN PRINTER BLUETOOTH</button>
                 <small id="statusBT">Status: Terputus</small>
             </div>
 
-            <!-- TAB NAVIGASI -->
             <div class="tab-container">
                 <button class="tab-btn active" onclick="switchTab('input', event)">1. Input Harian Produksi</button>
                 <button class="tab-btn" onclick="switchTab('setting', event)">2. Setting Harga Produksi</button>
@@ -201,7 +153,6 @@
                 <button class="tab-btn" onclick="switchTab('slip', event)">4. Cetak Slip Gaji</button>
             </div>
 
-            <!-- KOTAK STATISTIK RINGKASAN -->
             <div class="stats-grid">
                 <div class="stat-box">
                     <div class="stat-label">Total Input Hari Ini</div>
@@ -217,7 +168,7 @@
                 </div>
             </div>
 
-            <!-- KONTEN TAB 1: INPUT HARIAN -->
+            <!-- TAB 1: INPUT HARIAN -->
             <div id="tab-input" class="tab-content active">
                 <div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 15px;">
                     <div class="form-group"><label>Tanggal Produksi</label><input type="date" id="inTanggal"></div>
@@ -228,7 +179,7 @@
                 <button class="btn-action" style="margin-top: 15px;" onclick="simpanInputHarian()">Simpan Hasil Produksi</button>
             </div>
 
-            <!-- KONTEN TAB 2: SETTING HARGA -->
+            <!-- TAB 2: SETTING HARGA -->
             <div id="tab-setting" class="tab-content">
                 <div class="form-group" style="margin-bottom: 15px; max-width: 300px;">
                     <label>Pilih Karyawan</label>
@@ -239,7 +190,7 @@
                 <button class="btn-action" style="background: var(--blue); margin-top: 15px;" onclick="simpanSettingHarga()">Simpan Tarif Khusus Karyawan</button>
             </div>
 
-            <!-- KONTEN TAB 3: REKAP PRODUKSI TOTAL -->
+            <!-- TAB 3: REKAP PRODUKSI TOTAL -->
             <div id="tab-rekap" class="tab-content">
                 <div class="form-grid" style="grid-template-columns: 1fr 1fr auto; align-items: end;">
                     <div class="form-group"><label>Dari Tanggal</label><input type="date" id="rekapMulai"></div>
@@ -250,10 +201,10 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="width: 20%; text-align: center;">Tanggal & Karyawan</th>
+                                <th style="width: 18%; text-align: center;">Tanggal & Karyawan</th>
                                 <th style="width: 35%;">Total Produksi (Rincian)</th>
                                 <th style="width: 35%;">Total Lembur (Rincian)</th>
-                                <th style="width: 10%; text-align: center;">Total Gaji</th>
+                                <th style="width: 12%; text-align: center;">Aksi / Total</th>
                             </tr>
                         </thead>
                         <tbody id="tabelRekapBody">
@@ -263,7 +214,7 @@
                 </div>
             </div>
 
-            <!-- KONTEN TAB 4: CETAK SLIP GAJI -->
+            <!-- TAB 4: CETAK SLIP GAJI -->
             <div id="tab-slip" class="tab-content">
                 <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr auto; align-items: end;">
                     <div class="form-group"><label>Pilih Karyawan</label><select id="slipKaryawan"><option value="">-- Pilih Karyawan --</option></select></div>
@@ -304,15 +255,34 @@
     </div>
 </div>
 
+<!-- MODAL EDIT PRODUKSI HARIAN -->
+<div class="modal-overlay" id="modalEditProduksi">
+    <div class="modal-card" style="width: 600px;">
+        <div class="modal-header">
+            <span>✏️ Koreksi / Edit Rincian Produksi</span>
+            <button onclick="tutupModalEdit()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+        </div>
+        <div class="modal-body" id="modalEditBody" style="max-height: 60vh; overflow-y: auto;">
+            <!-- Form edit dinamis dimasukkan lewat JS -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn-action" style="background: var(--text-muted); padding: 8px 15px;" onclick="tutupModalEdit()">Batal</button>
+            <button class="btn-action" style="background: var(--green); padding: 8px 15px;" onclick="simpanPerubahanProduksi()">💾 Simpan Perubahan</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
+    let tokoIdGlobal = null;
     let namaTokoGlobal = "Toko Saya";
     let btCharacteristic = null;
     let connectedDeviceId = null;
     let lastPrintCommands = [];
+    let editTargetId = null; // Menyimpan ID data produksi yang sedang diedit
 
     const ITEM_LABELS = {
         'goreng': 'Goreng', 'kemas_pendek': 'Kemas Pendek', 'kemas_panjang': 'Kemas Panjang',
@@ -381,17 +351,11 @@
             const { data: { session } } = await _supabase.auth.getSession();
             if (!session) return window.location.replace("index.html");
 
-            let userMeta = session.user.user_metadata;
-            if (userMeta && userMeta.full_name) {
-                document.getElementById('txtNamaUser').innerText = userMeta.full_name.split(' ')[0];
-            } else {
-                document.getElementById('txtNamaUser').innerText = session.user.email.split('@')[0];
-            }
-
             const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap').eq('id', session.user.id).single();
             if (profile) {
                 if (profile.nama_lengkap) document.getElementById('txtNamaUser').innerText = profile.nama_lengkap.split(' ')[0];
                 if (profile.toko_id) {
+                    tokoIdGlobal = profile.toko_id;
                     const { data: toko } = await _supabase.from('toko').select('nama_toko, logo_url').eq('id', profile.toko_id).single();
                     if (toko) {
                         namaTokoGlobal = toko.nama_toko || "Toko Saya";
@@ -401,7 +365,13 @@
                 }
             }
 
-            const { data: karyawan } = await _supabase.from('karyawan').select('*');
+            // PERBAIKAN FILTER: Mengambil data karyawan berdasarkan toko_id yang aktif
+            let queryKaryawan = _supabase.from('karyawan').select('*');
+            if (tokoIdGlobal) {
+                queryKaryawan = queryKaryawan.eq('toko_id', tokoIdGlobal);
+            }
+            const { data: karyawan } = await queryKaryawan;
+            
             if(karyawan) {
                 let opt = '<option value="ALL">🌟 SEMUA KARYAWAN</option>';
                 karyawan.forEach(k => { opt += `<option value="${k.id}">${k.nama_karyawan || k.nama}</option>`; });
@@ -419,11 +389,15 @@
 
     async function muatStatistikHariIni() {
         let tglHariIni = new Date().toISOString().split('T')[0];
-        const { data } = await _supabase.from('produksi_harian').select('*').eq('tanggal', tglHariIni);
+        let query = _supabase.from('produksi_harian').select('*, karyawan:karyawan_id (toko_id)').eq('tanggal', tglHariIni);
+        
+        const { data } = await query;
         if(data) {
-            let totalSesi = data.length;
-            let totalUpah = data.reduce((acc, curr) => acc + Number(curr.total_upah || 0), 0);
-            let totalLembur = data.reduce((acc, curr) => {
+            // Filter ketat berdasarkan toko_id jika ada relasi karyawan
+            let filteredData = data.filter(d => !tokoIdGlobal || (d.karyawan && d.karyawan.toko_id === tokoIdGlobal));
+            let totalSesi = filteredData.length;
+            let totalUpah = filteredData.reduce((acc, curr) => acc + Number(curr.total_upah || 0), 0);
+            let totalLembur = filteredData.reduce((acc, curr) => {
                 let keys = Object.keys(ITEM_LABELS);
                 return acc + keys.reduce((subAcc, k) => subAcc + Number(curr['l_' + k] || 0), 0);
             }, 0);
@@ -536,6 +510,9 @@
         let tbody = document.getElementById('tabelRekapBody');
         if (error) { tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--red);">Gagal memuat rekap</td></tr>`; return; }
 
+        // Filter berdasarkan toko_id aktif
+        let filteredData = data ? data.filter(row => !tokoIdGlobal || (row.karyawan && row.karyawan.toko_id === tokoIdGlobal)) : [];
+
         const { data: tarifData } = await _supabase.from('tarif_karyawan').select('*');
         let tarifMap = {};
         if (tarifData) {
@@ -546,14 +523,14 @@
         }
 
         tbody.innerHTML = '';
-        if (!data || data.length === 0) {
+        if (filteredData.length === 0) {
             tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Tidak ada data pada rentang tanggal tersebut.</td></tr>`;
             return;
         }
 
         let items = Object.keys(ITEM_LABELS);
 
-        data.forEach(row => {
+        filteredData.forEach(row => {
             let kId = row.karyawan_id;
             let kName = row.karyawan?.nama_karyawan || row.karyawan?.nama || 'Karyawan';
             let t = tarifMap[kId] || {};
@@ -579,14 +556,86 @@
             if(!detailProd) detailProd = '-';
             if(!detailLemb) detailLemb = '-';
 
+            let finalUpah = Number(row.total_upah || (totRP + totRL));
+
             tbody.innerHTML += `
                 <tr>
                     <td style="text-align: center;"><b>${row.tanggal}</b><br><b>${kName}</b></td>
                     <td style="background: var(--bg-main);">${detailProd}</td>
                     <td style="background: var(--bg-main);">${detailLemb}</td>
-                    <td style="text-align: center;"><b style="color:var(--green);">Rp ${Number(row.total_upah || (totRP + totRL)).toLocaleString('id-ID')}</b></td>
+                    <td style="text-align: center;">
+                        <b style="color:var(--green); display:block; margin-bottom:6px;">Rp ${finalUpah.toLocaleString('id-ID')}</b>
+                        <button class="btn-action" style="padding: 5px 10px; font-size:11px; background:var(--blue);" onclick='bukaModalEdit(${JSON.stringify(row)})'>✏️ Edit</button>
+                    </td>
                 </tr>`;
         });
+    }
+
+    // Fungsi membuka modal edit transaksi produksi
+    function bukaModalEdit(row) {
+        editTargetId = row.id;
+        let items = Object.keys(ITEM_LABELS);
+        let htmlForm = `<div style="font-weight:bold; margin-bottom:10px; color:var(--p-color);">Tanggal: ${row.tanggal}</div>`;
+        
+        items.forEach(k => {
+            let valQ = row['q_' + k] || 0;
+            let valL = row['l_' + k] || 0;
+            htmlForm += `
+                <div class="prod-item-box" style="margin-bottom: 8px;">
+                    <label style="font-size: 11px; font-weight: bold;">${ITEM_LABELS[k]}</label>
+                    <div class="prod-row">
+                        <div class="prod-col"><label>Normal</label><input type="number" id="edit_q_${k}" value="${valQ}"></div>
+                        <div class="prod-col"><label>Lembur</label><input type="number" id="edit_l_${k}" value="${valL}"></div>
+                    </div>
+                </div>`;
+        });
+
+        document.getElementById('modalEditBody').innerHTML = htmlForm;
+        document.getElementById('modalEditProduksi').style.display = 'flex';
+    }
+
+    function tutupModalEdit() {
+        document.getElementById('modalEditProduksi').style.display = 'none';
+        editTargetId = null;
+    }
+
+    async function simpanPerubahanProduksi() {
+        if (!editTargetId) return;
+
+        let items = Object.keys(ITEM_LABELS);
+        let updatePayload = {};
+        let total_upah = 0;
+
+        // Ambil data karyawan dari row atau fetch untuk menghitung ulang upah total jika diperlukan
+        const { data: currentData } = await _supabase.from('produksi_harian').select('karyawan_id').eq('id', editTargetId).single();
+        let karyawan_id = currentData ? currentData.karyawan_id : null;
+
+        const { data: setTarif } = await _supabase.from('tarif_karyawan').select('*').eq('karyawan_id', karyawan_id);
+        let tarif = {};
+        if(setTarif) { setTarif.forEach(s => { tarif[s.kategori] = Number(s.tarif); }); }
+
+        items.forEach(item => {
+            let qVal = parseInt(document.getElementById('edit_q_' + item).value) || 0;
+            let lVal = parseInt(document.getElementById('edit_l_' + item).value) || 0;
+            updatePayload['q_' + item] = qVal;
+            updatePayload['l_' + item] = lVal;
+
+            let h_normal = tarif[item] || 0;
+            let h_lembur = tarif['lembur_' + item] || 0;
+            total_upah += (qVal * h_normal) + (lVal * h_lembur);
+        });
+
+        updatePayload['total_upah'] = total_upah;
+
+        const { error } = await _supabase.from('produksi_harian').update(updatePayload).eq('id', editTargetId);
+        if (error) {
+            alert("Gagal memperbarui data: " + error.message);
+        } else {
+            alert("✅ Perubahan rincian produksi berhasil disimpan!");
+            tutupModalEdit();
+            muatRekap();
+            muatStatistikHariIni();
+        }
     }
 
     async function connectBT() {
@@ -644,7 +693,10 @@
         if(kId !== 'ALL') { query = query.eq('karyawan_id', kId); }
 
         let { data } = await query;
-        if(!data || data.length === 0) { alert("Tidak ada data slip gaji pada rentang tanggal tersebut."); return null; }
+        // Filter ketat toko_id
+        let filteredData = data ? data.filter(row => !tokoIdGlobal || (row.karyawan && row.karyawan.toko_id === tokoIdGlobal)) : [];
+
+        if(filteredData.length === 0) { alert("Tidak ada data slip gaji pada rentang tanggal tersebut."); return null; }
 
         const { data: tarifData } = await _supabase.from('tarif_karyawan').select('*');
         let tarifMap = {};
@@ -657,7 +709,7 @@
 
         let items = Object.keys(ITEM_LABELS);
         let grouped = {};
-        data.forEach(row => {
+        filteredData.forEach(row => {
             let kid = row.karyawan_id;
             if(!grouped[kid]) grouped[kid] = { nama: row.karyawan?.nama_karyawan || row.karyawan?.nama || 'Karyawan', rows: [] };
             grouped[kid].rows.push(row);
@@ -798,30 +850,23 @@
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
     
     initData();
-	// Fungsi untuk mengubah status UI Jaringan
-function updateNetworkStatus() {
-    const statusContainer = document.getElementById('networkStatus');
-    const statusText = document.getElementById('networkText');
-    
-    if (navigator.onLine) {
-        // Jika terhubung internet
-        statusContainer.classList.remove('offline');
-        statusContainer.classList.add('online');
-        statusText.innerText = 'Connected';
-    } else {
-        // Jika terputus internet
-        statusContainer.classList.remove('online');
-        statusContainer.classList.add('offline');
-        statusText.innerText = 'Error';
+
+    function updateNetworkStatus() {
+        const statusContainer = document.getElementById('networkStatus');
+        const statusText = document.getElementById('networkText');
+        if (navigator.onLine) {
+            statusContainer.classList.remove('offline');
+            statusContainer.classList.add('online');
+            statusText.innerText = 'Connected';
+        } else {
+            statusContainer.classList.remove('online');
+            statusContainer.classList.add('offline');
+            statusText.innerText = 'Error';
+        }
     }
-}
-
-// Cek pertama kali saat web dibuka
-window.addEventListener('load', updateNetworkStatus);
-
-// Cek otomatis saat koneksi berubah di tengah jalan
-window.addEventListener('online', updateNetworkStatus);
-window.addEventListener('offline', updateNetworkStatus);
+    window.addEventListener('load', updateNetworkStatus);
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
 </script>
 </body>
 </html>

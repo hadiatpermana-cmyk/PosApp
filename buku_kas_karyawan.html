@@ -68,7 +68,6 @@
 </head>
 <body>
 
-
     <div class="content-area">
         <div class="card">
             <a href="dashboard_karyawan.html" class="link-dashboard">← Kembali ke Dashboard Karyawan</a>
@@ -105,7 +104,6 @@
             <div id="areaListBukuKas" class="bon-list"></div>
         </div>
     </div>
-</div>
 
 <!-- Modal Input Kas Manual -->
 <div id="modalKasManual" class="modal">
@@ -140,8 +138,8 @@
 </div>
 
 <script>
-const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
+    const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
     
     let toko_id = null;
@@ -162,17 +160,9 @@ const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
     function initTheme() { 
         if (localStorage.getItem('themeMode') === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark'); 
-            document.getElementById('btnThemeToggle').innerText = '☀️';
         } 
     }
-    function toggleTheme() { 
-        let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; 
-        document.documentElement.setAttribute('data-theme', t); 
-        localStorage.setItem('themeMode', t); 
-        document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; 
-    }
     initTheme(); 
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
 
     async function initBukuKas() {
         const { data: sessionData } = await _supabase.auth.getSession();
@@ -185,27 +175,27 @@ const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
         if (toko) {
             if (toko.nama_toko) {
                 document.title = "Buku Kas - " + toko.nama_toko;
-                document.getElementById('txtNamaTokoTop').innerText = toko.nama_toko;
             }
             if (toko.warna_tema) document.documentElement.style.setProperty('--blue', toko.warna_tema);
-            if (toko.logo_url) document.getElementById('logoTopbar').innerHTML = `<img src="${toko.logo_url}" style="width:100%;height:100%;object-fit:contain;">`;
-        }
-        
-        if (profile && profile.nama_lengkap) {
-            document.getElementById('txtNamaUser').innerText = profile.nama_lengkap;
         }
 
         await muatSemuaDataKas();
     }
 
     async function muatSemuaDataKas() {
-        // Karyawan HANYA mengambil data dari kas manual, tidak perlu data sales atau stok masuk
-        const { data: resKas } = await _supabase.from('kas_manual')
+        // PERBAIKAN: Mengambil semua data kas manual berdasarkan toko_id 
+        // agar sinkron dan terlihat sama baik di sisi admin maupun karyawan.
+        const { data: resKas, error } = await _supabase.from('kas_manual')
             .select('*')
-            .eq('toko_id', toko_id)
-            .eq('kategori_kas', 'KARYAWAN'); // <-- Hanya tarik data kategori Karyawan
+            .eq('toko_id', toko_id);
 
-        dbKasManual = resKas || [];
+        if (error) {
+            console.error("Gagal memuat data kas:", error.message);
+            dbKasManual = [];
+        } else {
+            dbKasManual = resKas || [];
+        }
+        
         renderBukuKas();
     }
 
@@ -231,7 +221,7 @@ const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
             jenis: jenis,
             jumlah: jumlah,
             keterangan: keterangan,
-            kategori_kas: 'KARYAWAN' // <-- Otomatis tersimpan sebagai Kas Karyawan agar nyambung ke Admin
+            kategori_kas: 'KARYAWAN' // Tetap ditandai kas karyawan atau disesuaikan
         }]);
 
         if (error) {
@@ -279,8 +269,7 @@ const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
                 keterangan: km.keterangan || '-',
                 masuk: km.jenis === 'MASUK' ? nominal : 0,
                 keluar: km.jenis === 'KELUAR' ? nominal : 0,
-                isManual: true,
-                sumber: 'Manual'
+                sumber: km.kategori_kas || 'Manual'
             });
         });
 
@@ -343,8 +332,6 @@ const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
             muatSemuaDataKas();
         }
     }
-
-    async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
     
     initBukuKas();
 </script>

@@ -9,71 +9,55 @@
     <style>
         :root { --bg-main: #f8fafc; --bg-card: #ffffff; --text-main: #1e293b; --text-muted: #64748b; --border-line: #e2e8f0; --p-color: #0f172a; --blue: #3b82f6; --red: #ef4444; --green: #10b981; }
         [data-theme="dark"] { --bg-main: #090d16; --bg-card: #111827; --text-main: #f3f4f6; --text-muted: #9ca3af; --border-line: #1f2937; }
-        
         body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg-main); padding: 12px; padding-bottom: 80px; color: var(--text-main); font-size: 14px; box-sizing: border-box; }
-        
         .header-bon { background: var(--bg-card); border: 1.5px solid var(--border-line); border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         .header-bon-left { display: flex; align-items: center; gap: 10px; }
         .header-bon-logo { width: 36px; height: 36px; background: var(--bg-main); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; overflow: hidden; border: 1px solid var(--border-line); }
         .header-bon-logo img { width: 100%; height: 100%; object-fit: contain; }
         .header-bon-info h3 { margin: 0; font-size: 14px; color: var(--p-color); font-weight: 800; }
         .header-bon-info p { margin: 0; font-size: 11px; color: var(--text-muted); font-weight: 600; }
-        
         .header-bon-right { display: flex; align-items: center; gap: 8px; }
         .btn-theme { background: var(--bg-main); border: 1px solid var(--border-line); width: 34px; height: 34px; border-radius: 8px; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-logout { background: #fee2e2; color: #ef4444; border: none; padding: 8px 10px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 11px; }
-
         .link-dashboard { display: inline-flex; align-items: center; gap: 6px; color: var(--blue); text-decoration: none; font-weight: 700; font-size: 13px; margin-bottom: 10px; }
         .link-dashboard:hover { text-decoration: underline; }
-
         .card { background: var(--bg-card); padding: 14px; border-radius: 14px; border: 1.5px solid var(--border-line); max-width: 600px; margin: auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); box-sizing: border-box; }
-        
         .header-title { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-line); padding-bottom: 10px; margin-bottom: 14px; }
         .header-title h3 { margin: 0; color: var(--p-color); font-size: 16px; font-weight: 800; }
-
         .tab-container { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; }
         .tab-btn { padding: 9px 12px; background: var(--bg-main); border: 1.5px solid var(--border-line); border-radius: 8px; font-weight: 800; cursor: pointer; color: var(--text-muted); font-family: inherit; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
         .tab-btn.active { background: var(--p-color); color: white; border-color: var(--p-color); }
-
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 14px; }
         .stat-box { background: var(--bg-main); border: 1.5px solid var(--border-line); padding: 8px; border-radius: 10px; text-align: center; }
         .stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 2px; }
         .stat-value { font-size: 13px; font-weight: 800; color: var(--text-main); }
-
         .form-group { margin-bottom: 10px; }
         label { display: block; font-weight: 800; font-size: 10px; margin-bottom: 3px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
         select, input { width: 100%; padding: 10px 11px; border: 1.5px solid var(--border-line); border-radius: 9px; box-sizing: border-box; font-family: inherit; background: var(--bg-card); color: var(--text-main); font-weight: 700; font-size: 13px; outline: none; }
         select:focus, input:focus { border-color: var(--blue); }
-
         .production-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
         .prod-item-box { background: var(--bg-main); border: 1.5px solid var(--border-line); padding: 10px; border-radius: 10px; display: flex; flex-direction: column; gap: 6px; }
         .prod-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .prod-col { display: flex; flex-direction: column; gap: 2px; }
         .prod-col label { font-size: 9px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
         .prod-col input { padding: 8px; border: 1.5px solid var(--border-line); border-radius: 7px; background: var(--bg-card); color: var(--text-main); font-weight: 800; font-size: 14px; text-align: center; width: 100%; box-sizing: border-box; }
-
         .btn-action { background: var(--green); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 14px; width: 100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-
         .bon-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
         .bon-card { background: var(--bg-main); border: 1.5px solid var(--border-line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
         .bon-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-line); padding-bottom: 5px; }
         .bon-rincian-item { font-size: 12px; display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-weight: 600; padding: 2px 0; }
         .bon-rincian-item span b { color: var(--text-main); }
         .bon-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-line); padding-top: 6px; font-weight: 800; }
-
         .bt-panel { margin-bottom: 10px; background: var(--bg-main); padding: 8px; border-radius: 9px; border: 1.5px solid var(--border-line); text-align: center; }
         #btnConnectBT { background: var(--blue); color: white; border: none; padding: 7px 10px; border-radius: 7px; font-weight: 800; cursor: pointer; font-size: 11px; width: 100%; }
         #statusBT { font-size: 10px; font-weight: 800; margin-top: 4px; display: block; color: var(--red); }
-
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; justify-content: center; align-items: center; }
         .modal-card { background: var(--bg-card); width: min(95vw, 420px); max-height: 90vh; border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1.5px solid var(--border-line); }
         .modal-header { padding: 12px 14px; background: var(--p-color); color: white; font-weight: 800; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
         .modal-body { padding: 14px; overflow-y: auto; background: var(--bg-main); display: flex; flex-direction: column; }
         .modal-footer { padding: 12px 14px; border-top: 1.5px solid var(--border-line); display: flex; justify-content: flex-end; gap: 8px; background: var(--bg-card); flex-wrap: wrap; }
-        
         .thermal-receipt { background: #fff; color: #000; padding: 10px; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; line-height: 1.3; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin: 0 auto; width: 100%; }
         .thermal-receipt.w80 { max-width: 80mm; font-size: 11px; }
         .thermal-receipt.w58 { max-width: 58mm; font-size: 9px; }
@@ -83,7 +67,6 @@
     </style>
 </head>
 <body>
-
 
 <div class="card">
     <a href="dashboard_karyawan.html" class="link-dashboard">← Kembali ke Dashboard Karyawan</a>
@@ -207,9 +190,7 @@
             <span id="modalRincianTitle">Rincian Harian</span>
             <span onclick="document.getElementById('modalRincian').style.display='none'" style="cursor:pointer; font-size:16px;">✕</span>
         </div>
-        <div class="modal-body" id="modalRincianBody">
-            <!-- Tabel rincian harian -->
-        </div>
+        <div class="modal-body" id="modalRincianBody"></div>
         <div class="modal-footer">
             <button class="btn-action" style="background: var(--text-muted); padding: 7px 10px; font-size:11px; width: auto;" onclick="document.getElementById('modalRincian').style.display='none'">Tutup</button>
         </div>
@@ -312,7 +293,6 @@
     }
     renderDinamisForm();
 
-    // FUNGSI BONUS DINAMIS MOBILE
     function tambahBarisBonus() {
         const container = document.getElementById('bonusContainer');
         const newRow = document.createElement('div');
@@ -340,7 +320,10 @@
             }
         }
 
-        const { data: karyawan } = await _supabase.from('karyawan').select('*').eq('toko_id', tokoIdGlobal).eq('aktif', true);
+        let queryKaryawan = _supabase.from('karyawan').select('*').eq('aktif', true);
+        if (tokoIdGlobal) queryKaryawan = queryKaryawan.eq('toko_id', tokoIdGlobal); // FIXED FILTER
+        
+        const { data: karyawan } = await queryKaryawan;
         if(karyawan) {
             let opt = '<option value="ALL">🌟 SEMUA KARYAWAN</option>';
             karyawan.forEach(k => { opt += `<option value="${k.id}">${k.nama_karyawan}</option>`; });
@@ -354,10 +337,13 @@
     async function muatStatistikHariIni() {
         let tglHariIni = getLocalToday();
         
-        const [resProd, resTarif] = await Promise.all([
-            _supabase.from('produksi_harian').select('*').eq('tanggal', tglHariIni).eq('toko_id', tokoIdGlobal),
-            _supabase.from('tarif_karyawan').select('*').eq('toko_id', tokoIdGlobal)
-        ]);
+        let queryProd = _supabase.from('produksi_harian').select('*').eq('tanggal', tglHariIni);
+        if (tokoIdGlobal) queryProd = queryProd.eq('toko_id', tokoIdGlobal); // FIXED FILTER
+        
+        let queryTarif = _supabase.from('tarif_karyawan').select('*');
+        if (tokoIdGlobal) queryTarif = queryTarif.eq('toko_id', tokoIdGlobal); // FIXED FILTER
+
+        const [resProd, resTarif] = await Promise.all([queryProd, queryTarif]);
 
         let tarifMap = {};
         if (resTarif.data) {
@@ -399,7 +385,10 @@
         }
         if(!kId) return;
 
-        const { data } = await _supabase.from('tarif_karyawan').select('*').eq('karyawan_id', kId);
+        let query = _supabase.from('tarif_karyawan').select('*').eq('karyawan_id', kId);
+        if (tokoIdGlobal) query = query.eq('toko_id', tokoIdGlobal); // FIXED FILTER
+
+        const { data } = await query;
         if(data) {
             data.forEach(s => {
                 if (s.kategori.startsWith('lembur_')) {
@@ -474,24 +463,26 @@
         }
     }
 
-    // ===================================
-    // REKAP GLOBAL UNTUK MOBILE UI
-    // ===================================
     async function muatRekap() {
         let mulai = document.getElementById('rekapMulai').value;
         let selesai = document.getElementById('rekapSelesai').value;
 
-        const { data, error } = await _supabase
-            .from('produksi_harian')
+        let query = _supabase.from('produksi_harian')
             .select(`*, karyawan:karyawan_id (*)`)
             .gte('tanggal', mulai)
             .lte('tanggal', selesai)
             .order('tanggal', { ascending: false });
+        
+        if (tokoIdGlobal) query = query.eq('toko_id', tokoIdGlobal); // FIXED FILTER
+        const { data, error } = await query;
 
         let container = document.getElementById('tabelRekapBody');
         if (error) { container.innerHTML = `<div style="text-align: center; color: var(--red); padding: 15px;">Gagal memuat rekap</div>`; return; }
 
-        const { data: tarifData } = await _supabase.from('tarif_karyawan').select('*');
+        let queryTarif = _supabase.from('tarif_karyawan').select('*');
+        if (tokoIdGlobal) queryTarif = queryTarif.eq('toko_id', tokoIdGlobal); // FIXED FILTER
+        const { data: tarifData } = await queryTarif;
+        
         let tarifMap = {};
         if (tarifData) {
             tarifData.forEach(t => {
@@ -678,12 +669,16 @@
         if(!kId) { alert("Silakan pilih karyawan terlebih dahulu!"); return null; }
 
         let query = _supabase.from('produksi_harian').select(`*, karyawan:karyawan_id (*)`).gte('tanggal', mulai).lte('tanggal', selesai);
-        if(kId !== 'ALL') { query = query.eq('karyawan_id', kId); }
+        if (tokoIdGlobal) query = query.eq('toko_id', tokoIdGlobal); // FIXED FILTER
+        if(kId !== 'ALL') query = query.eq('karyawan_id', kId);
 
         let { data, error } = await query;
         if(error || !data || data.length === 0) { alert("Tidak ada data slip gaji pada rentang tanggal tersebut."); return null; }
 
-        const { data: tarifData } = await _supabase.from('tarif_karyawan').select('*');
+        let queryTarif = _supabase.from('tarif_karyawan').select('*');
+        if (tokoIdGlobal) queryTarif = queryTarif.eq('toko_id', tokoIdGlobal); // FIXED FILTER
+        const { data: tarifData } = await queryTarif;
+        
         let tarifMap = {};
         if (tarifData) {
             tarifData.forEach(t => {

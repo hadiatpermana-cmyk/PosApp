@@ -10,7 +10,6 @@
         :root { --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0; --p-color: #b45309; --blue: #1ba0e2; --red: #f05050; --green: #27c24c; --sidebar-width: 250px; --topbar-height: 60px; }
         [data-theme="dark"] { --bg-main: #121212; --bg-card: #1e1e1e; --text-main: #f1f2f6; --text-muted: #aaaaaa; --border-line: #333333; }
         body { font-family: 'Roboto Condensed', sans-serif; margin: 0; background: var(--bg-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
-        
         .topbar { height: var(--topbar-height); background: var(--bg-card); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-bottom: 3px solid var(--p-color); flex-shrink: 0; }
         .topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
         .menu-toggle { background: var(--bg-main); border: 1px solid var(--border-line); font-size: 20px; cursor: pointer; color: var(--text-main); border-radius: 5px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
@@ -20,67 +19,50 @@
         .store-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
         .btn-theme { background: none; border: none; font-size: 20px; cursor: pointer; }
         .btn-logout { background: none; border: none; color: var(--red); cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: underline; }
-
         .main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border-line); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; transition: width 0.3s; z-index: 10; }
         .sidebar.collapsed { width: 0; border: none; }
         .nav-menu { padding: 15px 0; width: var(--sidebar-width); }
         .nav-item { padding: 12px 20px; display: block; color: var(--text-main); text-decoration: none; font-size: 15px; border-bottom: 1px solid var(--border-line); font-weight: bold; }
         .nav-item:hover, .nav-item.active { background: var(--bg-main); color: var(--p-color); border-right: 4px solid var(--p-color); }
-
         .content-area { padding: 20px; overflow-y: auto; flex: 1; box-sizing: border-box; }
-        
         .main-card { background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-line); padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 20px; }
         .main-card-header { font-size: 18px; font-weight: bold; color: var(--p-color); border-bottom: 2px solid var(--border-line); padding-bottom: 10px; margin-bottom: 15px; }
-
         .tab-container { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
         .tab-btn { padding: 10px 18px; background: var(--bg-main); border: 1px solid var(--border-line); border-radius: 6px; font-weight: bold; cursor: pointer; color: var(--text-main); font-family: inherit; font-size: 14px; }
         .tab-btn.active { background: var(--p-color); color: white; border-color: var(--p-color); }
-
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
         .stat-box { background: var(--bg-main); border: 1px solid var(--border-line); padding: 15px; border-radius: 6px; }
         .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
         .stat-value { font-size: 20px; font-weight: bold; color: var(--text-main); }
-
         .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
         .form-group { display: flex; flex-direction: column; gap: 5px; }
         .form-group label { font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
         .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-line); border-radius: 6px; background: var(--bg-main); color: var(--text-main); font-weight: bold; font-family: inherit; }
-
         .production-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
         .prod-item-box { background: var(--bg-main); border: 1px solid var(--border-line); padding: 10px; border-radius: 6px; display: flex; flex-direction: column; gap: 5px; }
         .prod-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .prod-col { display: flex; flex-direction: column; gap: 3px; }
         .prod-col label { font-size: 10px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
         .prod-col input { padding: 8px; border: 1px solid var(--border-line); border-radius: 4px; background: var(--bg-card); color: var(--text-main); font-weight: bold; font-family: inherit; width: 100%; box-sizing: border-box; }
-
         .btn-action { padding: 12px 20px; background: var(--green); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-family: inherit; }
-        
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th { background: var(--p-color); color: white; padding: 10px; text-align: left; font-size: 13px; text-transform: uppercase; }
         td { padding: 12px 10px; border-bottom: 1px solid var(--border-line); font-size: 14px; vertical-align: middle; }
-        
         .rincian-item { font-size: 13px; border-bottom: 1px dashed var(--border-line); padding: 4px 0; margin-bottom: 4px; }
         .rincian-item:last-child { border-bottom: none; margin-bottom: 0; }
         .rincian-title { font-weight: bold; color: var(--text-main); }
         .rincian-subtotal { color: var(--p-color); font-weight: bold; float: right; }
-
-        /* PANEL BLUETOOTH */
         .bt-panel { margin-bottom: 20px; text-align: center; background: var(--bg-main); padding: 14px; border-radius: 8px; border: 1px solid var(--border-line); }
         #btnConnect { width: 100%; padding: 12px; background: var(--blue); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
         #statusBT { font-size: 12px; font-weight: bold; margin-top: 8px; display: block; color: var(--red); }
-
-        /* MODAL UMUM & PREVIEW SLIP GAJI */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
         .modal-card { background: var(--bg-card); width: 550px; max-width: 95%; max-height: 90vh; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
         .modal-header { padding: 15px 20px; background: var(--p-color); color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .modal-body { padding: 20px; overflow-y: auto; background: var(--bg-main); display: flex; flex-direction: column; align-items: center; }
         .modal-footer { padding: 15px 20px; border-top: 1px solid var(--border-line); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-card); }
-        
-        /* TAMPILAN STRUK THERMAL SEPERTI SLIP GAJI RESMI DENGAN PAGE BREAK */
         .thermal-receipt { background: #fff; color: #000; padding: 3mm; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; line-height: 1.3; box-shadow: 0 4px 15px rgba(0,0,0,0.15); margin: 0 auto 20px auto; border: 1px dashed #cbd5e1; page-break-after: always; break-after: page; }
         .thermal-receipt:last-child { page-break-after: avoid; break-after: avoid; }
         .thermal-receipt.w80 { width: 80mm; font-size: 10px; }
@@ -89,15 +71,12 @@
         .receipt-title { font-weight: bold; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
         .receipt-line { border-bottom: 1px dashed #000; margin: 6px 0; }
         .receipt-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
-
-        /* INDIKATOR JARINGAN */
         .network-status { display: inline-flex; align-items: center; gap: 8px; margin-right: 15px; padding: 6px 12px; border-radius: 20px; background: #f1f5f9; font-size: 13px; font-weight: 800; }
         .network-status .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
         .network-status.online .dot { background-color: #10b981; animation: pulse-green 1.5s infinite; }
         .network-status.online .status-text { color: #10b981; }
         .network-status.offline .dot { background-color: #ef4444; animation: pulse-red 1.5s infinite; }
         .network-status.offline .status-text { color: #ef4444; }
-
         @keyframes pulse-green { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
         @keyframes pulse-red { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 	</style>
@@ -234,6 +213,18 @@
                         <button class="btn-action" style="background: #2563eb; height: 42px;" onclick="cetakBluetoothDirect()">🖨️ Cetak Bluetooth</button>
                     </div>
                 </div>
+                
+                <!-- ADAPTASI FORM PENDAPATAN LAIN / BONUS DARI SOURCE KARYAWAN -->
+                <div style="margin-top: 15px; background: rgba(27, 160, 226, 0.05); padding: 12px; border-radius: 8px; border: 1px dashed var(--blue);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong style="color: var(--blue); font-size: 13px;">Pendapatan Lain / Bonus (Opsional)</strong>
+                        <button class="btn-action" style="background: var(--blue); padding: 6px 12px; font-size: 11px; width:auto;" onclick="tambahBarisBonus()">+ Tambah</button>
+                    </div>
+                    <div id="bonusContainer">
+                        <!-- Dynamic bonus rows will appear here -->
+                    </div>
+                </div>
+
                 <div style="margin-top: 15px; display: flex; gap: 10px;">
                     <button class="btn-action" id="btnReprint" style="background: #f59e0b;" onclick="reprintLast()" disabled>🔄 REPRINT SLIP TERAKHIR</button>
                 </div>
@@ -322,6 +313,21 @@
         document.getElementById('containerSettingTarif').innerHTML = htmlSetting;
     }
 
+    // Adaptasi Fungsi Tambah/Hapus Bonus Dinamis
+    function tambahBarisBonus() {
+        const container = document.getElementById('bonusContainer');
+        const newRow = document.createElement('div');
+        newRow.className = 'bonus-row';
+        newRow.style = 'display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px;';
+        newRow.innerHTML = `
+            <div style="flex: 2;" class="form-group"><label style="color: var(--blue);">Keterangan</label><input type="text" class="in-bonus-desc" placeholder="Contoh: Bonus"></div>
+            <div style="flex: 1.5;" class="form-group"><label style="color: var(--blue);">Nominal (Rp)</label><input type="text" class="in-bonus-amount" placeholder="0" oninput="formatRibuan(this)"></div>
+            <button class="btn-action" style="background: var(--red); height: 38px; width: 38px; padding:0; display: flex; justify-content: center; align-items: center;" onclick="hapusBarisBonus(this)">✕</button>
+        `;
+        container.appendChild(newRow);
+    }
+    function hapusBarisBonus(btn) { btn.parentElement.remove(); }
+
     function autoSelect(input) { setTimeout(() => input.select(), 50); }
     function autoZero(input) { if (input.value.trim() === '') { input.value = '0'; } }
     function formatRibuan(input) { let val = input.value.replace(/[^0-9]/g, ''); input.value = val ? parseInt(val).toLocaleString('id-ID') : ''; }
@@ -368,7 +374,7 @@
             }
 
             let queryKaryawan = _supabase.from('karyawan').select('*');
-            if (tokoIdGlobal) { queryKaryawan = queryKaryawan.eq('toko_id', tokoIdGlobal); }
+            if (tokoIdGlobal) { queryKaryawan = queryKaryawan.eq('toko_id', tokoIdGlobal); } // FIXED FILTER
             const { data: karyawan } = await queryKaryawan;
             
             if(karyawan) {
@@ -389,10 +395,11 @@
     async function muatStatistikHariIni() {
         let tglHariIni = new Date().toISOString().split('T')[0];
         let query = _supabase.from('produksi_harian').select('*, karyawan:karyawan_id (toko_id)').eq('tanggal', tglHariIni);
+        if (tokoIdGlobal) query = query.eq('toko_id', tokoIdGlobal); // FIXED FILTER
         
         const { data } = await query;
         if(data) {
-            let filteredData = data.filter(d => !tokoIdGlobal || (d.karyawan && d.karyawan.toko_id === tokoIdGlobal));
+            let filteredData = data; // Sudah terfilter di database
             let totalSesi = filteredData.length;
             let totalUpah = filteredData.reduce((acc, curr) => acc + Number(curr.total_upah || 0), 0);
             let totalLembur = filteredData.reduce((acc, curr) => {
@@ -416,7 +423,10 @@
 
         if(!kId) return;
 
-        const { data } = await _supabase.from('tarif_karyawan').select('*').eq('karyawan_id', kId);
+        let query = _supabase.from('tarif_karyawan').select('*').eq('karyawan_id', kId);
+        if (tokoIdGlobal) query = query.eq('toko_id', tokoIdGlobal); // FIXED FILTER
+
+        const { data } = await query;
         if(data) {
             data.forEach(s => {
                 if (s.kategori.startsWith('lembur_')) {
@@ -442,8 +452,9 @@
             let valNormal = bersihFormat(document.getElementById('h_' + k).value);
             let valLembur = bersihFormat(document.getElementById('hl_' + k).value);
 
-            payloads.push({ karyawan_id: kId, kategori: k, tarif: valNormal });
-            payloads.push({ karyawan_id: kId, kategori: 'lembur_' + k, tarif: valLembur });
+            // FIX: Tambahkan toko_id pada payload setting harga agar tidak bocor
+            payloads.push({ toko_id: tokoIdGlobal, karyawan_id: kId, kategori: k, tarif: valNormal });
+            payloads.push({ toko_id: tokoIdGlobal, karyawan_id: kId, kategori: 'lembur_' + k, tarif: valLembur });
         }
 
         await _supabase.from('tarif_karyawan').upsert(payloads, { onConflict: 'karyawan_id,kategori' });
@@ -464,7 +475,10 @@
             l[item] = parseInt(document.getElementById('l_' + item).value) || 0;
         });
 
-        const { data: setTarif } = await _supabase.from('tarif_karyawan').select('*').eq('karyawan_id', karyawan_id);
+        let queryTarif = _supabase.from('tarif_karyawan').select('*').eq('karyawan_id', karyawan_id);
+        if (tokoIdGlobal) queryTarif = queryTarif.eq('toko_id', tokoIdGlobal);
+
+        const { data: setTarif } = await queryTarif;
         let tarif = {};
         if(setTarif) { setTarif.forEach(s => { tarif[s.kategori] = Number(s.tarif); }); }
 
@@ -475,7 +489,8 @@
             total_upah += (q[item] * h_normal) + (l[item] * h_lembur);
         });
 
-        let payload = { tanggal, karyawan_id, total_upah };
+        // FIX: Menambahkan toko_id agar record tersimpan pada properti store yang benar
+        let payload = { toko_id: tokoIdGlobal, tanggal, karyawan_id, total_upah };
         items.forEach(item => {
             payload['q_' + item] = q[item];
             payload['l_' + item] = l[item];
@@ -498,18 +513,23 @@
         let mulai = document.getElementById('rekapMulai').value;
         let selesai = document.getElementById('rekapSelesai').value;
 
-        const { data, error } = await _supabase
-            .from('produksi_harian')
+        let query = _supabase.from('produksi_harian')
             .select(`*, karyawan:karyawan_id (*)`)
             .gte('tanggal', mulai)
             .lte('tanggal', selesai);
+            
+        if (tokoIdGlobal) query = query.eq('toko_id', tokoIdGlobal); // FIXED FILTER
 
+        const { data, error } = await query;
         let tbody = document.getElementById('tabelRekapBody');
         if (error) { tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--red);">Gagal memuat rekap</td></tr>`; return; }
 
-        let filteredData = data ? data.filter(row => !tokoIdGlobal || (row.karyawan && row.karyawan.toko_id === tokoIdGlobal)) : [];
+        let filteredData = data || []; 
 
-        const { data: tarifData } = await _supabase.from('tarif_karyawan').select('*');
+        let queryTarif = _supabase.from('tarif_karyawan').select('*');
+        if (tokoIdGlobal) queryTarif = queryTarif.eq('toko_id', tokoIdGlobal); // FIXED FILTER
+        
+        const { data: tarifData } = await queryTarif;
         let tarifMap = {};
         if (tarifData) {
             tarifData.forEach(t => {
@@ -639,7 +659,10 @@
         let updatePayload = {};
         let total_upah = 0;
 
-        const { data: setTarif } = await _supabase.from('tarif_karyawan').select('*').eq('karyawan_id', kId);
+        let queryTarif = _supabase.from('tarif_karyawan').select('*').eq('karyawan_id', kId);
+        if(tokoIdGlobal) queryTarif = queryTarif.eq('toko_id', tokoIdGlobal);
+
+        const { data: setTarif } = await queryTarif;
         let tarif = {};
         if(setTarif) { setTarif.forEach(s => { tarif[s.kategori] = Number(s.tarif); }); }
 
@@ -733,17 +756,29 @@
         let selesai = document.getElementById('slipSelesai').value;
         let ukuran = document.getElementById('slipUkuranKertas').value;
 
+        // Ambil Data Bonus Multibaris
+        let bonusArr = [];
+        document.querySelectorAll('.bonus-row').forEach(row => {
+            let desc = row.querySelector('.in-bonus-desc').value.trim() || 'Pendapatan Lain';
+            let amount = bersihFormat(row.querySelector('.in-bonus-amount').value);
+            if (amount !== 0) { bonusArr.push({ desc: desc, amount: amount }); }
+        });
+
         if(!kId) { alert("Silakan pilih karyawan terlebih dahulu!"); return null; }
 
         let query = _supabase.from('produksi_harian').select(`*, karyawan:karyawan_id (*)`).gte('tanggal', mulai).lte('tanggal', selesai);
-        if(kId !== 'ALL') { query = query.eq('karyawan_id', kId); }
+        if (tokoIdGlobal) query = query.eq('toko_id', tokoIdGlobal); // FIXED FILTER
+        if(kId !== 'ALL') query = query.eq('karyawan_id', kId);
 
         let { data } = await query;
-        let filteredData = data ? data.filter(row => !tokoIdGlobal || (row.karyawan && row.karyawan.toko_id === tokoIdGlobal)) : [];
+        let filteredData = data || [];
 
         if(filteredData.length === 0) { alert("Tidak ada data slip gaji pada rentang tanggal tersebut."); return null; }
 
-        const { data: tarifData } = await _supabase.from('tarif_karyawan').select('*');
+        let queryTarif = _supabase.from('tarif_karyawan').select('*');
+        if (tokoIdGlobal) queryTarif = queryTarif.eq('toko_id', tokoIdGlobal); // FIXED FILTER
+
+        const { data: tarifData } = await queryTarif;
         let tarifMap = {};
         if (tarifData) {
             tarifData.forEach(t => {
@@ -763,13 +798,9 @@
         let htmlPreview = '';
         let allRawCommands = "";
 
-        const ESC = '\x1B';
-        const GS = '\x1D';
-        const INIT = ESC + '@';
-        const ALIGN_CENTER = ESC + 'a' + '\x01';
-        const ALIGN_LEFT = ESC + 'a' + '\x00';
-        const BOLD_ON = ESC + 'E' + '\x01';
-        const BOLD_OFF = ESC + 'E' + '\x00';
+        const ESC = '\x1B', GS = '\x1D', INIT = ESC + '@';
+        const ALIGN_CENTER = ESC + 'a' + '\x01', ALIGN_LEFT = ESC + 'a' + '\x00';
+        const BOLD_ON = ESC + 'E' + '\x01', BOLD_OFF = ESC + 'E' + '\x00';
         const CUT_PAPER = GS + 'V' + '\x41' + '\x03';
 
         let maxChar = (ukuran === '58') ? 32 : 48;
@@ -788,7 +819,6 @@
             let detailHtml = '';
             let textBuffer = '';
 
-            // Format Teks Printer Thermal Bluetooth (Gaya Slip Gaji Resmi)
             textBuffer += INIT + ALIGN_CENTER + BOLD_ON + namaTokoGlobal + '\n';
             textBuffer += '=== SLIP GAJI PRODUKSI ===\n' + BOLD_OFF;
             textBuffer += 'Periode: ' + mulai + ' s/d ' + selesai + '\n';
@@ -831,6 +861,19 @@
                 }
             }
 
+            // Tambahkan Integrasi Fitur Bonus untuk Source 2
+            if (bonusArr.length > 0) {
+                textBuffer += lineDashed + '\n'; 
+                detailHtml += `<div class="receipt-line"></div>`;
+                bonusArr.forEach(b => {
+                    grandTotal += b.amount;
+                    let lineStr = `+ ${b.desc}`;
+                    let priceStr = `Rp ${b.amount.toLocaleString('id-ID')}`;
+                    textBuffer += padRow(lineStr, priceStr, maxChar) + '\n';
+                    detailHtml += `<div class="receipt-row" style="color:var(--blue);"><span>${lineStr}</span><span><b>${priceStr}</b></span></div>`;
+                });
+            }
+
             let totalStr = `Rp ${grandTotal.toLocaleString('id-ID')}`;
             textBuffer += lineDashed + '\n';
             textBuffer += BOLD_ON + padRow('TOTAL PENERIMAAN', totalStr, maxChar) + '\n' + BOLD_OFF;
@@ -842,7 +885,6 @@
 
             allRawCommands += textBuffer;
 
-            // Format Preview HTML Slip Gaji Profesional dengan Page Break otomatis antar karyawan
             htmlPreview += `
             <div class="thermal-receipt w${ukuran}">
                 <div class="receipt-center">

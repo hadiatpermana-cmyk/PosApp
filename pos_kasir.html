@@ -532,20 +532,40 @@
         }
     }
 
-    function renderBarangDropdown() {
-        const selBrg = document.getElementById('inBarang');
-        selBrg.innerHTML = '<option value="">-- Pilih Barang (Barang Jadi) --</option>';
-        
-        barangStokList.sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang)).forEach(b => {
+    function renderBarangDropdown(agenId = null) {
+    const selBrg = document.getElementById('inBarang');
+    selBrg.innerHTML = '<option value="">-- Pilih Barang (Barang Jadi) --</option>';
+    
+    let listYangDitampilkan = barangStokList;
+
+    // Filter barang jika ada agen yang dipilih
+    if (agenId) {
+        if (databaseHarga[agenId]) {
+            // Ambil id barang milik agen ini (kecualikan key 'bon')
+            const barangKhususAgen = Object.keys(databaseHarga[agenId]).filter(key => key !== 'bon');
+            listYangDitampilkan = barangStokList.filter(b => barangKhususAgen.includes(b.id));
+        } else {
+            listYangDitampilkan = []; // Jika agen belum punya setting harga
+        }
+    }
+
+    if (listYangDitampilkan.length === 0 && agenId) {
+        selBrg.innerHTML = '<option value="">-- Agen ini belum disetting barangnya --</option>';
+    } else {
+        listYangDitampilkan.sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang)).forEach(b => {
             const infoStok = ` (Stok: ${b.stok_sekarang || 0})`;
             selBrg.options.add(new Option(b.nama_barang + infoStok, JSON.stringify({id: b.id, nama: b.nama_barang})));
         });
     }
+}
 
     function toggleFormJenis() {
-        renderBarangDropdown();
-        autoFillHarga();
-    }
+    const agRaw = document.getElementById('inPelanggan').value;
+    const agenId = agRaw ? JSON.parse(agRaw).id : null;
+    
+    renderBarangDropdown(agenId);
+    autoFillHarga();
+}
 
     function updateCheckerBon() {
         const chkVal = document.getElementById('inChecker').value;
@@ -553,39 +573,47 @@
     }
 
     function updateBonAgen() {
-        const agRaw = document.getElementById('inPelanggan').value;
-        if (!agRaw) { bonLamaVal = 0; document.getElementById('lblPelanggan').innerText = "UMUM"; return; }
-        const agenObj = JSON.parse(agRaw);
-        
-        const saldoBon = databaseHarga[agenObj.id]?.bon || 0;
-        
-        const agenPakeOngkir = ["Jawa Timur", "Catur", "Dajo Snack", "Edi", "Rizky", "Wanto"];
-        const isOngkir = agenPakeOngkir.includes(agenObj.nama);
-        document.getElementById('boxOngkir').style.display = isOngkir ? "block" : "none";
-
-        isDeposit = saldoBon < 0;
-        bonLamaVal = Math.abs(saldoBon);
-
-        document.getElementById('boxBonLama').style.display = saldoBon !== 0 ? "block" : "none";
-        document.getElementById('labelBonStruk').innerText = isDeposit ? "Deposit:" : "Bon Lama:";
-        document.getElementById('lblBonLama').innerText = bonLamaVal.toLocaleString('id-ID');
-        document.getElementById('inputBonLama').value = bonLamaVal.toLocaleString('id-ID');
-
-        const notif = document.getElementById('notifBon');
-        if (saldoBon > 0) {
-            notif.innerText = "⚠️ AGEN INI PUNYA BON LAMA!";
-            notif.style.display = "block";
-        } else if (saldoBon < 0) {
-            notif.innerText = "✅ AGEN INI PUNYA DEPOSIT!";
-            notif.style.display = "block";
-            notif.style.color = "#27ae60";
-        } else {
-            notif.style.display = "none";
-        }
-
-        document.getElementById('lblPelanggan').innerText = agenObj.nama.toUpperCase();
-        hitungKembalian();
+    const agRaw = document.getElementById('inPelanggan').value;
+    if (!agRaw) { 
+        bonLamaVal = 0; 
+        document.getElementById('lblPelanggan').innerText = "UMUM"; 
+        renderBarangDropdown(null); // Reset munculkan semua barang jika batal pilih agen
+        return; 
     }
+    const agenObj = JSON.parse(agRaw);
+    
+    const saldoBon = databaseHarga[agenObj.id]?.bon || 0;
+    
+    const agenPakeOngkir = ["Jawa Timur", "Catur", "Dajo Snack", "Edi", "Rizky", "Wanto"];
+    const isOngkir = agenPakeOngkir.includes(agenObj.nama);
+    document.getElementById('boxOngkir').style.display = isOngkir ? "block" : "none";
+
+    isDeposit = saldoBon < 0;
+    bonLamaVal = Math.abs(saldoBon);
+
+    document.getElementById('boxBonLama').style.display = saldoBon !== 0 ? "block" : "none";
+    document.getElementById('labelBonStruk').innerText = isDeposit ? "Deposit:" : "Bon Lama:";
+    document.getElementById('lblBonLama').innerText = bonLamaVal.toLocaleString('id-ID');
+    document.getElementById('inputBonLama').value = bonLamaVal.toLocaleString('id-ID');
+
+    const notif = document.getElementById('notifBon');
+    if (saldoBon > 0) {
+        notif.innerText = "⚠️ AGEN INI PUNYA BON LAMA!";
+        notif.style.display = "block";
+    } else if (saldoBon < 0) {
+        notif.innerText = "✅ AGEN INI PUNYA DEPOSIT!";
+        notif.style.display = "block";
+        notif.style.color = "#27ae60";
+    } else {
+        notif.style.display = "none";
+    }
+
+    document.getElementById('lblPelanggan').innerText = agenObj.nama.toUpperCase();
+    hitungKembalian();
+
+    // MEMANGGIL FILTER BARANG UNTUK AGEN INI
+    renderBarangDropdown(agenObj.id);
+}
 
     function autoFillHarga() {
         const agRaw = document.getElementById('inPelanggan').value;

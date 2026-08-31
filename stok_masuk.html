@@ -460,24 +460,37 @@
     }
 
     async function muatDataBarangDanSupplier() {
-        const { data: barang } = await _supabase.from('barang').select('*').eq('toko_id', tokoIdGlobal).order('nama_barang');
-        listBarang = barang || []; 
+    // 1. Muat data barang
+    const { data: barang } = await _supabase.from('barang').select('*').eq('toko_id', tokoIdGlobal).order('nama_barang');
+    listBarang = barang || []; 
 
-        const { data: agen } = await _supabase.from('agen').select('*').eq('toko_id', tokoIdGlobal);
-        listAgenSupplier = agen || [];
+    // 2. Muat data kontak (Agen & Supplier)
+    const { data: agen } = await _supabase.from('agen').select('*').eq('toko_id', tokoIdGlobal);
+    listAgenSupplier = agen || [];
 
-        const { data: hargaAgen } = await _supabase.from('harga_agen').select('*').eq('toko_id', tokoIdGlobal);
-        listHargaAgen = hargaAgen || [];
+    // 3. Muat data harga khusus
+    const { data: hargaAgen } = await _supabase.from('harga_agen').select('*').eq('toko_id', tokoIdGlobal);
+    listHargaAgen = hargaAgen || [];
 
-        let supplierSet = new Set();
-        listBarang.forEach(b => { if(b.supplier) supplierSet.add(b.supplier); });
+    // --- PERBAIKAN FILTER SUPPLIER DI SINI ---
+    let dropdownHtml = '<option value="">-- Pilih Supplier --</option>';
+    
+    // Filter hanya kontak yang tipenya mengandung kata "Supplier"
+    let khususSupplier = listAgenSupplier.filter(a => {
+        let tipe = (a.tipe_agen || a.type_agen || '').toLowerCase();
+        return tipe.includes('supplier');
+    });
 
-        let dropdownHtml = '<option value="">-- Pilih Supplier --</option>';
-        supplierSet.forEach(sup => {
-            dropdownHtml += `<option value="${sup}">${sup}</option>`;
-        });
-        document.getElementById('inSupplier').innerHTML = dropdownHtml;
-    }
+    // Urutkan berdasarkan nama abjad (A-Z)
+    khususSupplier.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
+
+    // Masukkan ke dalam dropdown
+    khususSupplier.forEach(sup => {
+        dropdownHtml += `<option value="${sup.nama_agen}">${sup.nama_agen}</option>`;
+    });
+    
+    document.getElementById('inSupplier').innerHTML = dropdownHtml;
+}
 
     function filterBarangSupplier() {
         const namaSup = document.getElementById('inSupplier').value;

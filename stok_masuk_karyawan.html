@@ -44,8 +44,12 @@
         .btn-action { background: #64748b; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700; }
         
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
-        .modal-content { background: white; margin: 10% auto; padding: 20px; border-radius: 16px; width: 95%; max-width: 550px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 85vh; overflow-y: auto; border: 1px solid #e2e8f0; }
+        .modal-content { background: white; margin: 10% auto; padding: 20px; border-radius: 16px; width: 85%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 85vh; overflow-y: auto; border: 1px solid #e2e8f0; }
 
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: 700; margin-bottom: 6px; font-size: 14px; color: #475569; }
+        .form-group select, .form-group input { width: 100%; padding: 11px; border: 1.5px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 16px; font-weight: 600; }
+        
         .sub-display { background: #f8fafc; padding: 10px 14px; font-size: 15px; font-weight: 800; text-align: right; border: 1.5px solid #e2e8f0; border-top: none; display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; color: #334155; }
         
         .summary-box { background: #0f172a; padding: 16px; border-radius: 14px; margin-top: 15px; color: white; box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.1); }
@@ -79,7 +83,7 @@
     <div class="info-grid">
         <input type="text" id="noFaktur" readonly placeholder="No. Faktur" style="background:#f1f5f9; color:#64748b;">
         <input type="date" id="tglFaktur">
-        <select id="pilihSupplier"><option value="">-- PILIH SUPPLIER --</option></select>
+        <select id="pilihSupplier" onchange="filterBarangSupplier()"><option value="">-- PILIH SUPPLIER --</option></select>
         <input type="text" id="penerima" readonly style="background:#f1f5f9; color:#64748b;" placeholder="Penerima">
     </div>
 
@@ -140,35 +144,33 @@
     </div>
 </div>
 
-<!-- Modal Input Item Multi-Baris -->
+<!-- Modal Input Item Barang -->
 <div id="modalInput" class="modal">
     <div class="modal-content">
-        <h3 id="modalTitle" style="margin-top:0; color:#0f172a; font-weight:800; text-transform: uppercase;">DAFTAR BARANG</h3>
-        
-        <div style="overflow-x: auto;">
-            <table style="width: 100%; margin-bottom: 10px; min-width: 480px;">
-                <thead>
-                    <tr>
-                        <th style="width: 35%; padding: 5px;">NAMA BARANG</th>
-                        <th style="width: 20%; padding: 5px;">SATUAN</th>
-                        <th style="width: 15%; padding: 5px;">QTY</th>
-                        <th style="width: 25%; padding: 5px;">HARGA (Rp)</th>
-                        <th style="width: 5%; padding: 5px; text-align: center;">#</th>
-                    </tr>
-                </thead>
-                <tbody id="containerBarisBarang">
-                    <!-- Baris barang dinamis akan muncul di sini -->
-                </tbody>
-            </table>
+        <h3 id="modalTitle" style="margin-top:0; color:#0f172a; font-weight:800;">Tambah Barang</h3>
+        <div class="form-group">
+            <label>Barang</label>
+            <select id="modalBarang" onchange="autoFillHargaModal()"></select>
         </div>
-
-        <button onclick="tambahBarisBarang()" style="width: 100%; padding: 12px; background: #fffbeb; color: #d97706; border: 2px dashed #fcd34d; border-radius: 8px; font-weight: 800; cursor: pointer; margin-bottom: 20px; font-size: 15px;">
-            + Tambah Baris Barang
-        </button>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <button onclick="closeModal()" style="padding:12px; border-radius:8px; border:none; background:#f1f5f9; color:#475569; font-weight:800; cursor:pointer;">BATAL</button>
-            <button onclick="simpanItemMulti()" style="background:#10b981; color:white; border:none; border-radius:8px; font-weight:800; cursor:pointer;">SIMPAN</button>
+        <div class="form-group">
+            <label>Satuan</label>
+            <select id="modalSatuan" onchange="autoFillHargaModal()">
+                <option value="Bal">Bal</option>
+                <option value="Pack">Pack</option>
+                <option value="Pcs">Pcs / Lembar / Kg</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Qty (Kemasan)</label>
+            <input type="number" id="modalQty" value="0" onfocus="clearZero(this)">
+        </div>
+        <div class="form-group">
+            <label>Harga Beli Satuan (Rp)</label>
+            <input type="text" id="modalHarga" value="0" oninput="formatRupiah(this)" onfocus="clearZero(this)">
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
+            <button onclick="closeModal()" style="padding:12px; border-radius:8px; border:1.5px solid #cbd5e1; background:#fff; font-weight:700; cursor:pointer;">BATAL</button>
+            <button onclick="addItem()" style="background:#10b981; color:white; border:none; border-radius:8px; font-weight:800; cursor:pointer;">TAMBAH</button>
         </div>
     </div>
 </div>
@@ -313,93 +315,39 @@
         btn.innerText = "SIMPAN & UPDATE STOK";
     }
 
-    function openModal(mode) { 
+    function filterBarangSupplier() {
         const sup = document.getElementById('pilihSupplier').value;
-        if(!sup) return alert("Pilih Supplier terlebih dahulu!");
+        const modalBarang = document.getElementById('modalBarang');
+        modalBarang.innerHTML = '<option value="">-- Pilih Barang --</option>';
         
-        currentMode = mode; 
-        document.getElementById('modalTitle').innerText = mode === 'TERIMA' ? "DAFTAR BARANG DITERIMA" : "DAFTAR BARANG RETUR";
-        
-        document.getElementById('containerBarisBarang').innerHTML = ''; // Kosongkan baris
-        tambahBarisBarang(); // Tambahkan 1 baris awal
-        
-        document.getElementById('modalInput').removeAttribute('data-edit-index');
-        document.getElementById('modalInput').style.display = "block"; 
-    }
-
-    function closeModal() { 
-        document.getElementById('modalInput').style.display = "none"; 
-    }
-
-    function tambahBarisBarang(itemData = null) {
-        const tbody = document.getElementById('containerBarisBarang');
-        const tr = document.createElement('tr');
-        
-        const sup = document.getElementById('pilihSupplier').value;
         const filtered = sup ? listBarang.filter(b => b.supplier === sup) : listBarang;
-
-        let options = '<option value="">-- Pilih Barang --</option>';
         filtered.sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang)).forEach(b => {
-            const isSelected = (itemData && String(itemData.id_barang) === String(b.id)) ? 'selected' : '';
-            options += `<option value="${b.id}" ${isSelected}>${b.nama_barang}</option>`;
+            modalBarang.options.add(new Option(b.nama_barang, b.id));
         });
-
-        const satBal = (itemData && itemData.satuan === 'Bal') ? 'selected' : '';
-        const satPack = (itemData && itemData.satuan === 'Pack') ? 'selected' : '';
-        const satPcs = (itemData && (itemData.satuan === 'Pcs' || itemData.satuan === 'Lembar' || itemData.satuan === 'Kg')) ? 'selected' : '';
-        
-        const qtyVal = itemData ? itemData.qty : '0';
-        const hargaVal = itemData ? itemData.harga.toLocaleString('id-ID') : '0';
-        const isEditMode = itemData ? 'disabled style="background:#e2e8f0;"' : '';
-
-        tr.innerHTML = `
-            <td style="padding: 4px;">
-                <select class="input-barang" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;" onchange="autoFillHargaMulti(this)" ${isEditMode}>
-                    ${options}
-                </select>
-            </td>
-            <td style="padding: 4px;">
-                <select class="input-satuan" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;" onchange="autoFillHargaMulti(this)">
-                    <option value="Bal" ${satBal}>Bal</option>
-                    <option value="Pack" ${satPack}>Pack</option>
-                    <option value="Pcs" ${satPcs}>Pcs</option>
-                </select>
-            </td>
-            <td style="padding: 4px;">
-                <input type="number" class="input-qty" value="${qtyVal}" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center;" onfocus="clearZero(this)">
-            </td>
-            <td style="padding: 4px;">
-                <input type="text" class="input-harga" value="${hargaVal}" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: right;" oninput="formatRupiah(this)" onfocus="clearZero(this)">
-            </td>
-            <td style="padding: 4px; text-align: center;">
-                <button onclick="this.closest('tr').remove()" style="background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">×</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
+        autoFillHargaModal();
     }
 
-    function autoFillHargaMulti(element) {
-        const tr = element.closest('tr');
-        const brgId = tr.querySelector('.input-barang').value;
-        const satuanDipilih = (tr.querySelector('.input-satuan').value || '').toLowerCase();
-        const inputHarga = tr.querySelector('.input-harga');
+    function autoFillHargaModal() {
         const namaSup = document.getElementById('pilihSupplier').value;
+        const brgId = document.getElementById('modalBarang').value;
+        const satuanDipilih = (document.getElementById('modalSatuan').value || '').toLowerCase();
+        
+        if(!brgId) return;
 
-        if(!brgId) {
-            inputHarga.value = '0';
-            return;
-        }
+        let hargaBal = 0;
+        let hargaPack = 0;
+        let hargaPcs = 0;
 
-        let hargaBal = 0, hargaPack = 0, hargaPcs = 0;
-
+        // Cari data agen/supplier berdasarkan nama
         const dataAgen = listAgenSupplier.find(a => {
             const nAgen = (a.nama_agen || a.nama || a.nama_supplier || '').toLowerCase();
             return nAgen === namaSup.toLowerCase();
         });
-
+        
         if (dataAgen) {
-            const settingHarga = listHargaAgen.find(h =>
-                String(h.agen_id).trim() === String(dataAgen.id).trim() &&
+            // Cari setting harga khusus di tabel harga_agen berdasarkan agen_id dan barang_id
+            const settingHarga = listHargaAgen.find(h => 
+                String(h.agen_id).trim() === String(dataAgen.id).trim() && 
                 String(h.barang_id).trim() === String(brgId).trim()
             );
             if (settingHarga) {
@@ -409,6 +357,7 @@
             }
         }
 
+        // Ambil data master barang untuk fallback atau isi konversi
         const brg = listBarang.find(b => String(b.id) === String(brgId));
         if (brg) {
             if (hargaBal === 0) hargaBal = Number(brg.harga_bal) || Number(brg.harga_beli_dasar) || 0;
@@ -418,7 +367,10 @@
             const isiPack = Number(brg.isi_pack) || 1;
             const isiPcs = Number(brg.isi_pcs) || 1;
 
-            if (hargaPack === 0 && hargaBal > 0 && isiPack > 0) hargaPack = Math.round(hargaBal / isiPack);
+            // Fallback otomatis jika harga pack/pcs di database masih 0
+            if (hargaPack === 0 && hargaBal > 0 && isiPack > 0) {
+                hargaPack = Math.round(hargaBal / isiPack);
+            }
             if (hargaPcs === 0 && hargaBal > 0 && isiPack > 0 && isiPcs > 0) {
                 hargaPcs = Math.round(hargaBal / (isiPack * isiPcs));
             } else if (hargaPcs === 0 && hargaPack === 0 && isiPcs > 0) {
@@ -427,85 +379,33 @@
         }
 
         let hargaDitemukan = 0;
-        if (satuanDipilih.includes('bal')) hargaDitemukan = hargaBal;
-        else if (satuanDipilih.includes('pack')) hargaDitemukan = hargaPack;
-        else hargaDitemukan = hargaPcs;
-
-        inputHarga.value = hargaDitemukan > 0 ? hargaDitemukan.toLocaleString('id-ID') : '0';
-    }
-
-    function simpanItemMulti() {
-        const modal = document.getElementById('modalInput');
-        const editIdx = modal.getAttribute('data-edit-index');
-        const rows = document.querySelectorAll('#containerBarisBarang tr');
-
-        if(editIdx !== null && editIdx !== "") {
-            // Edit Mode
-            const row = rows[0];
-            if(!row) {
-                if(currentMode === 'TERIMA') itemsTerima.splice(editIdx, 1);
-                else itemsRetur.splice(editIdx, 1);
-            } else {
-                const brgId = row.querySelector('.input-barang').value;
-                const s = row.querySelector('.input-satuan').value;
-                const q = parseFloat(row.querySelector('.input-qty').value) || 0;
-                const h = getAngka(row.querySelector('.input-harga').value);
-
-                if(q === 0) {
-                    if(currentMode === 'TERIMA') itemsTerima.splice(editIdx, 1);
-                    else itemsRetur.splice(editIdx, 1);
-                } else {
-                    const brg = listBarang.find(b => String(b.id) === String(brgId));
-                    const qtyBase = qtyKeSatuanTerkecil(brg, q, s);
-                    const it = { id_barang: brgId, barang: brg.nama_barang, satuan: s, qty: q, qty_base: qtyBase, harga: h, total: q * h };
-
-                    if(currentMode === 'TERIMA') itemsTerima[editIdx] = it;
-                    else itemsRetur[editIdx] = it;
-                }
-            }
+        if (satuanDipilih.includes('bal')) {
+            hargaDitemukan = hargaBal;
+        } else if (satuanDipilih.includes('pack')) {
+            hargaDitemukan = hargaPack;
         } else {
-            // Tambah Mode Multi Baris
-            rows.forEach(row => {
-                const brgId = row.querySelector('.input-barang').value;
-                const s = row.querySelector('.input-satuan').value;
-                const q = parseFloat(row.querySelector('.input-qty').value) || 0;
-                const h = getAngka(row.querySelector('.input-harga').value);
-
-                if(!brgId || q <= 0) return;
-
-                const brg = listBarang.find(b => String(b.id) === String(brgId));
-                const qtyBase = qtyKeSatuanTerkecil(brg, q, s);
-                const it = { id_barang: brgId, barang: brg.nama_barang, satuan: s, qty: q, qty_base: qtyBase, harga: h, total: q * h };
-
-                const targetArray = currentMode === 'TERIMA' ? itemsTerima : itemsRetur;
-                const existingIdx = targetArray.findIndex(i => String(i.id_barang) === String(brgId) && i.satuan === s && i.harga === h);
-
-                if(existingIdx > -1) {
-                    targetArray[existingIdx].qty += q;
-                    targetArray[existingIdx].qty_base += qtyBase;
-                    targetArray[existingIdx].total = targetArray[existingIdx].qty * targetArray[existingIdx].harga;
-                } else {
-                    targetArray.push(it);
-                }
-            });
+            hargaDitemukan = hargaPcs;
         }
 
-        modal.removeAttribute('data-edit-index');
-        render();
-        hitungTotal();
-        closeModal();
+        document.getElementById('modalHarga').value = hargaDitemukan > 0 ? hargaDitemukan.toLocaleString('id-ID') : '0';
     }
 
-    function editItem(idx, mode) {
-        currentMode = mode;
-        const item = mode === 'TERIMA' ? itemsTerima[idx] : itemsRetur[idx];
+    function openModal(mode) { 
+        const sup = document.getElementById('pilihSupplier').value;
+        if(!sup) return alert("Pilih Supplier terlebih dahulu!");
+        
+        currentMode = mode; 
+        editIndex = -1; 
+        
+        document.getElementById('modalTitle').innerText = mode === 'TERIMA' ? "Tambah Barang Diterima" : "Tambah Retur Barang";
+        filterBarangSupplier();
+        document.getElementById('modalQty').value = "0";
+        autoFillHargaModal();
+        document.getElementById('modalInput').style.display = "block"; 
+    }
 
-        document.getElementById('modalTitle').innerText = mode === 'TERIMA' ? "EDIT BARANG DITERIMA" : "EDIT BARANG RETUR";
-        document.getElementById('containerBarisBarang').innerHTML = '';
-        tambahBarisBarang(item);
-
-        document.getElementById('modalInput').setAttribute('data-edit-index', idx);
-        document.getElementById('modalInput').style.display = "block";
+    function closeModal() { 
+        document.getElementById('modalInput').style.display = "none"; 
     }
 
     function getBarangKonversi(barang) {
@@ -536,6 +436,61 @@
         return jml;
     }
 
+    function addItem() {
+        const idB = document.getElementById('modalBarang').value;
+        const s = document.getElementById('modalSatuan').value;
+        const q = parseFloat(document.getElementById('modalQty').value) || 0;
+        const h = getAngka(document.getElementById('modalHarga').value);
+        
+        if(!idB) return alert("Pilih barang terlebih dahulu!");
+        if(q <= 0) return alert("Qty harus lebih dari 0!");
+
+        const brg = listBarang.find(b => b.id === idB);
+        const qtyBase = qtyKeSatuanTerkecil(brg, q, s);
+        const itemObj = { 
+            id_barang: idB, 
+            barang: brg.nama_barang, 
+            satuan: s, 
+            qty: q, 
+            qty_base: qtyBase, 
+            harga: h, 
+            total: q * h 
+        };
+        
+        const targetArray = currentMode === 'TERIMA' ? itemsTerima : itemsRetur;
+
+        if (editIndex > -1) {
+            targetArray[editIndex] = itemObj;
+        } else { 
+            const existingIdx = targetArray.findIndex(i => i.id_barang === idB && i.satuan === s);
+            if(existingIdx > -1) {
+                targetArray[existingIdx].qty += q;
+                targetArray[existingIdx].qty_base += qtyBase;
+                targetArray[existingIdx].total = targetArray[existingIdx].qty * targetArray[existingIdx].harga;
+            } else {
+                targetArray.push(itemObj); 
+            }
+        }
+        
+        render(); 
+        closeModal(); 
+        hitungTotal();
+    }
+
+    function editItem(idx, mode) {
+        currentMode = mode; 
+        editIndex = idx; 
+        const item = mode === 'TERIMA' ? itemsTerima[idx] : itemsRetur[idx];
+        
+        filterBarangSupplier();
+        document.getElementById('modalTitle').innerText = mode === 'TERIMA' ? "Edit Barang Diterima" : "Edit Retur Barang";
+        document.getElementById('modalBarang').value = item.id_barang;
+        document.getElementById('modalSatuan').value = item.satuan; 
+        document.getElementById('modalQty').value = item.qty;
+        document.getElementById('modalHarga').value = item.harga.toLocaleString('id-ID');
+        document.getElementById('modalInput').style.display = "block";
+    }
+
     function deleteItem(idx, mode) {
         if(confirm("Hapus baris item ini?")) {
             if(mode === 'TERIMA') itemsTerima.splice(idx, 1);
@@ -555,7 +510,7 @@
                                <td>${it.qty}</td>
                                <td>${it.total.toLocaleString()}</td>
                                <td>
-                                   <button class="btn-action" style="background:#3b82f6; margin-bottom: 4px;" onclick="editItem(${idx},'${mode}')">✏️</button>
+                                   <button class="btn-action" style="background:#3b82f6" onclick="editItem(${idx},'${mode}')">✏️</button>
                                    <button class="btn-action" style="background:#ef4444" onclick="deleteItem(${idx},'${mode}')">🗑️</button>
                                </td>`;
             });
@@ -733,23 +688,26 @@
             if (errHeader) throw new Error("Header: " + errHeader.message);
 
             // 2. Simpan Details & Update Stok Barang
+// 2. Simpan Details & Update Stok Barang
             let counter = 1;
             
             // Proses Barang Terima (Stok +)
             for (const item of itemsTerima) {
                 const uniqueDetailId = `${noFaktur}-D${counter++}`;
                 
+                // Tambahkan penangkap error (const { error }) dan hapus kolom yang tidak ada di database
                 const { error: errDetail } = await _supabase.from('pembelian_detail').insert([{
                     id: uniqueDetailId,
                     toko_id: tokoIdGlobal,
                     no_pb: noFaktur,
                     barang_id: item.id_barang,
                     qty: item.qty_base || item.qty,
-                    satuan: item.satuan, 
+                    satuan: item.satuan, // atau gunakan 'pcs' sesuai versi desktop Anda
                     harga_satuan: item.harga,
                     subtotal: item.total
                 }]);
                 
+                // Jika gagal, hentikan dan munculkan peringatan
                 if (errDetail) throw new Error("Gagal menyimpan detail (Terima): " + errDetail.message);
 
                 const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();

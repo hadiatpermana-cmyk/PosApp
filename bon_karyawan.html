@@ -47,7 +47,7 @@
         .btn-action { background: #64748b; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700; }
         
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
-        .modal-content { background: white; margin: 10% auto; padding: 20px; border-radius: 16px; width: 85%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 85vh; overflow-y: auto; border: 1px solid #e2e8f0; }
+        .modal-content { background: white; margin: 10% auto; padding: 20px; border-radius: 16px; width: 95%; max-width: 500px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 85vh; overflow-y: auto; border: 1px solid #e2e8f0; }
 
         .form-group label { display: block; font-weight: 700; margin-bottom: 6px; font-size: 14px; color: #475569; }
         .form-group select, .form-group input { width: 100%; padding: 11px; border: 1.5px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 16px; font-weight: 600; }
@@ -167,16 +167,32 @@
     </div>
 </div>
 
-<!-- Modal Input Item -->
+<!-- Modal Input Item Multi-Baris -->
 <div id="modalInput" class="modal">
     <div class="modal-content">
-        <h3 style="margin-top:0; color:#0f172a; font-weight:800;">Tambah Item Barang</h3>
-        <div class="form-group"><label>Barang (Barang Jadi)</label><select id="modalBarang" onchange="autoFillHargaModal()"></select></div>
-        <div class="form-group"><label>Satuan</label><select id="modalSatuan" onchange="autoFillHargaModal()"><option value="Bal">Bal</option><option value="Pack">Pack</option><option value="Pcs">Pcs</option></select></div>
-        <div class="form-group"><label>Qty</label><input type="number" id="modalQty" value="0" onfocus="clearZero(this)"></div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
-            <button onclick="closeModal()" style="padding:12px; border-radius:8px; border:1.5px solid #cbd5e1; background:#fff; font-weight:700; cursor:pointer;">BATAL</button>
-            <button onclick="addItem()" style="background:#10b981; color:white; border:none; border-radius:8px; font-weight:800; cursor:pointer;">SIMPAN</button>
+        <h3 id="modalTitle" style="margin-top:0; color:#0f172a; font-weight:800; text-transform: uppercase;">DAFTAR BARANG</h3>
+        
+        <table style="width: 100%; margin-bottom: 10px;">
+            <thead>
+                <tr>
+                    <th style="width: 50%; padding: 5px;">NAMA BARANG</th>
+                    <th style="width: 25%; padding: 5px;">SATUAN</th>
+                    <th style="width: 15%; padding: 5px;">QTY</th>
+                    <th style="width: 10%; padding: 5px; text-align: center;">#</th>
+                </tr>
+            </thead>
+            <tbody id="containerBarisBarang">
+                <!-- Baris barang dinamis akan muncul di sini -->
+            </tbody>
+        </table>
+
+        <button onclick="tambahBarisBarang()" style="width: 100%; padding: 12px; background: #fffbeb; color: #d97706; border: 2px dashed #fcd34d; border-radius: 8px; font-weight: 800; cursor: pointer; margin-bottom: 20px; font-size: 15px;">
+            + Tambah Baris Barang
+        </button>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <button onclick="closeModal()" style="padding:12px; border-radius:8px; border:none; background:#f1f5f9; color:#475569; font-weight:800; cursor:pointer;">BATAL</button>
+            <button onclick="simpanItemMulti()" style="background:#10b981; color:white; border:none; border-radius:8px; font-weight:800; cursor:pointer;">SIMPAN</button>
         </div>
     </div>
 </div>
@@ -202,7 +218,7 @@
     
     let tokoIdGlobal = null, namaKasirGlobal = "", namaTokoGlobal = "SBR PUTRA FOOD", alamatTokoGlobal = "Lembang, Bandung Barat", footerTokoGlobal = "Terima Kasih Atas Kunjungan Anda";
     let databaseHarga = {}, barangStokList = [];
-    let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
+    let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim';
     let lastPrintText = ""; 
     let isDeposit = false;
     let btCharacteristic = null, connectedDeviceId = null;
@@ -269,7 +285,7 @@
 
      async function initData() {
         try {
-            // 1. Muat Agen yang difilter berdasarkan toko_id user yang aktif[cite: 3]
+            // 1. Muat Agen yang difilter berdasarkan toko_id user yang aktif
             const { data: agen, error: errorAgen } = await _supabase
                 .from('agen')
                 .select('*')
@@ -295,7 +311,7 @@
                 });
             }
 
-            // Muat Master Barang yang difilter berdasarkan toko_id yang aktif[cite: 3]
+            // Muat Master Barang yang difilter berdasarkan toko_id yang aktif
             const { data: listBrg } = await _supabase
                 .from('barang')
                 .select('*')
@@ -309,7 +325,8 @@
                 });
             }
 
-            const { data: hargaAgen } = await _supabase.from('harga_agen').select('*');
+            // Perbaikan: Harga juga wajib pakai filter toko_id
+            const { data: hargaAgen } = await _supabase.from('harga_agen').select('*').eq('toko_id', tokoIdGlobal);
             if(hargaAgen) {
                 hargaAgen.forEach(h => {
                     if(!databaseHarga[h.agen_id]) databaseHarga[h.agen_id] = {};
@@ -321,7 +338,7 @@
                 });
             }
 
-            const { data: harga } = await _supabase.from('harga').select('*');
+            const { data: harga } = await _supabase.from('harga').select('*').eq('toko_id', tokoIdGlobal);
             if(harga) {
                 harga.forEach(h => {
                     if(!databaseHarga[h.nama_agen]) databaseHarga[h.nama_agen] = {};
@@ -334,7 +351,7 @@
                 .from('karyawan')
                 .select('*')
                 .eq('aktif', true)
-                .eq('toko_id', tokoIdGlobal); // <-- Tambahan filter toko_id
+                .eq('toko_id', tokoIdGlobal); 
             
             const d2 = document.getElementById('driver2');
             d2.innerHTML = '<option value="">-- CHECKER / DRIVER 2 --</option>';
@@ -349,7 +366,7 @@
             const { data: mobil } = await _supabase
                 .from('kendaraan')
                 .select('*')
-                .eq('toko_id', tokoIdGlobal); // <-- Tambahan filter toko_id
+                .eq('toko_id', tokoIdGlobal); 
             
             const selMobil = document.getElementById('pilihMobil');
             if(mobil) {
@@ -365,11 +382,6 @@
             alert("🚨 KONEKSI DATABASE ERROR:\n" + e.message); 
             console.error("Init Error:", e); 
         }
-    }
-    
-    // Fungsi dummy untuk mencegah error "renderBarangDropdown is not defined"
-    function renderBarangDropdown() {
-        // Ditangani langsung oleh openModal di file ini
     }
 
     function resetForm() {
@@ -449,64 +461,64 @@
     function openModal(mode) { 
         const agRaw = document.getElementById('pilihAgen').value;
         if(!agRaw) return alert("Pilih Agen terlebih dahulu!");
-        currentMode = mode; editIndex = -1; 
+        currentMode = mode; 
         
-        const mBarang = document.getElementById('modalBarang');
-        mBarang.innerHTML = '<option value="">-- Pilih Barang Jadi --</option>';
-        mBarang.disabled = false;
+        const mTitle = document.getElementById('modalTitle');
+        mTitle.innerText = mode === 'Kirim' ? "DAFTAR BARANG DIKIRIM" : "DAFTAR BARANG RETUR";
         
-        barangStokList.sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang)).forEach(b => {
-            const infoStok = ` (Stok: ${b.stok_sekarang || 0})`;
-            mBarang.options.add(new Option(b.nama_barang + infoStok, JSON.stringify({id: b.id, nama: b.nama_barang})));
-        });
-
-        document.getElementById('modalQty').value = "0";
+        document.getElementById('containerBarisBarang').innerHTML = ''; // Kosongkan baris
+        tambahBarisBarang(); // Tambahkan 1 baris awal
+        
+        document.getElementById('modalInput').removeAttribute('data-edit-index');
         document.getElementById('modalInput').style.display = "block"; 
     }
 
-    function closeModal() { document.getElementById('modalInput').style.display = "none"; }
-
-    function autoFillHargaModal() {
-        const agRaw = document.getElementById('pilihAgen').value;
-        const brgRaw = document.getElementById('modalBarang').value;
-        const s = document.getElementById('modalSatuan').value;
-        
-        if (!agRaw || !brgRaw) return;
-
-        const agenObj = JSON.parse(agRaw);
-        const brgObj = JSON.parse(brgRaw);
-
-        let h = 0;
-        if (databaseHarga[agenObj.id] && databaseHarga[agenObj.id][brgObj.id]) {
-            const itemHargaAgen = databaseHarga[agenObj.id][brgObj.id];
-            h = itemHargaAgen[s] || itemHargaAgen['Pack'] || itemHargaAgen['Bal'] || itemHargaAgen['Pcs'] || 0;
-        } else if (databaseHarga[agenObj.nama]) {
-            h = databaseHarga[agenObj.nama][`${brgObj.nama}_${s}`] || databaseHarga[agenObj.nama][`${brgObj.nama}_Bal`] || 0;
-        }
-
-        if (h === 0) {
-            const foundMaster = barangStokList.find(b => b.id === brgObj.id);
-            if (foundMaster) {
-                if (s === 'Bal') h = foundMaster.harga_bal || foundMaster.harga_jual || 0;
-                else if (s === 'Pack') h = foundMaster.harga_pac || foundMaster.harga_pack || foundMaster.harga_jual || 0;
-                else h = foundMaster.harga_pcs || foundMaster.harga_jual || 0;
-            }
-        }
-        
+    function closeModal() { 
+        document.getElementById('modalInput').style.display = "none"; 
     }
 
-    function addItem() {
-        const agRaw = document.getElementById('pilihAgen').value;
-        const brgRaw = document.getElementById('modalBarang').value;
-        const s = document.getElementById('modalSatuan').value;
-        const q = parseFloat(document.getElementById('modalQty').value) || 0;
+    function tambahBarisBarang(itemData = null) {
+        const tbody = document.getElementById('containerBarisBarang');
+        const tr = document.createElement('tr');
         
-        if(!brgRaw) return alert("Pilih barang terlebih dahulu!");
-        if(q <= 0) return alert("Qty harus lebih dari 0!");
+        // Buat opsi barang dari barangStokList (sudah difilter per toko_id)
+        let options = '<option value="">-- Pilih Barang --</option>';
+        barangStokList.sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang)).forEach(b => {
+            const isSelected = (itemData && itemData.id === b.id) ? 'selected' : '';
+            options += `<option value='{"id": "${b.id}", "nama": "${b.nama_barang}"}' ${isSelected}>${b.nama_barang}</option>`;
+        });
 
-        const agenObj = JSON.parse(agRaw);
-        const brgObj = JSON.parse(brgRaw);
+        const satBal = (itemData && itemData.satuan === 'Bal') ? 'selected' : '';
+        const satPack = (itemData && itemData.satuan === 'Pack') ? 'selected' : '';
+        const satPcs = (itemData && itemData.satuan === 'Pcs') ? 'selected' : '';
+        const qtyVal = itemData ? itemData.qty : '0';
+        const isEditMode = itemData ? 'disabled style="background:#e2e8f0;"' : '';
 
+        tr.innerHTML = `
+            <td style="padding: 4px;">
+                <select class="input-barang" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;" ${isEditMode}>
+                    ${options}
+                </select>
+            </td>
+            <td style="padding: 4px;">
+                <select class="input-satuan" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    <option value="Bal" ${satBal}>Ball</option>
+                    <option value="Pack" ${satPack}>Pack</option>
+                    <option value="Pcs" ${satPcs}>Pcs</option>
+                </select>
+            </td>
+            <td style="padding: 4px;">
+                <input type="number" class="input-qty" value="${qtyVal}" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center;" onfocus="clearZero(this)">
+            </td>
+            <td style="padding: 4px; text-align: center;">
+                <button onclick="this.closest('tr').remove()" style="background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">×</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    // Fungsi Pembantu Cari Harga
+    function cariHarga(agenObj, brgObj, s) {
         let h = 0;
         if (databaseHarga[agenObj.id] && databaseHarga[agenObj.id][brgObj.id]) {
             const itemHargaAgen = databaseHarga[agenObj.id][brgObj.id];
@@ -523,31 +535,79 @@
                 else h = foundMaster.harga_pcs || foundMaster.harga_jual || 0;
             }
         }
+        return h;
+    }
 
-        const foundMaster = barangStokList.find(b => b.id === brgObj.id);
-        const qtyBase = qtyKeSatuanTerkecil(foundMaster, q, s);
-        const it = { id: brgObj.id, barang: brgObj.nama, satuan: s, qty: q, qty_base: qtyBase, harga: h, total: q * h };
+    function simpanItemMulti() {
+        const agRaw = document.getElementById('pilihAgen').value;
+        const agenObj = JSON.parse(agRaw);
+        const modal = document.getElementById('modalInput');
+        const editIdx = modal.getAttribute('data-edit-index');
         
-        if (editIndex > -1) {
-            if(q === 0) (currentMode === 'Kirim' ? itemsKirim : itemsRetur).splice(editIndex, 1);
-            else (currentMode === 'Kirim' ? itemsKirim : itemsRetur)[editIndex] = it;
-        } else { 
-            if(q > 0) (currentMode === 'Kirim' ? itemsKirim : itemsRetur).push(it); 
+        const rows = document.querySelectorAll('#containerBarisBarang tr');
+
+        if(editIdx !== null && editIdx !== "") {
+            // Mode Edit (Hanya proses baris pertama jika ada)
+            const row = rows[0];
+            if(!row) { 
+                 if (currentMode === 'Kirim') itemsKirim.splice(editIdx, 1);
+                 else itemsRetur.splice(editIdx, 1);
+            } else {
+                const brgRaw = row.querySelector('.input-barang').value;
+                const s = row.querySelector('.input-satuan').value;
+                const q = parseFloat(row.querySelector('.input-qty').value) || 0;
+                
+                if(q === 0) {
+                     if (currentMode === 'Kirim') itemsKirim.splice(editIdx, 1);
+                     else itemsRetur.splice(editIdx, 1);
+                } else {
+                    const brgObj = JSON.parse(brgRaw);
+                    let h = cariHarga(agenObj, brgObj, s);
+                    const foundMaster = barangStokList.find(b => b.id === brgObj.id);
+                    const qtyBase = qtyKeSatuanTerkecil(foundMaster, q, s);
+                    const it = { id: brgObj.id, barang: brgObj.nama, satuan: s, qty: q, qty_base: qtyBase, harga: h, total: q * h };
+                    
+                    if (currentMode === 'Kirim') itemsKirim[editIdx] = it;
+                    else itemsRetur[editIdx] = it;
+                }
+            }
+        } else {
+            // Mode Tambah Multi-baris
+            rows.forEach(row => {
+                const brgRaw = row.querySelector('.input-barang').value;
+                const s = row.querySelector('.input-satuan').value;
+                const q = parseFloat(row.querySelector('.input-qty').value) || 0;
+
+                if(!brgRaw || q <= 0) return; // Lewati jika tidak valid
+
+                const brgObj = JSON.parse(brgRaw);
+                let h = cariHarga(agenObj, brgObj, s);
+                const foundMaster = barangStokList.find(b => b.id === brgObj.id);
+                const qtyBase = qtyKeSatuanTerkecil(foundMaster, q, s);
+                const it = { id: brgObj.id, barang: brgObj.nama, satuan: s, qty: q, qty_base: qtyBase, harga: h, total: q * h };
+                
+                if (currentMode === 'Kirim') itemsKirim.push(it);
+                else itemsRetur.push(it);
+            });
         }
-        
-        render(); closeModal(); hitungTotal();
+
+        modal.removeAttribute('data-edit-index');
+        render();
+        hitungTotal();
+        closeModal();
     }
 
     function editItem(idx, mode) {
-        currentMode = mode; editIndex = idx; 
+        currentMode = mode; 
         const item = mode === 'Kirim' ? itemsKirim[idx] : itemsRetur[idx];
         
-        const mBarang = document.getElementById('modalBarang');
-        mBarang.innerHTML = `<option value='{"id":"${item.id}","nama":"${item.barang}"}'>${item.barang}</option>`;
-        mBarang.disabled = true;
+        const mTitle = document.getElementById('modalTitle');
+        mTitle.innerText = mode === 'Kirim' ? "EDIT BARANG KIRIM" : "EDIT BARANG RETUR";
         
-        document.getElementById('modalSatuan').value = item.satuan; 
-        document.getElementById('modalQty').value = item.qty;
+        document.getElementById('containerBarisBarang').innerHTML = ''; 
+        tambahBarisBarang(item); 
+        
+        document.getElementById('modalInput').setAttribute('data-edit-index', idx);
         document.getElementById('modalInput').style.display = "block";
     }
 

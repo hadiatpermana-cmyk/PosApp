@@ -924,21 +924,25 @@
         p += `\x1B\x61\x01\x1B\x21\x00` + `\n` + footerTokoGlobal + `\n\n\n\n\x1B\x56\x41\x03`;
 
         try {
-            // 1. Simpan Header Transaksi Pengiriman
-            const { error: errTx } = await _supabase.from('transaksi_pengiriman').insert([{
-                no_nota: noStrukAktif, nama_agen: ag, tanggal: tglInput,
-                driver_1: kasirVal, driver_2: checkerVal, plat_nomor: mobil, 
-                total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
-                ongkir: ongkir, bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
-            }]);
+// 1. Simpan Header Transaksi Pengiriman
+const { error: errTx } = await _supabase.from('transaksi_pengiriman').insert([{
+    toko_id: tokoIdGlobal, // <-- Tambahkan penanda toko_id di sini
+    no_nota: noStrukAktif, nama_agen: ag, tanggal: tglInput,
+    driver_1: kasirVal, driver_2: checkerVal, plat_nomor: mobil, 
+    total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
+    ongkir: ongkir, bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
+}]);
+
             if (errTx) throw new Error(errTx.message);
 
-            // 2. Simpan Detail Transaksi
-            const details = [
-                ...keranjangKirim.map(i => ({ no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
-                ...keranjangRetur.map(i => ({ no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
-            ];
-            await _supabase.from('transaksi_pengiriman_detail').insert(details);
+// 2. Simpan Detail Transaksi
+const details = [
+    // <-- Tambahkan toko_id: tokoIdGlobal di dalam masing-masing keranjang
+    ...keranjangKirim.map(i => ({ toko_id: tokoIdGlobal, no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
+    ...keranjangRetur.map(i => ({ toko_id: tokoIdGlobal, no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
+];
+await _supabase.from('transaksi_pengiriman_detail').insert(details);
+
             
             // 3. Potong / Update Stok Barang
             const allItemsToProcess = [

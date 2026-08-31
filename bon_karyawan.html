@@ -47,7 +47,7 @@
         .btn-action { background: #64748b; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700; }
         
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
-        .modal-content { background: white; margin: 10% auto; padding: 20px; border-radius: 16px; width: 95%; max-width: 500px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 85vh; overflow-y: auto; border: 1px solid #e2e8f0; }
+        .modal-content { background: white; margin: 10% auto; padding: 15px; border-radius: 16px; width: 95%; max-width: 500px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 85vh; overflow-y: auto; border: 1px solid #e2e8f0; }
 
         .form-group label { display: block; font-weight: 700; margin-bottom: 6px; font-size: 14px; color: #475569; }
         .form-group select, .form-group input { width: 100%; padding: 11px; border: 1.5px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 16px; font-weight: 600; }
@@ -170,23 +170,22 @@
 <!-- Modal Input Item Multi-Baris -->
 <div id="modalInput" class="modal">
     <div class="modal-content">
-        <h3 id="modalTitle" style="margin-top:0; color:#0f172a; font-weight:800; text-transform: uppercase;">DAFTAR BARANG</h3>
+        <h3 id="modalTitle" style="margin-top:0; margin-bottom:15px; color:#0f172a; font-weight:800; text-transform: uppercase;">DAFTAR BARANG</h3>
         
-        <table style="width: 100%; margin-bottom: 10px;">
-            <thead>
-                <tr>
-                    <th style="width: 50%; padding: 5px;">NAMA BARANG</th>
-                    <th style="width: 25%; padding: 5px;">SATUAN</th>
-                    <th style="width: 15%; padding: 5px;">QTY</th>
-                    <th style="width: 10%; padding: 5px; text-align: center;">#</th>
-                </tr>
-            </thead>
-            <tbody id="containerBarisBarang">
-                <!-- Baris barang dinamis akan muncul di sini -->
-            </tbody>
-        </table>
+        <!-- Grid Header -->
+        <div style="display: grid; grid-template-columns: 2fr 1.2fr 0.8fr 32px; gap: 6px; margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; align-items: center;">
+            <div style="font-size: 11px; font-weight: 800; color: #0f172a;">NAMA BARANG</div>
+            <div style="font-size: 11px; font-weight: 800; color: #0f172a;">SATUAN</div>
+            <div style="font-size: 11px; font-weight: 800; color: #0f172a; text-align: center;">QTY</div>
+            <div style="font-size: 11px; font-weight: 800; color: #0f172a; text-align: center;">#</div>
+        </div>
+        
+        <!-- Container Baris Barang -->
+        <div id="containerBarisBarang" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+            <!-- Baris barang dinamis akan muncul di sini -->
+        </div>
 
-        <button onclick="tambahBarisBarang()" style="width: 100%; padding: 12px; background: #fffbeb; color: #d97706; border: 2px dashed #fcd34d; border-radius: 8px; font-weight: 800; cursor: pointer; margin-bottom: 20px; font-size: 15px;">
+        <button onclick="tambahBarisBarang()" style="width: 100%; padding: 12px; background: #fffbeb; color: #d97706; border: 2px dashed #fcd34d; border-radius: 8px; font-weight: 800; cursor: pointer; margin-bottom: 20px; font-size: 14px;">
             + Tambah Baris Barang
         </button>
 
@@ -478,8 +477,10 @@
     }
 
     function tambahBarisBarang(itemData = null) {
-        const tbody = document.getElementById('containerBarisBarang');
-        const tr = document.createElement('tr');
+        const container = document.getElementById('containerBarisBarang');
+        const div = document.createElement('div');
+        div.className = 'item-row';
+        div.style.cssText = "display: grid; grid-template-columns: 2fr 1.2fr 0.8fr 32px; gap: 6px; align-items: center; border-bottom: 1px solid #f8fafc; padding-bottom: 8px;";
         
         // Buat opsi barang dari barangStokList (sudah difilter per toko_id)
         let options = '<option value="">-- Pilih Barang --</option>';
@@ -492,29 +493,29 @@
         const satPack = (itemData && itemData.satuan === 'Pack') ? 'selected' : '';
         const satPcs = (itemData && itemData.satuan === 'Pcs') ? 'selected' : '';
         const qtyVal = itemData ? itemData.qty : '0';
-        const isEditMode = itemData ? 'disabled style="background:#e2e8f0;"' : '';
+        const isEditMode = itemData ? 'disabled style="background:#e2e8f0; color:#64748b;"' : 'style="background:#fff;"';
 
-        tr.innerHTML = `
-            <td style="padding: 4px;">
-                <select class="input-barang" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;" ${isEditMode}>
+        div.innerHTML = `
+            <div>
+                <select class="input-barang" style="width: 100%; padding: 10px 5px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" ${isEditMode}>
                     ${options}
                 </select>
-            </td>
-            <td style="padding: 4px;">
-                <select class="input-satuan" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;">
+            </div>
+            <div>
+                <select class="input-satuan" style="width: 100%; padding: 10px 5px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 600; background: #fff;">
                     <option value="Bal" ${satBal}>Ball</option>
                     <option value="Pack" ${satPack}>Pack</option>
                     <option value="Pcs" ${satPcs}>Pcs</option>
                 </select>
-            </td>
-            <td style="padding: 4px;">
-                <input type="number" class="input-qty" value="${qtyVal}" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center;" onfocus="clearZero(this)">
-            </td>
-            <td style="padding: 4px; text-align: center;">
-                <button onclick="this.closest('tr').remove()" style="background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">×</button>
-            </td>
+            </div>
+            <div>
+                <input type="number" class="input-qty" value="${qtyVal}" style="width: 100%; padding: 10px 2px; border: 1.5px solid #cbd5e1; border-radius: 8px; text-align: center; font-size: 14px; font-weight: 700; background: #fff; box-sizing: border-box;" onfocus="clearZero(this)">
+            </div>
+            <div style="text-align: right;">
+                <button onclick="this.closest('.item-row').remove()" style="background: #ef4444; color: white; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 18px;">×</button>
+            </div>
         `;
-        tbody.appendChild(tr);
+        container.appendChild(div);
     }
 
     // Fungsi Pembantu Cari Harga
@@ -544,7 +545,7 @@
         const modal = document.getElementById('modalInput');
         const editIdx = modal.getAttribute('data-edit-index');
         
-        const rows = document.querySelectorAll('#containerBarisBarang tr');
+        const rows = document.querySelectorAll('#containerBarisBarang .item-row');
 
         if(editIdx !== null && editIdx !== "") {
             // Mode Edit (Hanya proses baris pertama jika ada)

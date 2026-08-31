@@ -473,16 +473,26 @@
         }
     }
 
-    async function muatHarga() {
-        const { data } = await _supabase.from('harga_agen').select('id, agen_id, barang_id, harga_bal, harga_pack, harga_pcs, agen(nama_agen, tipe_agen, type_agen), barang(nama_barang)').eq('toko_id', tokoIdGlobal);
-        listHargaKhususCache = data || [];
-        
-        if(agenTerpilihId) {
-            renderDetailAgen();
-        } else {
-            renderDaftarAgen();
-        }
+   async function muatHarga() {
+    const { data, error } = await _supabase
+        .from('harga_agen')
+        .select('id, agen_id, barang_id, harga_bal, harga_pack, harga_pcs, agen(nama_agen, tipe_agen), barang(nama_barang)') // Coba hapus type_agen jika tidak ada di DB
+        .eq('toko_id', tokoIdGlobal);
+    
+    // Tambahkan baris ini untuk mengecek error di console browser
+    if (error) {
+        console.error("Gagal memuat harga:", error.message);
+        alert("Error memuat data: " + error.message); 
     }
+
+    listHargaKhususCache = data || [];
+    
+    if(agenTerpilihId) {
+        renderDetailAgen();
+    } else {
+        renderDaftarAgen();
+    }
+}
 
     function renderDaftarAgen() {
         const fTipe = document.getElementById('filterTipeKontak').value;

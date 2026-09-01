@@ -145,16 +145,28 @@
     let toko_id = null;
     let dbKasManual = [];
 
-    function setDefaultDates() {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        const localToday = `${year}-${month}-${day}`;
-        document.getElementById('filterDariTanggal').value = localToday;
-        document.getElementById('filterSampaiTanggal').value = localToday;
-        document.getElementById('inTanggalKas').value = localToday;
-    }
+ function setDefaultDates() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    
+    // Buat variabel khusus untuk tanggal 1 di bulan berjalan
+    const tglAwalBulan = `${year}-${month}-01`; 
+    const localToday = `${year}-${month}-${day}`;
+    
+    const elDari = document.getElementById('filterDariTanggal');
+    const elSampai = document.getElementById('filterSampaiTanggal');
+    const elTglKas = document.getElementById('inTanggalKas');
+    
+    // Set default "Dari Tanggal" menjadi tanggal 1
+    if (elDari) elDari.value = tglAwalBulan; 
+    // Set default "Sampai Tanggal" menjadi hari ini
+    if (elSampai) elSampai.value = localToday; 
+    // Set tanggal input form kas ke hari ini
+    if (elTglKas) elTglKas.value = localToday;
+}
+
     setDefaultDates();
 
     function initTheme() { 

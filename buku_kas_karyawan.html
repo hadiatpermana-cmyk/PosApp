@@ -145,28 +145,16 @@
     let toko_id = null;
     let dbKasManual = [];
 
- function setDefaultDates() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    
-    // Buat variabel khusus untuk tanggal 1 di bulan berjalan
-    const tglAwalBulan = `${year}-${month}-01`; 
-    const localToday = `${year}-${month}-${day}`;
-    
-    const elDari = document.getElementById('filterDariTanggal');
-    const elSampai = document.getElementById('filterSampaiTanggal');
-    const elTglKas = document.getElementById('inTanggalKas');
-    
-    // Set default "Dari Tanggal" menjadi tanggal 1
-    if (elDari) elDari.value = tglAwalBulan; 
-    // Set default "Sampai Tanggal" menjadi hari ini
-    if (elSampai) elSampai.value = localToday; 
-    // Set tanggal input form kas ke hari ini
-    if (elTglKas) elTglKas.value = localToday;
-}
-
+    function setDefaultDates() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const localToday = `${year}-${month}-${day}`;
+        document.getElementById('filterDariTanggal').value = localToday;
+        document.getElementById('filterSampaiTanggal').value = localToday;
+        document.getElementById('inTanggalKas').value = localToday;
+    }
     setDefaultDates();
 
     function initTheme() { 
@@ -264,76 +252,103 @@
         });
     }
 
-    function renderBukuKas() {
-        let filteredKas = filterByWaktu(dbKasManual, 'tanggal');
+ function renderBukuKas() {
+    const tglMulai = document.getElementById('filterDariTanggal').value;
+    const tglSelesai = document.getElementById('filterSampaiTanggal').value;
 
-        let totalMasuk = 0;
-        let totalKeluar = 0;
-        let listBuku = [];
+    let filteredKas = filterByWaktu(dbKasManual, 'tanggal');
 
-        filteredKas.forEach(km => {
-            let nominal = Number(km.jumlah || km.nominal || 0);
-            if (km.jenis === 'MASUK') totalMasuk += nominal;
-            if (km.jenis === 'KELUAR') totalKeluar += nominal;
-            listBuku.push({
-                id: km.id,
-                tanggal: km.tanggal || km.created_at,
-                keterangan: km.keterangan || '-',
-                masuk: km.jenis === 'MASUK' ? nominal : 0,
-                keluar: km.jenis === 'KELUAR' ? nominal : 0,
-                sumber: km.kategori_kas || 'Manual'
-            });
+    let saldoAwal = 0;
+
+    if (tglMulai) {
+        dbKasManual.forEach(km => {
+            // PENAMBAHAN: Lewati jika data ini milik Admin
+            let kategori = km.kategori_kas || 'ADMIN';
+            if (kategori !== 'KARYAWAN') return; 
+
+            let rawDate = km.tanggal || km.created_at;
+            if (!rawDate) return;
+            let itemDateStr = rawDate.split('T')[0]; 
+            
+            if (itemDateStr < tglMulai) {
+                let nominal = Number(km.jumlah || km.nominal || 0);
+                if (km.jenis === 'MASUK') saldoAwal += nominal;
+                if (km.jenis === 'KELUAR') saldoAwal -= nominal;
+            }
         });
-
-        let saldoAwal = 0;
-        let saldoAkhir = saldoAwal + totalMasuk - totalKeluar;
-
-        document.getElementById('valSumMasuk').innerText = `Rp ${totalMasuk.toLocaleString('id-ID')}`;
-        document.getElementById('valSumKeluar').innerText = `Rp ${totalKeluar.toLocaleString('id-ID')}`;
-        document.getElementById('valSumSaldo').innerText = `Rp ${saldoAkhir.toLocaleString('id-ID')}`;
-
-        listBuku.sort((a,b) => new Date(a.tanggal || 0) - new Date(b.tanggal || 0));
-
-        let cardsHtml = `<div class="bon-card" style="background:#f1f5f9; border-style:dashed;">
-            <div class="bon-info"><span class="bon-date">Saldo Awal</span><span class="bon-ket">Akumulasi Periode Sebelumnya</span></div>
-            <div class="bon-nominal"><span class="nominal-angka" style="color:var(--text-main);">Rp ${saldoAwal.toLocaleString('id-ID')}</span></div>
-        </div>`;
-        
-        if (listBuku.length > 0) {
-            let runningSaldo = saldoAwal;
-            listBuku.forEach(item => {
-                runningSaldo = runningSaldo + item.masuk - item.keluar;
-                let tglFmt = item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
-                
-                let warnaNominal = item.masuk > 0 ? 'var(--green)' : 'var(--red)';
-                let tandaNominal = item.masuk > 0 ? '+ Rp ' + item.masuk.toLocaleString('id-ID') : '- Rp ' + item.keluar.toLocaleString('id-ID');
-                let tagColor = '#e0f2fe; color:#0369a1;';
-                
-                let tombolHapus = `<span style="color:var(--red); cursor:pointer; font-size:11px; font-weight:800; margin-top:4px;" onclick="hapusKasManual('${item.id}')">🗑️ Hapus</span>`;
-
-                cardsHtml += `
-                    <div class="bon-card">
-                        <div class="bon-info">
-                            <div style="display:flex; gap:6px; align-items:center;">
-                                <span class="bon-date">${tglFmt}</span>
-                                <span class="bon-tag" style="background:${tagColor}">${item.sumber}</span>
-                            </div>
-                            <span class="bon-ket">${item.keterangan}</span>
-                            ${tombolHapus}
-                        </div>
-                        <div class="bon-nominal">
-                            <span class="nominal-angka" style="color:${warnaNominal}">${tandaNominal}</span>
-                            <span class="saldo-jalan">Saldo: Rp ${runningSaldo.toLocaleString('id-ID')}</span>
-                        </div>
-                    </div>
-                `;
-            });
-        } else {
-            cardsHtml += `<div style="text-align: center; padding: 30px; color: var(--text-muted); font-weight: 700;">Belum ada catatan kas pada periode ini.</div>`;
-        }
-
-        document.getElementById('areaListBukuKas').innerHTML = cardsHtml;
     }
+
+    let totalMasuk = 0;
+    let totalKeluar = 0;
+    let listBuku = [];
+
+    filteredKas.forEach(km => {
+        // PENAMBAHAN: Lewati jika data ini milik Admin
+        let kategori = km.kategori_kas || 'ADMIN';
+        if (kategori !== 'KARYAWAN') return; 
+
+        let nominal = Number(km.jumlah || km.nominal || 0);
+        if (km.jenis === 'MASUK') totalMasuk += nominal;
+        if (km.jenis === 'KELUAR') totalKeluar += nominal;
+        listBuku.push({
+            id: km.id,
+            tanggal: km.tanggal || km.created_at,
+            keterangan: km.keterangan || '-',
+            masuk: km.jenis === 'MASUK' ? nominal : 0,
+            keluar: km.jenis === 'KELUAR' ? nominal : 0,
+            sumber: km.kategori_kas || 'Manual'
+        });
+    });
+
+    let saldoAkhir = saldoAwal + totalMasuk - totalKeluar;
+
+    document.getElementById('valSumMasuk').innerText = `Rp ${totalMasuk.toLocaleString('id-ID')}`;
+    document.getElementById('valSumKeluar').innerText = `Rp ${totalKeluar.toLocaleString('id-ID')}`;
+    document.getElementById('valSumSaldo').innerText = `Rp ${saldoAkhir.toLocaleString('id-ID')}`;
+
+    listBuku.sort((a,b) => new Date(a.tanggal || 0) - new Date(b.tanggal || 0));
+
+    let cardsHtml = `<div class="bon-card" style="background:#f1f5f9; border-style:dashed;">
+        <div class="bon-info"><span class="bon-date">Saldo Awal</span><span class="bon-ket">Akumulasi Periode Sebelumnya</span></div>
+        <div class="bon-nominal"><span class="nominal-angka" style="color:var(--text-main);">Rp ${saldoAwal.toLocaleString('id-ID')}</span></div>
+    </div>`;
+    
+    if (listBuku.length > 0) {
+        let runningSaldo = saldoAwal;
+        listBuku.forEach(item => {
+            runningSaldo = runningSaldo + item.masuk - item.keluar;
+            let tglFmt = item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
+            
+            let warnaNominal = item.masuk > 0 ? 'var(--green)' : 'var(--red)';
+            let tandaNominal = item.masuk > 0 ? '+ Rp ' + item.masuk.toLocaleString('id-ID') : '- Rp ' + item.keluar.toLocaleString('id-ID');
+            let tagColor = '#e0f2fe; color:#0369a1;';
+            
+            let tombolHapus = `<span style="color:var(--red); cursor:pointer; font-size:11px; font-weight:800; margin-top:4px;" onclick="hapusKasManual('${item.id}')">🗑️ Hapus</span>`;
+
+            cardsHtml += `
+                <div class="bon-card">
+                    <div class="bon-info">
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <span class="bon-date">${tglFmt}</span>
+                            <span class="bon-tag" style="background:${tagColor}">${item.sumber}</span>
+                        </div>
+                        <span class="bon-ket">${item.keterangan}</span>
+                        ${tombolHapus}
+                    </div>
+                    <div class="bon-nominal">
+                        <span class="nominal-angka" style="color:${warnaNominal}">${tandaNominal}</span>
+                        <span class="saldo-jalan">Saldo: Rp ${runningSaldo.toLocaleString('id-ID')}</span>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        cardsHtml += `<div style="text-align: center; padding: 30px; color: var(--text-muted); font-weight: 700;">Belum ada catatan kas pada periode ini.</div>`;
+    }
+
+    document.getElementById('areaListBukuKas').innerHTML = cardsHtml;
+}
+
 
     async function hapusKasManual(id) {
         if (!confirm("Yakin ingin menghapus catatan kas manual ini?")) return;

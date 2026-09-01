@@ -308,7 +308,7 @@
 
             // Update Sisa Akhir pada Nota Referensi agar selalu sinkron
             if (nota && nota.length > 0) {
-                await clientSupabase.from('transaksi')
+                await clientSupabase.from('transaksi_pengiriman')
                     .update({ sisa_akhir: sisaAkhir })
                     .eq('id', nota[0].id)
                     .eq('toko_id', profileTokoId);

@@ -62,59 +62,17 @@
         .struk-visual .garis { border-top: 1px dashed #000; margin: 8px 0; }
         .struk-visual .garis-tebal { border-top: 2px dashed #000; margin: 8px 0; }
         .struk-visual .flex-row { display: flex; justify-content: space-between; }
-    /* --- GAYA INDIKATOR JARINGAN --- */
-.network-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-right: 15px;
-    padding: 6px 12px;
-    border-radius: 20px;
-    background: #f1f5f9; /* Background tipis agar terlihat */
-    font-size: 13px;
-    font-weight: 800;
-}
-
-.network-status .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-/* Jika Online (Konek) */
-.network-status.online .dot {
-    background-color: #10b981; /* Hijau */
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-    animation: pulse-green 1.5s infinite;
-}
-.network-status.online .status-text {
-    color: #10b981;
-}
-
-/* Jika Offline (Error) */
-.network-status.offline .dot {
-    background-color: #ef4444; /* Merah */
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-    animation: pulse-red 1.5s infinite;
-}
-.network-status.offline .status-text {
-    color: #ef4444;
-}
-
-/* Animasi Denyut Hijau */
-@keyframes pulse-green {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-/* Animasi Denyut Merah */
-@keyframes pulse-red {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
+        
+        /* --- GAYA INDIKATOR JARINGAN --- */
+        .network-status { display: inline-flex; align-items: center; gap: 8px; margin-right: 15px; padding: 6px 12px; border-radius: 20px; background: #f1f5f9; font-size: 13px; font-weight: 800; }
+        .network-status .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .network-status.online .dot { background-color: #10b981; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); animation: pulse-green 1.5s infinite; }
+        .network-status.online .status-text { color: #10b981; }
+        .network-status.offline .dot { background-color: #ef4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); animation: pulse-red 1.5s infinite; }
+        .network-status.offline .status-text { color: #ef4444; }
+        
+        @keyframes pulse-green { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        @keyframes pulse-red { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 	</style>
 </head>
 <body>
@@ -128,13 +86,10 @@
         </a>
     </div>
     <div class="topbar-right">
-        
-        <!-- TAMBAHAN INDIKATOR JARINGAN DI SINI -->
         <div class="network-status" id="networkStatus">
             <span class="dot"></span>
             <span class="status-text" id="networkText">Connected</span>
         </div>
-        
         <button class="btn-theme" id="btnThemeToggle" onclick="toggleTheme()">🌙</button>
         <span id="txtNamaUser">User</span> 👋
         <button class="btn-logout" onclick="prosesLogout()">Keluar</button>
@@ -247,6 +202,19 @@
                 </div>
                 <button class="btn-action" style="background:#f39c12; color:white; width:auto; padding:5px 10px; font-size:11px;" onclick="tarikPesananPending()">📥 Tarik Pesanan</button>
             </div>
+            
+            <!-- TOMBOL & NOTIF MODE EDIT -->
+            <div id="notifEditMode" style="display: none; background: #fef3c7; color: #b45309; padding: 10px; border-radius: 10px; border: 1px solid #fde68a; text-align: center; font-weight: bold; margin-bottom: 12px; font-size: 13px;">
+                ⚠️ MODE EDIT NOTA LAMA - Perubahan akan menimpa data terdahulu!
+            </div>
+            
+            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                <select id="selectNoNota" style="flex: 1; padding: 8px; border: 1px solid var(--border-line); border-radius: 6px; font-weight: bold; background: var(--bg-main); color: var(--text-main);">
+                    <option value="BARU">-- NOTA BARU --</option>
+                </select>
+                <button id="btnAmbilNota" onclick="muatDataNotaTerpilih()" class="btn-action" style="background: var(--blue); color: white; width: auto; font-size: 12px; padding: 0 15px;">✏️ AMBIL DATA</button>
+            </div>
+
             <a href="dashboard.html" class="link-kembali">← Kembali ke Dashboard</a>
 
             <div id="notifBon">⚠️ AGEN INI PUNYA BON LAMA!</div>
@@ -341,6 +309,10 @@
     let keranjangKirim = [], keranjangRetur = [];
     let noStrukAktif = "", totalBelanja = 0, totalKirimVal = 0, totalReturVal = 0, bonLamaVal = 0, isDeposit = false;
     let btCharacteristic = null, connectedDeviceId = null, lastPrintText = "";
+
+    // Variable Edit Mode Desktop
+    let isEditMode = false;
+    let originalNotaData = null;
 
     function initTheme() { 
         if (localStorage.getItem('themeMode') === 'dark') {
@@ -460,12 +432,42 @@
         }
     }
 
+    async function muatDropdownNotaTerakhir() {
+        try {
+            const select = document.getElementById('selectNoNota');
+            select.innerHTML = '<option value="BARU">-- NOTA BARU --</option>';
+
+            let query = _supabase
+                .from('transaksi_pengiriman')
+                .select('no_nota, nama_agen, tanggal, created_at')
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            if (tokoIdGlobal) {
+                query = query.eq('toko_id', tokoIdGlobal);
+            }
+
+            const { data: listNota, error } = await query;
+            if (error) console.error("Error muat nota terakhir:", error);
+
+            if (listNota && listNota.length > 0) {
+                listNota.forEach(n => {
+                    const opt = document.createElement('option');
+                    opt.value = n.no_nota;
+                    opt.innerText = `✏️ ${n.no_nota} - ${n.nama_agen}`;
+                    select.appendChild(opt);
+                });
+            }
+        } catch (e) {
+            console.error("Gagal muat list nota:", e);
+        }
+    }
+
     async function muatDropdown() {
-        // 1. Muat Kontak (Difilter berdasarkan toko_id yang aktif)
         const { data: agen } = await _supabase
             .from('agen')
             .select('*')
-            .eq('toko_id', tokoIdGlobal); // <-- Tambahkan filter ini
+            .eq('toko_id', tokoIdGlobal);
 
         if(agen) {
             const agenFilter = agen.filter(a => {
@@ -484,14 +486,10 @@
             });
         }
         
-        // ... (lanjutan kode lainnya tetap sama)
-
-
-        // 2. Muat Master Barang (Barang Jadi) - Difilter berdasarkan toko_id aktif
         const { data: listBrg } = await _supabase
             .from('barang')
             .select('*')
-            .eq('toko_id', tokoIdGlobal); // <-- Tambahkan filter toko_id di sini
+            .eq('toko_id', tokoIdGlobal);
 
         if(listBrg) {
             barangStokList = listBrg.filter(b => {
@@ -502,7 +500,6 @@
             renderBarangDropdown();
         }
 
-        // 3. Muat Harga Khusus dari tabel 'harga_agen'
         const { data: hargaAgen } = await _supabase.from('harga_agen').select('*');
         if(hargaAgen) {
             hargaAgen.forEach(h => {
@@ -515,7 +512,6 @@
             });
         }
 
-        // 4. Muat Kendaraan / Mobil (disembunyikan)
         const { data: mobil } = await _supabase.from('kendaraan').select('*');
         const selMobil = document.getElementById('inMobil');
         if(mobil) {
@@ -523,49 +519,133 @@
             mobil.forEach(m => selMobil.options.add(new Option(m.plat_nomor, m.plat_nomor)));
         }
 
-        // 5. Muat Checker (disembunyikan)
         const { data: karyawan } = await _supabase.from('karyawan').select('*').eq('aktif', true);
         const selChk = document.getElementById('inChecker');
         if(karyawan) {
             selChk.innerHTML = '<option value="">-- Pilih Checker --</option>';
             karyawan.forEach(k => selChk.options.add(new Option(k.nama_karyawan, k.nama_karyawan)));
         }
+
+        await muatDropdownNotaTerakhir();
     }
 
-    function renderBarangDropdown(agenId = null) {
-    const selBrg = document.getElementById('inBarang');
-    selBrg.innerHTML = '<option value="">-- Pilih Barang (Barang Jadi) --</option>';
-    
-    let listYangDitampilkan = barangStokList;
+    async function muatDataNotaTerpilih() {
+        const selectedNo = document.getElementById('selectNoNota').value;
+        if (!selectedNo || selectedNo === "BARU") {
+            window.location.reload();
+            return;
+        }
 
-    // Filter barang jika ada agen yang dipilih
-    if (agenId) {
-        if (databaseHarga[agenId]) {
-            // Ambil id barang milik agen ini (kecualikan key 'bon')
-            const barangKhususAgen = Object.keys(databaseHarga[agenId]).filter(key => key !== 'bon');
-            listYangDitampilkan = barangStokList.filter(b => barangKhususAgen.includes(b.id));
-        } else {
-            listYangDitampilkan = []; // Jika agen belum punya setting harga
+        const btnAmbil = document.getElementById('btnAmbilNota');
+        btnAmbil.disabled = true;
+        btnAmbil.innerText = "LOADING...";
+
+        try {
+            const { data: tx, error: errTx } = await _supabase.from('transaksi_pengiriman').select('*').eq('no_nota', selectedNo).single();
+            if (errTx || !tx) throw new Error("Data nota tidak ditemukan!");
+
+            const { data: details, error: errDet } = await _supabase.from('transaksi_pengiriman_detail').select('*').eq('no_nota', selectedNo);
+            if (errDet) throw new Error("Gagal ambil detail nota: " + errDet.message);
+
+            isEditMode = true;
+            originalNotaData = { tx, details };
+            
+            noStrukAktif = selectedNo;
+            document.getElementById('lblFaktur').innerText = selectedNo;
+            document.getElementById('notifEditMode').style.display = "block";
+            document.getElementById('lblTanggal').innerText = tx.tanggal;
+
+            // Set Dropdown Agen
+            const selAgen = document.getElementById('inPelanggan');
+            for (let i = 0; i < selAgen.options.length; i++) {
+                if (selAgen.options[i].value) {
+                    const parsed = JSON.parse(selAgen.options[i].value);
+                    if (parsed.nama === tx.nama_agen) {
+                        selAgen.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            // Keranjang Belanja
+            keranjangKirim = [];
+            keranjangRetur = [];
+            if (details) {
+                details.forEach(d => {
+                    const foundMaster = barangStokList.find(b => b.nama_barang === d.nama_barang);
+                    const itemObj = {
+                        id: foundMaster ? foundMaster.id : null,
+                        nama: d.nama_barang,
+                        satuan: 'Pcs',
+                        qty: d.qty,
+                        qty_base: d.qty,
+                        harga: d.harga_satuan,
+                        total: d.subtotal
+                    };
+                    if (d.tipe === 'Kirim') {
+                        itemObj.jenis = 'BELI';
+                        keranjangKirim.push(itemObj);
+                    } else if (d.tipe === 'Retur') {
+                        itemObj.jenis = 'RETUR';
+                        keranjangRetur.push(itemObj);
+                    }
+                });
+            }
+
+            document.getElementById('inBayar').value = Number(tx.bayar_cash || 0).toLocaleString('id-ID');
+            document.getElementById('inTransfer').value = Number(tx.bayar_transfer || 0).toLocaleString('id-ID');
+            document.getElementById('inputOngkir').value = Number(tx.ongkir || 0).toLocaleString('id-ID');
+
+            if (tx.bayar_cash === 0 && tx.bayar_transfer === 0) {
+                document.getElementById('cbTidakTitip').checked = true;
+            } else {
+                document.getElementById('cbTidakTitip').checked = false;
+            }
+
+            togglePembayaran();
+            updateBonAgen();
+            renderKeranjang();
+
+            alert(`✅ Nota ${selectedNo} berhasil dimuat. Silakan ubah QTY/uang, lalu klik SIMPAN & PRINT untuk meng-update!`);
+        } catch (e) {
+            alert("❌ Gagal memuat nota: " + e.message);
+        } finally {
+            btnAmbil.disabled = false;
+            btnAmbil.innerText = "✏️ AMBIL DATA";
         }
     }
 
-    if (listYangDitampilkan.length === 0 && agenId) {
-        selBrg.innerHTML = '<option value="">-- Agen ini belum disetting barangnya --</option>';
-    } else {
-        listYangDitampilkan.sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang)).forEach(b => {
-            const infoStok = ` (Stok: ${b.stok_sekarang || 0})`;
-            selBrg.options.add(new Option(b.nama_barang + infoStok, JSON.stringify({id: b.id, nama: b.nama_barang})));
-        });
+    function renderBarangDropdown(agenId = null) {
+        const selBrg = document.getElementById('inBarang');
+        selBrg.innerHTML = '<option value="">-- Pilih Barang (Barang Jadi) --</option>';
+        
+        let listYangDitampilkan = barangStokList;
+
+        if (agenId) {
+            if (databaseHarga[agenId]) {
+                const barangKhususAgen = Object.keys(databaseHarga[agenId]).filter(key => key !== 'bon');
+                listYangDitampilkan = barangStokList.filter(b => barangKhususAgen.includes(b.id));
+            } else {
+                listYangDitampilkan = [];
+            }
+        }
+
+        if (listYangDitampilkan.length === 0 && agenId) {
+            selBrg.innerHTML = '<option value="">-- Agen ini belum disetting barangnya --</option>';
+        } else {
+            listYangDitampilkan.sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang)).forEach(b => {
+                const infoStok = ` (Stok: ${b.stok_sekarang || 0})`;
+                selBrg.options.add(new Option(b.nama_barang + infoStok, JSON.stringify({id: b.id, nama: b.nama_barang})));
+            });
+        }
     }
-}
 
     function toggleFormJenis() {
-    const agRaw = document.getElementById('inPelanggan').value;
-    const agenId = agRaw ? JSON.parse(agRaw).id : null;
-    
-    renderBarangDropdown(agenId);
-    autoFillHarga();
-}
+        const agRaw = document.getElementById('inPelanggan').value;
+        const agenId = agRaw ? JSON.parse(agRaw).id : null;
+        renderBarangDropdown(agenId);
+        autoFillHarga();
+    }
 
     function updateCheckerBon() {
         const chkVal = document.getElementById('inChecker').value;
@@ -573,47 +653,51 @@
     }
 
     function updateBonAgen() {
-    const agRaw = document.getElementById('inPelanggan').value;
-    if (!agRaw) { 
-        bonLamaVal = 0; 
-        document.getElementById('lblPelanggan').innerText = "UMUM"; 
-        renderBarangDropdown(null); // Reset munculkan semua barang jika batal pilih agen
-        return; 
+        const agRaw = document.getElementById('inPelanggan').value;
+        if (!agRaw) { 
+            bonLamaVal = 0; 
+            document.getElementById('lblPelanggan').innerText = "UMUM"; 
+            renderBarangDropdown(null);
+            return; 
+        }
+        const agenObj = JSON.parse(agRaw);
+        let saldoBon = databaseHarga[agenObj.id]?.bon || 0;
+
+        // Logic Revert Bon Visual (Mode Edit)
+        if (isEditMode && originalNotaData && originalNotaData.tx.nama_agen === agenObj.nama) {
+            const txLama = originalNotaData.tx;
+            saldoBon = saldoBon - txLama.sisa_akhir;
+        }
+        
+        const agenPakeOngkir = ["Jawa Timur", "Catur", "Dajo Snack", "Edi", "Rizky", "Wanto"];
+        const isOngkir = agenPakeOngkir.includes(agenObj.nama);
+        document.getElementById('boxOngkir').style.display = isOngkir ? "block" : "none";
+
+        isDeposit = saldoBon < 0;
+        bonLamaVal = Math.abs(saldoBon);
+
+        document.getElementById('boxBonLama').style.display = saldoBon !== 0 ? "block" : "none";
+        document.getElementById('labelBonStruk').innerText = isDeposit ? "Deposit:" : "Bon Lama:";
+        document.getElementById('lblBonLama').innerText = bonLamaVal.toLocaleString('id-ID');
+        document.getElementById('inputBonLama').value = bonLamaVal.toLocaleString('id-ID');
+
+        const notif = document.getElementById('notifBon');
+        if (saldoBon > 0) {
+            notif.innerText = "⚠️ AGEN INI PUNYA BON LAMA!";
+            notif.style.display = "block";
+        } else if (saldoBon < 0) {
+            notif.innerText = "✅ AGEN INI PUNYA DEPOSIT!";
+            notif.style.display = "block";
+            notif.style.color = "#27ae60";
+        } else {
+            notif.style.display = "none";
+        }
+
+        document.getElementById('lblPelanggan').innerText = agenObj.nama.toUpperCase();
+        hitungKembalian();
+
+        renderBarangDropdown(agenObj.id);
     }
-    const agenObj = JSON.parse(agRaw);
-    
-    const saldoBon = databaseHarga[agenObj.id]?.bon || 0;
-    
-    const agenPakeOngkir = ["Jawa Timur", "Catur", "Dajo Snack", "Edi", "Rizky", "Wanto"];
-    const isOngkir = agenPakeOngkir.includes(agenObj.nama);
-    document.getElementById('boxOngkir').style.display = isOngkir ? "block" : "none";
-
-    isDeposit = saldoBon < 0;
-    bonLamaVal = Math.abs(saldoBon);
-
-    document.getElementById('boxBonLama').style.display = saldoBon !== 0 ? "block" : "none";
-    document.getElementById('labelBonStruk').innerText = isDeposit ? "Deposit:" : "Bon Lama:";
-    document.getElementById('lblBonLama').innerText = bonLamaVal.toLocaleString('id-ID');
-    document.getElementById('inputBonLama').value = bonLamaVal.toLocaleString('id-ID');
-
-    const notif = document.getElementById('notifBon');
-    if (saldoBon > 0) {
-        notif.innerText = "⚠️ AGEN INI PUNYA BON LAMA!";
-        notif.style.display = "block";
-    } else if (saldoBon < 0) {
-        notif.innerText = "✅ AGEN INI PUNYA DEPOSIT!";
-        notif.style.display = "block";
-        notif.style.color = "#27ae60";
-    } else {
-        notif.style.display = "none";
-    }
-
-    document.getElementById('lblPelanggan').innerText = agenObj.nama.toUpperCase();
-    hitungKembalian();
-
-    // MEMANGGIL FILTER BARANG UNTUK AGEN INI
-    renderBarangDropdown(agenObj.id);
-}
 
     function autoFillHarga() {
         const agRaw = document.getElementById('inPelanggan').value;
@@ -633,7 +717,6 @@
             hrg = databaseHarga[agenObj.id][brgObj.id][sat] || 0;
         }
 
-        // Jika tidak ada di harga khusus agen, ambil harga jual dasar dari master barang
         if (hrg === 0) {
             const brgMaster = barangStokList.find(b => b.id === brgObj.id);
             if (brgMaster) {
@@ -866,8 +949,8 @@
         const ag = agenObj.nama;
 
         const kasirVal = document.getElementById('inKasir').value || 'Kasir';
-        const checkerVal = null;
-        const mobil = null;
+        const checkerVal = document.getElementById('inChecker').value || null;
+        const mobil = document.getElementById('inMobil').value || null;
         
         const cash = parseRupiah(document.getElementById('inBayar').value);
         const trf = parseRupiah(document.getElementById('inTransfer').value);
@@ -952,42 +1035,76 @@
         p += `\x1B\x61\x01\x1B\x21\x00` + `\n` + footerTokoGlobal + `\n\n\n\n\x1B\x56\x41\x03`;
 
         try {
-// 1. Simpan Header Transaksi Pengiriman
-const { error: errTx } = await _supabase.from('transaksi_pengiriman').insert([{
-    toko_id: tokoIdGlobal, // <-- Tambahkan penanda toko_id di sini
-    no_nota: noStrukAktif, nama_agen: ag, tanggal: tglInput,
-    driver_1: kasirVal, driver_2: checkerVal, plat_nomor: mobil, 
-    total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
-    ongkir: ongkir, bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
-}]);
+            // PROSES REVERT (JIKA MODE EDIT)
+            if (isEditMode && originalNotaData) {
+                // 1. Revert Stok Barang
+                for (const oldDetail of originalNotaData.details) {
+                    const masterBrg = barangStokList.find(b => b.nama_barang === oldDetail.nama_barang);
+                    if (masterBrg) {
+                        const revertQty = oldDetail.tipe === 'Kirim' ? Number(oldDetail.qty) : -Math.abs(Number(oldDetail.qty));
+                        const { data: brgLama } = await _supabase.from('barang').select('id, stok_sekarang').eq('id', masterBrg.id).single();
+                        if (brgLama) {
+                            await _supabase.from('barang').update({
+                                stok_sekarang: (Number(brgLama.stok_sekarang) || 0) + revertQty
+                            }).eq('id', masterBrg.id);
+                        }
+                    }
+                }
 
-            if (errTx) throw new Error(errTx.message);
+                // 2. Delete detail transaksi lama
+                await _supabase.from('transaksi_pengiriman_detail').delete().eq('no_nota', noStrukAktif);
 
-// 2. Simpan Detail Transaksi
-const details = [
-    // <-- Tambahkan toko_id: tokoIdGlobal di dalam masing-masing keranjang
-    ...keranjangKirim.map(i => ({ toko_id: tokoIdGlobal, no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
-    ...keranjangRetur.map(i => ({ toko_id: tokoIdGlobal, no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
-];
-await _supabase.from('transaksi_pengiriman_detail').insert(details);
+                // 3. Update transaksi utama
+                const { error: errUpdate } = await _supabase.from('transaksi_pengiriman').update({
+                    nama_agen: ag, tanggal: tglInput,
+                    driver_1: kasirVal, driver_2: checkerVal, plat_nomor: mobil, 
+                    total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
+                    ongkir: ongkir, bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
+                }).eq('no_nota', noStrukAktif);
 
+                if (errUpdate) throw new Error(errUpdate.message);
+            } else {
+                // PROSES INSERT BARU
+                const { error: errTx } = await _supabase.from('transaksi_pengiriman').insert([{
+                    toko_id: tokoIdGlobal,
+                    no_nota: noStrukAktif, nama_agen: ag, tanggal: tglInput,
+                    driver_1: kasirVal, driver_2: checkerVal, plat_nomor: mobil, 
+                    total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
+                    ongkir: ongkir, bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
+                }]);
+                if (errTx) throw new Error(errTx.message);
+            }
+
+            // SIMPAN DETAIL TRANSAKSI BARU
+            const details = [
+                ...keranjangKirim.map(i => ({ toko_id: tokoIdGlobal, no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
+                ...keranjangRetur.map(i => ({ toko_id: tokoIdGlobal, no_nota: noStrukAktif, nama_barang: i.nama, qty: Number(i.qty_base) || Number(i.qty) || 0, satuan: 'pcs', tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
+            ];
+            await _supabase.from('transaksi_pengiriman_detail').insert(details);
             
-            // 3. Potong / Update Stok Barang
+            // POTONG STOK SEKARANG
             const allItemsToProcess = [
-                ...keranjangKirim.map(i => ({ id: i.id, qtyFix: Number(i.qty_base) || Number(i.qty) || 0 })),
-                ...keranjangRetur.map(i => ({ id: i.id, qtyFix: -Math.abs(Number(i.qty_base) || Number(i.qty) || 0) }))
+                ...keranjangKirim.map(i => ({ id: i.id, nama: i.nama, qtyFix: Number(i.qty_base) || Number(i.qty) || 0 })),
+                ...keranjangRetur.map(i => ({ id: i.id, nama: i.nama, qtyFix: -Math.abs(Number(i.qty_base) || Number(i.qty) || 0) }))
             ];
             for (const item of allItemsToProcess) {
-                const { data: brgList } = await _supabase.from('barang').select('id, stok_sekarang').eq('id', item.id);
-                if (brgList && brgList.length > 0) {
-                    const brg = brgList[0];
-                    await _supabase.from('barang').update({ 
-                        stok_sekarang: (Number(brg.stok_sekarang) || 0) - item.qtyFix 
-                    }).eq('id', brg.id);
+                let targetId = item.id;
+                if (!targetId) {
+                    const f = barangStokList.find(b => b.nama_barang === item.nama);
+                    if (f) targetId = f.id;
+                }
+                if (targetId) {
+                    const { data: brgList } = await _supabase.from('barang').select('id, stok_sekarang').eq('id', targetId);
+                    if (brgList && brgList.length > 0) {
+                        const brg = brgList[0];
+                        await _supabase.from('barang').update({ 
+                            stok_sekarang: (Number(brg.stok_sekarang) || 0) - item.qtyFix 
+                        }).eq('id', targetId);
+                    }
                 }
             }
 
-            // 4. Update Saldo Bon Agen
+            // UPDATE SALDO BON AGEN
             await _supabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
 
             if (window.activePendingId) {
@@ -1019,6 +1136,7 @@ await _supabase.from('transaksi_pengiriman_detail').insert(details);
 
             btn.innerText = "SIMPAN & PRINT 💾"; 
             btn.disabled = false;
+            await muatDropdownNotaTerakhir(); // Refresh list nota 5 terakhir
         } catch (e) {
             alert("❌ DATABASE ERROR: " + (e.message || e));
             btn.innerText = "SIMPAN & PRINT 💾"; 
@@ -1085,30 +1203,25 @@ await _supabase.from('transaksi_pengiriman_detail').insert(details);
     }
 
     verifikasiSesi();
-	// Fungsi untuk mengubah status UI Jaringan
-function updateNetworkStatus() {
-    const statusContainer = document.getElementById('networkStatus');
-    const statusText = document.getElementById('networkText');
     
-    if (navigator.onLine) {
-        // Jika terhubung internet
-        statusContainer.classList.remove('offline');
-        statusContainer.classList.add('online');
-        statusText.innerText = 'Connected';
-    } else {
-        // Jika terputus internet
-        statusContainer.classList.remove('online');
-        statusContainer.classList.add('offline');
-        statusText.innerText = 'Error';
+    function updateNetworkStatus() {
+        const statusContainer = document.getElementById('networkStatus');
+        const statusText = document.getElementById('networkText');
+        
+        if (navigator.onLine) {
+            statusContainer.classList.remove('offline');
+            statusContainer.classList.add('online');
+            statusText.innerText = 'Connected';
+        } else {
+            statusContainer.classList.remove('online');
+            statusContainer.classList.add('offline');
+            statusText.innerText = 'Error';
+        }
     }
-}
 
-// Cek pertama kali saat web dibuka
-window.addEventListener('load', updateNetworkStatus);
-
-// Cek otomatis saat koneksi berubah di tengah jalan
-window.addEventListener('online', updateNetworkStatus);
-window.addEventListener('offline', updateNetworkStatus);
+    window.addEventListener('load', updateNetworkStatus);
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
 </script>
 </body>
 </html>

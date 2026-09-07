@@ -307,7 +307,7 @@
                 .from('transaksi_pengiriman')
                 .select('no_nota, nama_agen, tanggal, created_at')
                 .order('created_at', { ascending: false })
-                .limit(5);
+                .limit(35);
 
             if (tokoIdGlobal) {
                 query = query.eq('toko_id', tokoIdGlobal);

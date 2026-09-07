@@ -246,34 +246,28 @@
 
     async function initData() {
         try {
-            // Muat Data Barang
             let queryBarang = _supabase.from('barang').select('*').order('nama_barang');
             if(tokoIdGlobal) queryBarang = queryBarang.eq('toko_id', tokoIdGlobal);
             const { data: barang } = await queryBarang;
             listBarang = barang || []; 
 
-            // Muat Data Agen / Supplier
             let queryAgen = _supabase.from('agen').select('*');
             if(tokoIdGlobal) queryAgen = queryAgen.eq('toko_id', tokoIdGlobal);
             const { data: agen } = await queryAgen;
             listAgenSupplier = agen || [];
 
-            // Muat Data Harga Agen
             let queryHargaAgen = _supabase.from('harga_agen').select('*');
             if(tokoIdGlobal) queryHargaAgen = queryHargaAgen.eq('toko_id', tokoIdGlobal);
             const { data: hargaAgen } = await queryHargaAgen;
             listHargaAgen = hargaAgen || [];
 
-            // FILTER KHUSUS UNTUK MENAMPILKAN SUPPLIER SAJA
             const supplierSaja = listAgenSupplier.filter(a => {
                 const tipe = (a.type_agen || a.tipe_agen || '').toLowerCase();
                 return tipe.includes('supplier'); 
             });
 
-            // Urutkan berdasarkan abjad
             supplierSaja.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
 
-            // Masukkan ke dalam dropdown
             const selSupplier = document.getElementById('pilihSupplier');
             selSupplier.innerHTML = '<option value="">-- PILIH SUPPLIER --</option>';
             supplierSaja.forEach(sup => {
@@ -338,14 +332,12 @@
         let hargaPack = 0;
         let hargaPcs = 0;
 
-        // Cari data agen/supplier berdasarkan nama
         const dataAgen = listAgenSupplier.find(a => {
             const nAgen = (a.nama_agen || a.nama || a.nama_supplier || '').toLowerCase();
             return nAgen === namaSup.toLowerCase();
         });
         
         if (dataAgen) {
-            // Cari setting harga khusus di tabel harga_agen berdasarkan agen_id dan barang_id
             const settingHarga = listHargaAgen.find(h => 
                 String(h.agen_id).trim() === String(dataAgen.id).trim() && 
                 String(h.barang_id).trim() === String(brgId).trim()
@@ -357,7 +349,6 @@
             }
         }
 
-        // Ambil data master barang untuk fallback atau isi konversi
         const brg = listBarang.find(b => String(b.id) === String(brgId));
         if (brg) {
             if (hargaBal === 0) hargaBal = Number(brg.harga_bal) || Number(brg.harga_beli_dasar) || 0;
@@ -367,7 +358,6 @@
             const isiPack = Number(brg.isi_pack) || 1;
             const isiPcs = Number(brg.isi_pcs) || 1;
 
-            // Fallback otomatis jika harga pack/pcs di database masih 0
             if (hargaPack === 0 && hargaBal > 0 && isiPack > 0) {
                 hargaPack = Math.round(hargaBal / isiPack);
             }
@@ -618,7 +608,6 @@
         document.getElementById('imgPreviewLaporan').src = imgUrl;
         document.getElementById('modalPreviewLaporan').style.display = 'block';
 
-        // Download Otomatis
         const downloadLink = document.createElement("a");
         downloadLink.href = imgUrl;
         downloadLink.download = `Faktur_${dataStruk.noFaktur}.jpg`;
@@ -626,7 +615,6 @@
         downloadLink.click();
         document.body.removeChild(downloadLink);
 
-        // Siapkan Teks Pengantar WhatsApp
         let pesanWA = `Halo admin ${dataStruk.supplier},\nBerikut adalah bukti penerimaan barang & update stok dengan No. Faktur *${dataStruk.noFaktur}* pada tanggal *${dataStruk.tglIndo}*.\n\n_Mohon lampirkan gambar struk penerimaan yang baru saja diunduh._`;
         let waUrl = `https://wa.me/?text=${encodeURIComponent(pesanWA)}`;
         
@@ -637,7 +625,7 @@
 
     function tutupModalDanReset() {
         document.getElementById('modalPreviewLaporan').style.display = 'none';
-        resetFormForNewFaktur(); // Reset form agar siap untuk transaksi baru
+        resetFormForNewFaktur();
     }
 
     async function simpanDanUpdateStok() {
@@ -675,7 +663,6 @@
         let totalQtyBase = itemsTerima.reduce((a, b) => a + (b.qty_base || b.qty), 0);
 
         try {
-            // 1. Simpan Pembelian Header
             const { error: errHeader } = await _supabase.from('pembelian_header').insert([{
                 id: noFaktur,
                 toko_id: tokoIdGlobal,
@@ -687,27 +674,21 @@
             }]);
             if (errHeader) throw new Error("Header: " + errHeader.message);
 
-            // 2. Simpan Details & Update Stok Barang
-// 2. Simpan Details & Update Stok Barang
             let counter = 1;
             
-            // Proses Barang Terima (Stok +)
             for (const item of itemsTerima) {
                 const uniqueDetailId = `${noFaktur}-D${counter++}`;
-                
-                // Tambahkan penangkap error (const { error }) dan hapus kolom yang tidak ada di database
                 const { error: errDetail } = await _supabase.from('pembelian_detail').insert([{
                     id: uniqueDetailId,
                     toko_id: tokoIdGlobal,
                     no_pb: noFaktur,
                     barang_id: item.id_barang,
                     qty: item.qty_base || item.qty,
-                    satuan: item.satuan, // atau gunakan 'pcs' sesuai versi desktop Anda
+                    satuan: item.satuan,
                     harga_satuan: item.harga,
                     subtotal: item.total
                 }]);
                 
-                // Jika gagal, hentikan dan munculkan peringatan
                 if (errDetail) throw new Error("Gagal menyimpan detail (Terima): " + errDetail.message);
 
                 const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();
@@ -715,10 +696,8 @@
                 await _supabase.from('barang').update({ stok_sekarang: stokBaru }).eq('id', item.id_barang);
             }
 
-            // Proses Barang Retur (Stok -)
             for (const item of itemsRetur) {
                 const uniqueDetailId = `${noFaktur}-R${counter++}`;
-                
                 const { error: errRetur } = await _supabase.from('pembelian_detail').insert([{
                     id: uniqueDetailId,
                     toko_id: tokoIdGlobal,
@@ -737,7 +716,6 @@
                 await _supabase.from('barang').update({ stok_sekarang: stokBaru }).eq('id', item.id_barang);
             }
 
-            // 3. Cetak Struk Printer ESC/POS (Jika Bluetooth Terhubung)
             if (btCharacteristic && !isTanpaPrinter) {
                 btn.innerText = "MENCETAK STRUK...";
                 const lebar = parseInt(document.getElementById('ukuranKertas').value);
@@ -773,7 +751,6 @@
                 await printToBT(p);
             }
 
-            // 4. Generate Gambar Laporan Digital & Download
             btn.innerText = "MEMBUAT DIGITAL FAKTUR...";
             await buatGambarStruk({
                 noFaktur, tglIndo, supplier, penerima,

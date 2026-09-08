@@ -432,36 +432,49 @@
         }
     }
 
-    async function muatDropdownNotaTerakhir() {
-        try {
-            const select = document.getElementById('selectNoNota');
-            select.innerHTML = '<option value="BARU">-- NOTA BARU --</option>';
+async function muatDropdownNotaTerakhir() {
+    try {
+        const select = document.getElementById('selectNoNota');
+        select.innerHTML = '<option value="BARU">-- NOTA BARU --</option>';
 
-            let query = _supabase
-                .from('transaksi_pengiriman')
-                .select('no_nota, nama_agen, tanggal, created_at')
-                .order('created_at', { ascending: false })
-                .limit(5);
+        // Ambil maksimal 35 transaksi terakhir dari Supabase beserta tanggalnya
+        let query = _supabase
+            .from('transaksi_pengiriman')
+            .select('no_nota, nama_agen, tanggal, created_at')
+            .order('created_at', { ascending: false })
+            .limit(35);
 
-            if (tokoIdGlobal) {
-                query = query.eq('toko_id', tokoIdGlobal);
-            }
-
-            const { data: listNota, error } = await query;
-            if (error) console.error("Error muat nota terakhir:", error);
-
-            if (listNota && listNota.length > 0) {
-                listNota.forEach(n => {
-                    const opt = document.createElement('option');
-                    opt.value = n.no_nota;
-                    opt.innerText = `✏️ ${n.no_nota} - ${n.nama_agen}`;
-                    select.appendChild(opt);
-                });
-            }
-        } catch (e) {
-            console.error("Gagal muat list nota:", e);
+        if (tokoIdGlobal) {
+            query = query.eq('toko_id', tokoIdGlobal);
         }
+
+        const { data: listNota, error } = await query;
+        if (error) console.error("Error muat nota terakhir:", error);
+
+        if (listNota && listNota.length > 0) {
+            listNota.forEach(n => {
+                const opt = document.createElement('option');
+                opt.value = n.no_nota;
+                
+                // Format tanggal dari YYYY-MM-DD menjadi DD-MM-YYYY agar mudah dibaca
+                let tglFormatted = n.tanggal;
+                if (n.tanggal && n.tanggal.includes('-')) {
+                    const parts = n.tanggal.split('-');
+                    if (parts.length === 3) {
+                        tglFormatted = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    }
+                }
+
+                // Menambahkan tanggal pada teks dropdown
+                opt.innerText = `✏️ ${n.no_nota} - ${n.nama_agen} (${tglFormatted})`;
+                select.appendChild(opt);
+            });
+        }
+    } catch (e) {
+        console.error("Gagal muat list nota:", e);
     }
+}
+
 
     async function muatDropdown() {
         const { data: agen } = await _supabase

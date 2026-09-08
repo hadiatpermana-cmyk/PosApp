@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pusat Laporan Keuangan</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+Prime&display=swap" rel="stylesheet">
     <style>
@@ -103,6 +104,16 @@
     70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
+/* Styling Struk Thermal dari bayar_bon.html */
+.modal-content.modal-struk { max-width: 460px !important; }
+.struk-box { background: #fff; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; font-family: 'Courier New', Courier, monospace; color: #000; font-size: 13px; line-height: 1.4; text-align: left; }
+.struk-center { text-align: center; }
+.struk-bold { font-weight: bold; }
+.struk-title { font-size: 16px; font-weight: bold; margin: 0; font-family: sans-serif; }
+.struk-separator { border-top: 1px dashed #000; margin: 6px 0; }
+.struk-double-separator { border-top: 2px double #000; margin: 6px 0; }
+.struk-row { display: flex; justify-content: space-between; }
+.struk-item-detail { padding-left: 8px; }
 	</style>
 </head>
 <body>
@@ -193,7 +204,7 @@
         <span style="float:right; cursor:pointer; color:red; font-weight:bold;" onclick="document.getElementById('modalNota').style.display='none'">❌</span>
         <div style="text-align:center; font-weight:bold; font-size:16px;" id="modalTitle">DETAIL NOTA</div>
         <hr style="border:1px dashed var(--border-line);">
-        <div id="detailNotaContent" style="font-size:12px; line-height:1.5; min-width: 820px;"></div>
+        <div id="detailNotaContent" style="font-size:12px; line-height:1.5; overflow-x: auto;"></div>
     </div>
 </div>
 
@@ -1131,38 +1142,157 @@
         document.getElementById('modalNota').style.display = 'flex';
     }
 
-    function bukaNotaPengiriman(kirim) {
-        document.getElementById('modalTitle').innerText = "NOTA PENGIRIMAN & RINCIAN BARANG";
-        let itemsHtml = '';
+async function bukaNotaPengiriman(kirim) {
+    // 1. Terapkan kelas ukuran modal struk
+    document.querySelector('#modalNota .modal-content').classList.add('modal-struk');
+    document.getElementById('modalTitle').innerText = "STRUK DETAIL NOTA";
+    
+    let container = document.getElementById('detailNotaContent');
+    container.innerHTML = "<p style='text-align:center;'>Membuka struk belanja...</p>";
+    document.getElementById('modalNota').style.display = 'flex';
+
+    try {
+        let noNota = kirim.no_nota;
+        
+        // Ambil data detail barang & riwayat cicilan dari database/memory
         let details = dbPengirimanDetail.filter(d => {
             let pId = String(d.pengiriman_id || d.transaksi_pengiriman_id || d.id_pengiriman || '');
             let nNota = String(d.no_nota || '');
-            return pId === String(kirim.id) || nNota === String(kirim.no_nota);
-        });
-        
-        details.forEach(d => {
-            let matchedBrg = carikanBarangDetail(d);
-            let namaBrg = matchedBrg ? matchedBrg.nama_barang : (d.nama_barang || 'Barang');
-            let sub = parseFloat(d.subtotal || (d.qty * d.harga_satuan) || 0);
-            let qtyText = formatQtyBarangDisplay(Number(d.qty || d.jumlah || 0), 'pcs', matchedBrg);
-            itemsHtml += `<li>${qtyText} - ${namaBrg} = <b>Rp ${sub.toLocaleString()}</b></li>`;
+            return pId === String(kirim.id) || nNota === String(noNota);
         });
 
-        document.getElementById('detailNotaContent').innerHTML = `
-            <b>No Nota:</b> ${kirim.no_nota || '-'}<br>
-            <b>Nama Agen:</b> ${kirim.nama_agen || '-'}<br>
-            <b>Pembayaran Cash:</b> Rp ${Number(kirim.bayar_cash || 0).toLocaleString()}<br>
-            <b>Pembayaran Transfer:</b> Rp ${Number(kirim.bayar_transfer || 0).toLocaleString()}<br>
-            <b>Driver:</b> ${kirim.driver_1 || '-'}<br>
-            <hr style="border:1px dashed var(--border-line);">
-            <ul style="padding-left:15px; margin:0; line-height:1.6;">${itemsHtml.length > 0 ? itemsHtml : '<li>Tidak ada rincian detail barang</li>'}</ul>
-            <hr style="border:1px dashed var(--border-line);">
-            <b>Total Kirim:</b> Rp ${parseFloat(kirim.total_kirim || 0).toLocaleString()}<br>
-            <b>Total Retur:</b> Rp ${parseFloat(kirim.total_retur || 0).toLocaleString()}<br>
-            <b>Sisa Akhir:</b> Rp ${parseFloat(kirim.sisa_akhir || 0).toLocaleString()}
-        `;
-        document.getElementById('modalNota').style.display = 'flex';
+        // Ambil riwayat bayar cicilan jika ada dari Supabase
+        let riwayatBayar = [];
+        if (typeof clientSupabase !== 'undefined' && noNota) {
+            const { data: rw } = await clientSupabase
+                .from('pembayaran_bon')
+                .select('tanggal, bayar_cash, bayar_transfer, keterangan')
+                .eq('no_nota_referensi', noNota)
+                .eq('toko_id', profileTokoId);
+            if (rw) riwayatBayar = rw;
+        }
+
+        // Simpan variabel global untuk fungsi Print & JPG
+        window.currentStrukData = { trx: kirim, detail: details, riwayatBayar: riwayatBayar };
+
+        let namaToko = (document.getElementById('txtNamaTokoTop')?.innerText || 'RIAN SNACK').toUpperCase();
+        let rawDate = kirim.tanggal || kirim.created_at;
+        let tglFormatted = '-';
+        if (rawDate) {
+            let [y, m, d] = rawDate.split('T')[0].split('-');
+            tglFormatted = `${d}-${m}-${y}`;
+        }
+        let drvGabung = kirim.driver_2 ? `${kirim.driver_1} / ${kirim.driver_2}` : (kirim.driver_1 || '-');
+
+        let s = `<div class="struk-box" id="areaStruk">
+                    <div class="struk-center">
+                        <span class="struk-title">${namaToko}</span><br>
+                        <span style="font-size:11px;">STRUK PENJUALAN & RETUR</span>
+                    </div>
+                    <div class="struk-separator"></div>
+                    <div class="struk-row"><span>NO: ${kirim.no_nota || '-'}</span><span>TGL: ${tglFormatted}</span></div>
+                    <div class="struk-center struk-bold" style="font-size:14px; margin: 4px 0;">${(kirim.nama_agen || '-').toUpperCase()}</div>
+                    <div>DRV: ${drvGabung} ${kirim.plat_nomor ? '[' + kirim.plat_nomor + ']' : ''}</div>
+                    <div class="struk-separator"></div>`;
+
+        // Filter Barang Kirim & Retur
+        let itemsKirim = details.filter(i => (i.tipe || '').toLowerCase() !== 'retur');
+        let itemsRetur = details.filter(i => (i.tipe || '').toLowerCase() === 'retur');
+
+        // Barang Kirim
+        itemsKirim.forEach(i => {
+            let matchedBrg = typeof carikanBarangDetail === 'function' ? carikanBarangDetail(i) : null;
+            let namaBrg = matchedBrg ? matchedBrg.nama_barang : (i.nama_barang || 'Barang');
+            let hg = Number(i.harga_satuan || 0);
+            let sub = Number(i.subtotal || 0);
+            let qtyTxt = typeof formatQtyBarangDisplay === 'function' ? formatQtyBarangDisplay(i.qty || i.jumlah, i.satuan, matchedBrg) : `${i.qty || i.jumlah} ${i.satuan||''}`;
+
+            s += `<div>${namaBrg}</div>`;
+            s += `<div class="struk-row struk-item-detail">
+                    <span>&nbsp;&nbsp;${qtyTxt} x Rp ${hg.toLocaleString('id-ID')}</span>
+                    <span>Rp ${sub.toLocaleString('id-ID')}</span>
+                  </div>`;
+        });
+
+        s += `<div class="struk-separator"></div>`;
+        s += `<div class="struk-row"><span>TOTAL KIRIM:</span><span>Rp ${(kirim.total_kirim || 0).toLocaleString('id-ID')}</span></div>`;
+
+        // Barang Retur
+        if (itemsRetur.length > 0) {
+            s += `<br><div class="struk-bold" style="color:#d32f2f;">BARANG RETUR:</div>`;
+            itemsRetur.forEach(i => {
+                let matchedBrg = typeof carikanBarangDetail === 'function' ? carikanBarangDetail(i) : null;
+                let namaBrg = matchedBrg ? matchedBrg.nama_barang : (i.nama_barang || 'Barang');
+                let hg = Number(i.harga_satuan || 0);
+                let sub = Number(i.subtotal || 0);
+                let qtyTxt = typeof formatQtyBarangDisplay === 'function' ? formatQtyBarangDisplay(i.qty || i.jumlah, i.satuan, matchedBrg) : `${i.qty || i.jumlah} ${i.satuan||''}`;
+
+                s += `<div style="color:#d32f2f;">[RETUR] ${namaBrg}</div>`;
+                s += `<div class="struk-row struk-item-detail" style="color:#d32f2f;">
+                        <span>&nbsp;&nbsp;${qtyTxt} x Rp ${hg.toLocaleString('id-ID')}</span>
+                        <span>- Rp ${sub.toLocaleString('id-ID')}</span>
+                      </div>`;
+            });
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-row" style="color:#d32f2f;"><span>TOTAL RETUR:</span><span>- Rp ${(kirim.total_retur || 0).toLocaleString('id-ID')}</span></div>`;
+        }
+
+        // Hitung Bon Lama & Tagihan
+        let bonLama = Number(kirim.bon_lama || 0);
+        let tagihanBersih = (Number(kirim.total_kirim || 0) - Number(kirim.total_retur || 0)) + bonLama;
+        let labelBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
+
+        s += `<br><div class="struk-row"><span>${labelBonLama}</span><span>Rp ${Math.abs(bonLama).toLocaleString('id-ID')}</span></div>`;
+        s += `<div class="struk-double-separator"></div>`;
+        s += `<div class="struk-row struk-bold" style="font-size:14px;"><span>TOTAL TAGIHAN:</span><span>Rp ${tagihanBersih.toLocaleString('id-ID')}</span></div>`;
+        s += `<div class="struk-separator"></div>`;
+        s += `<div class="struk-row"><span>Bayar CASH:</span><span>Rp ${(kirim.bayar_cash || 0).toLocaleString('id-ID')}</span></div>`;
+        s += `<div class="struk-row"><span>Bayar TRF:</span><span>Rp ${(kirim.bayar_transfer || 0).toLocaleString('id-ID')}</span></div>`;
+        s += `<div class="struk-separator"></div>`;
+
+        // Riwayat Cicilan Jika Ada
+        if (riwayatBayar && riwayatBayar.length > 0) {
+            s += `<br><div class="struk-bold">RIWAYAT CICILAN:</div>`;
+            let riwayatSort = [...riwayatBayar].sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
+            riwayatSort.forEach(p => {
+                let detailBayar = "";
+                if ((p.bayar_cash || 0) > 0) detailBayar += `CASH: ${p.bayar_cash.toLocaleString('id-ID')} `;
+                if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: ${p.bayar_transfer.toLocaleString('id-ID')}`;
+                let ket = p.keterangan ? `<div style="font-size:11px; color:#555;">&nbsp;&nbsp;(${p.keterangan})</div>` : '';
+                
+                s += `<div class="struk-row"><span>&nbsp;&nbsp;${p.tanggal}</span><span>${detailBayar}</span></div>${ket}`;
+            });
+            s += `<div class="struk-separator"></div>`;
+        }
+
+        let sisaAkhir = Number(kirim.sisa_akhir !== undefined ? kirim.sisa_akhir : ((kirim.total_kirim || 0) - (kirim.total_retur || 0) - (kirim.bayar_cash || 0) - (kirim.bayar_transfer || 0)));
+        let labelSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
+        
+        s += `<div class="struk-row struk-bold" style="font-size:14px; color:#dc2626;"><span>${labelSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
+        s += `<div class="struk-separator"></div>`;
+        s += `<div class="struk-center struk-bold" style="margin-top:10px; text-align:center;">${namaToko} SYSTEM</div>`;
+        s += `</div>`;
+
+        // Tombol Aksi (Print & Save JPG)
+        s += `<div class="action-buttons" style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="printStrukBluetooth()" style="flex:1; background:#2980b9; color:white; padding:10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">🖨️ PRINT BLUETOOTH</button>
+                <button onclick="downloadStrukJPG()" style="flex:1; background:#27ae60; color:white; padding:10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">📸 SAVE JPG</button>
+              </div>`;
+        
+        s += `<div style="margin-top: 12px; text-align: center;">
+                <label for="printSize" style="font-size: 13px; font-weight: bold; color: var(--text-main);">Ukuran Kertas Printer: </label>
+                <select id="printSize" style="padding: 6px; border-radius: 6px; font-weight: bold; background: #2d2d2d; color: white; border: 1px solid #555; outline: none; cursor: pointer;">
+                    <option value="48">80mm (48 Karakter)</option>
+                    <option value="32" selected>58mm (32 Karakter)</option>
+                </select>
+              </div>`;
+
+        container.innerHTML = s;
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = `<p style='color:red; text-align:center;'>Gagal memuat struk: ${e.message}</p>`;
     }
+}
 
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
     initLaporan();

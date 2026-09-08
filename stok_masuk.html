@@ -790,9 +790,17 @@
         area.innerHTML = htmlContent;
 
         const canvas = await html2canvas(area, { scale: 2, backgroundColor: "#ffffff", logging: false });
-        const imgUrl = canvas.toDataURL("image/jpeg", 0.9);
+const imgUrl = canvas.toDataURL("image/jpeg", 0.9);
+
+// --- KODE BARU UNTUK AUTO-DOWNLOAD ---
+const linkDownload = document.createElement('a');
+linkDownload.download = `Faktur_${dataStruk.noFaktur}.jpg`; // Nama file yang akan diunduh
+linkDownload.href = imgUrl;
+linkDownload.click();
+// -------------------------------------
+
+document.getElementById('imgPreviewLaporan').src = imgUrl;
         
-        document.getElementById('imgPreviewLaporan').src = imgUrl;
         
         let waText = `*FAKTUR PENERIMAAN BARANG*\n*${namaTokoGlobal}*\n\n`;
         waText += `No Faktur: ${dataStruk.noFaktur}\nTanggal: ${dataStruk.tgl}\nSupplier: ${dataStruk.supplier}\n\n`;

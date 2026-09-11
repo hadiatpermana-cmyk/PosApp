@@ -100,7 +100,7 @@
         </div>
 
         <input type="date" id="tglNota">
-        <select id="pilihAgen" onchange="updateBon()"><option value="">-- PILIH AGEN --</option></select>
+        <select id="pilihAgen" onchange="updateBon()"><option value="">-- UMUM (TANPA AGEN) --</option></select>
         <select id="driver1" disabled style="background:#f1f5f9; color:#64748b;"><option value="">-- KASIR --</option></select>
         <select id="pilihMobil"><option value="">-- PILIH MOBIL --</option></select>
         <select id="driver2" style="grid-column: span 2;"><option value="">-- CHECKER / DRIVER 2 --</option></select>
@@ -181,11 +181,11 @@
     <div class="modal-content">
         <h3 id="modalTitle" style="margin-top:0; margin-bottom:15px; color:#0f172a; font-weight:800; text-transform: uppercase;">DAFTAR BARANG</h3>
         
-        <div style="display: grid; grid-template-columns: 2fr 1.2fr 0.8fr 32px; gap: 6px; margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; align-items: center;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr 0.7fr 0.9fr 32px; gap: 6px; margin-bottom: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; align-items: center;">
             <div style="font-size: 11px; font-weight: 800; color: #0f172a;">NAMA BARANG</div>
             <div style="font-size: 11px; font-weight: 800; color: #0f172a;">SATUAN</div>
-            <div style="font-size: 11px; font-weight: 800; color: #0f172a; text-align: center;">QTY</div>
-            <div style="font-size: 11px; font-weight: 800; color: #0f172a; text-align: center;">#</div>
+            <div style="font-size: 11px; font-weight: 800; color: #0f172a; text-align: center;">Harga</div>
+            <div style="font-size: 11px; font-weight: 800; color: #0f172a; text-align: center;">Qty</div>
         </div>
         
         <div id="containerBarisBarang" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;"></div>
@@ -342,9 +342,10 @@
             
             if(agen) {
                 const agenFilter = agen.filter(a => {
-                    const tipe = (a.type_agen || a.tipe_agen || '').toLowerCase();
+                    const tipe = String(a.type_agen || a.tipe_agen || a.tipe || a.jenis || '').toLowerCase().trim();
                     if (tipe.includes('supplier')) return false;
-                    return tipe.includes('agen') || tipe.includes('umum') || tipe === '';
+                    // tampilkan semua selain supplier agar motoris dengan penamaan berbeda tetap masuk
+                    return true;
                 });
 
                 agenFilter.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
@@ -571,14 +572,15 @@
 
     function updateBon() {
         const agRaw = document.getElementById('pilihAgen').value;
+        const agenObj = agRaw ? JSON.parse(agRaw) : {id: 'umum', nama: 'Umum', tipe_agen: 'umum'};
+
         if (!agRaw) {
             document.getElementById('notifBon').style.display = "none";
             document.getElementById('boxBonLama').style.display = "none";
             document.getElementById('boxOngkir').style.display = "none";
+            hitungTotal();
             return;
         }
-
-        const agenObj = JSON.parse(agRaw);
         let saldoBon = databaseHarga[agenObj.id]?.bon || 0;
         
         // Apabila sedang dalam mode Edit Nota Lama, hitung penyesuaian saldo bon awal
@@ -620,7 +622,7 @@
 
     function openModal(mode) { 
         const agRaw = document.getElementById('pilihAgen').value;
-        if(!agRaw) return alert("Pilih Agen terlebih dahulu!");
+        // Agen kosong = mode umum, tetap boleh input barang manual
         currentMode = mode; 
         
         const mTitle = document.getElementById('modalTitle');
@@ -641,7 +643,7 @@
         const container = document.getElementById('containerBarisBarang');
         const div = document.createElement('div');
         div.className = 'item-row';
-        div.style.cssText = "display: grid; grid-template-columns: 2fr 1.2fr 0.8fr 32px; gap: 6px; align-items: center; border-bottom: 1px solid #f8fafc; padding-bottom: 8px;";
+        div.style.cssText = "display: grid; grid-template-columns: 2fr 1fr 0.7fr 0.9fr 32px; gap: 6px; align-items: center; border-bottom: 1px solid #f8fafc; padding-bottom: 8px;";
         
         let options = '<option value="">-- Pilih Barang --</option>';
 
@@ -655,13 +657,16 @@
                 const agenObj = JSON.parse(agRaw);
                 const allowedIds = barangPerAgen[agenObj.id];
 
-                // Jika agen mempunyai data harga_agen, tampilkan HANYA barang milik agen tersebut.
+                // Jika Agen/Motoris punya daftar barang khusus, tampilkan hanya barang tersebut.
                 if (allowedIds && allowedIds.size > 0) {
                     daftarBarangAgen = barangStokList.filter(b => allowedIds.has(String(b.id)));
                 }
             } catch (e) {
                 console.error('Gagal memfilter barang berdasarkan agen:', e);
             }
+        } else {
+            // Belum memilih Agen/Motoris = otomatis mode Umum.
+            daftarBarangAgen = barangStokList;
         }
 
         daftarBarangAgen
@@ -689,6 +694,9 @@
                     <option value="Pack" ${satPack}>Pack</option>
                     <option value="Pcs" ${satPcs}>Pcs</option>
                 </select>
+            </div>
+            <div>
+                <input type="number" class="input-harga" value="${itemData ? itemData.harga || 0 : 0}" placeholder="Harga" style="width:100%;padding:10px 2px;border:1.5px solid #cbd5e1;border-radius:8px;text-align:center;font-size:13px;font-weight:700;background:#fff;box-sizing:border-box;">
             </div>
             <div>
                 <input type="number" class="input-qty" value="${qtyVal}" style="width: 100%; padding: 10px 2px; border: 1.5px solid #cbd5e1; border-radius: 8px; text-align: center; font-size: 14px; font-weight: 700; background: #fff; box-sizing: border-box;" onfocus="clearZero(this)">
@@ -722,7 +730,7 @@
 
     function simpanItemMulti() {
         const agRaw = document.getElementById('pilihAgen').value;
-        const agenObj = JSON.parse(agRaw);
+        const agenObj = agRaw ? JSON.parse(agRaw) : {id: 'umum', nama: 'Umum', tipe_agen: 'umum'};
         const modal = document.getElementById('modalInput');
         const editIdx = modal.getAttribute('data-edit-index');
         
@@ -744,6 +752,8 @@
                 } else {
                     const brgObj = JSON.parse(brgRaw);
                     let h = cariHarga(agenObj, brgObj, s);
+                    const manualHarga = Number(row.querySelector('.input-harga')?.value || 0);
+                    if ((!agenObj.id || agenObj.id === 'umum') && manualHarga > 0) h = manualHarga;
                     const foundMaster = barangStokList.find(b => b.id === brgObj.id);
                     const qtyBase = qtyKeSatuanTerkecil(foundMaster, q, s);
                     const it = { id: brgObj.id, barang: brgObj.nama, satuan: s, qty: q, qty_base: qtyBase, harga: h, total: q * h };
@@ -762,6 +772,8 @@
 
                 const brgObj = JSON.parse(brgRaw);
                 let h = cariHarga(agenObj, brgObj, s);
+                const manualHarga = Number(row.querySelector('.input-harga')?.value || 0);
+                if ((!agenObj.id || agenObj.id === 'umum') && manualHarga > 0) h = manualHarga;
                 const foundMaster = barangStokList.find(b => b.id === brgObj.id);
                 const qtyBase = qtyKeSatuanTerkecil(foundMaster, q, s);
                 const it = { id: brgObj.id, barang: brgObj.nama, satuan: s, qty: q, qty_base: qtyBase, harga: h, total: q * h };

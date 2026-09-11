@@ -222,6 +222,8 @@
     
     let tokoIdGlobal = null, namaKasirGlobal = "", namaTokoGlobal = "SBR PUTRA FOOD", alamatTokoGlobal = "Lembang, Bandung Barat", footerTokoGlobal = "Terima Kasih Atas Kunjungan Anda";
     let databaseHarga = {}, barangStokList = [];
+    // Menyimpan daftar barang yang memang terdaftar untuk masing-masing agen
+    let barangPerAgen = {};
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim';
     let lastPrintText = ""; 
     let isDeposit = false;
@@ -378,6 +380,10 @@
                         'Pack': Number(h.harga_pac) || Number(h.harga_pack) || 0,
                         'Pcs': Number(h.harga_pcs) || 0
                     };
+
+                    // Barang yang muncul di dropdown hanya barang yang terdaftar di agen ini
+                    if(!barangPerAgen[h.agen_id]) barangPerAgen[h.agen_id] = new Set();
+                    barangPerAgen[h.agen_id].add(String(h.barang_id));
                 });
             }
 
@@ -638,10 +644,33 @@
         div.style.cssText = "display: grid; grid-template-columns: 2fr 1.2fr 0.8fr 32px; gap: 6px; align-items: center; border-bottom: 1px solid #f8fafc; padding-bottom: 8px;";
         
         let options = '<option value="">-- Pilih Barang --</option>';
-        barangStokList.sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang)).forEach(b => {
-            const isSelected = (itemData && (itemData.id === b.id || itemData.barang === b.nama_barang)) ? 'selected' : '';
-            options += `<option value='{"id": "${b.id}", "nama": "${b.nama_barang}"}' ${isSelected}>${b.nama_barang}</option>`;
-        });
+
+        // Filter barang berdasarkan agen yang sedang dipilih.
+        // Sumber relasi: tabel harga_agen (agen_id -> barang_id).
+        const agRaw = document.getElementById('pilihAgen').value;
+        let daftarBarangAgen = barangStokList;
+
+        if (agRaw) {
+            try {
+                const agenObj = JSON.parse(agRaw);
+                const allowedIds = barangPerAgen[agenObj.id];
+
+                // Jika agen mempunyai data harga_agen, tampilkan HANYA barang milik agen tersebut.
+                if (allowedIds && allowedIds.size > 0) {
+                    daftarBarangAgen = barangStokList.filter(b => allowedIds.has(String(b.id)));
+                }
+            } catch (e) {
+                console.error('Gagal memfilter barang berdasarkan agen:', e);
+            }
+        }
+
+        daftarBarangAgen
+            .slice()
+            .sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang))
+            .forEach(b => {
+                const isSelected = (itemData && (itemData.id === b.id || itemData.barang === b.nama_barang)) ? 'selected' : '';
+                options += `<option value='{"id": "${b.id}", "nama": "${b.nama_barang}"}' ${isSelected}>${b.nama_barang}</option>`;
+            });
 
         const satBal = (itemData && itemData.satuan === 'Bal') ? 'selected' : '';
         const satPack = (itemData && itemData.satuan === 'Pack') ? 'selected' : '';

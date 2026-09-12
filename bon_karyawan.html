@@ -530,12 +530,14 @@
             if (details) {
                 details.forEach(d => {
                     const foundMaster = barangStokList.find(b => b.nama_barang === d.nama_barang);
+                    const baseQty = Number(d.qty_base || d.qty || 0);
+                    const display = konversiQtyUntukEdit(foundMaster, baseQty);
                     const itemObj = {
                         id: foundMaster ? foundMaster.id : null,
                         barang: d.nama_barang,
-                        satuan: 'Pcs', // Default base unit saat disimpan
-                        qty: d.qty,
-                        qty_base: d.qty,
+                        satuan: display.satuan,
+                        qty: display.qty,
+                        qty_base: baseQty,
                         harga: d.harga_satuan,
                         total: d.subtotal
                     };
@@ -826,6 +828,29 @@
         if (jenis === 'kg') return { jenis: 'kg', base: 'Kg', packPerBal: 1, pcsPerPack: 1 };
         if (jenis === 'lembar') return { jenis: 'lembar', base: 'Lembar', packPerBal: 1, pcsPerPack: isiPcs || 1 };
         return { jenis: 'pcs', base: 'Pcs', packPerBal: isiPack || 1, pcsPerPack: isiPcs || 1 };
+    }
+
+    function konversiQtyUntukEdit(barang, qtyBase) {
+        const base = Number(qtyBase || 0);
+        if (!barang || base <= 0) {
+            return { satuan: 'Pcs', qty: 0 };
+        }
+
+        const cfg = getBarangKonversi(barang);
+        const totalPerBal = (cfg.packPerBal || 1) * (cfg.pcsPerPack || 1);
+        const totalPerPack = cfg.pcsPerPack || 1;
+
+        if (base >= totalPerBal) {
+            const qtyBal = base / totalPerBal;
+            return { satuan: 'Bal', qty: Number((qtyBal).toFixed(3)) };
+        }
+
+        if (base >= totalPerPack) {
+            const qtyPack = base / totalPerPack;
+            return { satuan: 'Pack', qty: Number((qtyPack).toFixed(3)) };
+        }
+
+        return { satuan: 'Pcs', qty: base };
     }
 
     function qtyKeSatuanTerkecil(barang, qty, satuan) {

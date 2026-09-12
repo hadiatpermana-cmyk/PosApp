@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBR Putra Food - Stok Masuk Mobile</title>
-    <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="theme-color" content="#0f172a">
@@ -83,7 +82,7 @@
     <div class="info-grid">
         <input type="text" id="noFaktur" readonly placeholder="No. Faktur" style="background:#f1f5f9; color:#64748b;">
         <input type="date" id="tglFaktur">
-        <select id="pilihSupplier" onchange="filterBarangSupplier()"><option value="">-- PILIH SUPPLIER --</option></select>
+        <select id="pilihSupplier" onchange="filterBarangSupplier(); updateBonSupplierMobile();"><option value="">-- PILIH SUPPLIER --</option></select>
         <input type="text" id="penerima" readonly style="background:#f1f5f9; color:#64748b;" placeholder="Penerima">
     </div>
 
@@ -119,6 +118,30 @@
         <div class="sum-row"><span>Total Penerimaan:</span><span id="txtTerima">Rp 0</span></div>
         <div class="sum-row"><span>Total Retur:</span><span id="txtRetur">Rp 0</span></div>
         <div class="sum-row grand-total"><span>GRAND TOTAL:</span><span id="txtGrand">Rp 0</span></div>
+
+        <div id="notifHutang" style="display: none; background: #fff5f5; color: #c53030; padding: 10px; border-radius: 6px; border: 1px solid #feb2b2; text-align: center; font-weight: bold; margin-top: 10px; font-size: 13px;"></div>
+
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #cbd5e1;">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px; margin-bottom:8px;"><span>BON LAMA (Hutang):</span><span>Rp <span id="lblBonLama">0</span></span></div>
+            <div id="boxBonLama" style="display:none; margin-bottom:10px;">
+                <input type="text" id="inputBonLama" style="width:100%; padding:8px; text-align:right; border:1px solid #cbd5e1; border-radius:6px; font-weight:bold;" value="0" oninput="formatRupiah(this); hitungKembalianMobile();" onfocus="clearZero(this)">
+            </div>
+
+            <div style="border-top:1px dashed #cbd5e1; margin-top:8px; padding-top:8px;"></div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:15px; margin-bottom:8px;"><span>TOTAL TAGIHAN:</span><span>Rp <span id="totalTagihan">0</span></span></div>
+
+            <div style="border-top:1px dashed #cbd5e1; margin-top:8px; padding-top:8px;"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:bold; margin-bottom:6px;"><span>Bayar CASH:</span><span>Rp <input type="text" id="inBayarCash" style="width:100px; padding:6px; text-align:right; border:1px solid #cbd5e1; border-radius:4px; background: transparent; color:inherit;" oninput="formatRupiah(this); hitungKembalianMobile()" placeholder="0" onfocus="clearZero(this)"></span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:bold; margin-bottom:8px;"><span>Bayar TRF:</span><span>Rp <input type="text" id="inBayarTrf" style="width:100px; padding:6px; text-align:right; border:1px solid #cbd5e1; border-radius:4px; background: transparent; color:inherit;" oninput="formatRupiah(this); hitungKembalianMobile()" placeholder="0" onfocus="clearZero(this)"></span></div>
+
+            <div style="background: rgba(240, 80, 80, 0.08); padding: 8px; border-radius: 4px; margin-bottom: 10px; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="cbBonFull" style="transform: scale(1.2); cursor: pointer;" onchange="togglePembayaranMobile()">
+                <label for="cbBonFull" style="cursor: pointer; margin: 0; color: #dc2626;">BON PENUH (Tanpa Bayar)</label>
+            </div>
+
+            <div style="border-top:1px dashed #cbd5e1; margin-top:8px; padding-top:8px;"></div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px; background: rgba(255,253,245,0.5); padding: 8px; border-radius: 4px;"><span id="labelSisaBon">SISA BON/HUTANG:</span><span>Rp <span id="lblSisaBon">0</span></span></div>
+        </div>
     </div>
 
     <div class="bt-panel" style="margin-top: 15px;">
@@ -203,10 +226,28 @@
     let itemsTerima = [], itemsRetur = []; 
     let currentMode = 'TERIMA', editIndex = -1;
     let btCharacteristic = null, connectedDeviceId = null;
+    let supplierTerpilih = null, bonLamaVal = 0, selectedSupplierId = null;
+
+    function isSupplierType(agenData) {
+        const tipe = (agenData?.type_agen || agenData?.tipe_agen || '').toLowerCase();
+        return tipe.includes('supplier');
+    }
+
+    function getNamaAgen(agenData) {
+        return agenData?.nama_agen || agenData?.nama || agenData?.nama_supplier || '';
+    }
 
     function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
     function formatRupiah(el) { let v = el.value.replace(/[^0-9]/g, ''); el.value = v === "" ? "0" : Number(v).toLocaleString('id-ID'); }
-    function getAngka(val) { return parseFloat(String(val).replace(/[^0-9]/g, '')) || 0; }
+    function getAngka(idOrValue) {
+        let raw = idOrValue;
+        if (typeof idOrValue === 'string') {
+            const el = document.getElementById(idOrValue);
+            raw = el ? el.value : idOrValue;
+        }
+        const cleaned = String(raw ?? '').replace(/\./g, '').replace(/[^0-9-]/g, '');
+        return cleaned === '' || cleaned === '-' ? 0 : parseFloat(cleaned) || 0;
+    }
 
     function simpanUkuranKertas() {
         const val = document.getElementById('ukuranKertas').value;
@@ -254,24 +295,20 @@
             let queryAgen = _supabase.from('agen').select('*');
             if(tokoIdGlobal) queryAgen = queryAgen.eq('toko_id', tokoIdGlobal);
             const { data: agen } = await queryAgen;
-            listAgenSupplier = agen || [];
+            listAgenSupplier = (agen || []).filter(isSupplierType);
 
             let queryHargaAgen = _supabase.from('harga_agen').select('*');
             if(tokoIdGlobal) queryHargaAgen = queryHargaAgen.eq('toko_id', tokoIdGlobal);
             const { data: hargaAgen } = await queryHargaAgen;
             listHargaAgen = hargaAgen || [];
 
-            const supplierSaja = listAgenSupplier.filter(a => {
-                const tipe = (a.type_agen || a.tipe_agen || '').toLowerCase();
-                return tipe.includes('supplier'); 
-            });
-
-            supplierSaja.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
+            listAgenSupplier.sort((a, b) => (getNamaAgen(a) || '').localeCompare(getNamaAgen(b) || ''));
 
             const selSupplier = document.getElementById('pilihSupplier');
             selSupplier.innerHTML = '<option value="">-- PILIH SUPPLIER --</option>';
-            supplierSaja.forEach(sup => {
-                selSupplier.options.add(new Option(sup.nama_agen, sup.nama_agen));
+            listAgenSupplier.forEach(sup => {
+                const nama = getNamaAgen(sup);
+                if (nama) selSupplier.options.add(new Option(nama, String(sup.id)));
             });
 
             resetForm();
@@ -294,12 +331,23 @@
         document.getElementById('tglFaktur').value = `${year}-${month}-${day}`;
         document.getElementById('noFaktur').value = generateNoFaktur();
         document.getElementById('pilihSupplier').value = "";
+        selectedSupplierId = null;
         document.getElementById('cbTanpaPrinter').checked = false;
+        document.getElementById('inBayarCash').value = '0';
+        document.getElementById('inBayarTrf').value = '0';
+        document.getElementById('inputBonLama').value = '0';
+        document.getElementById('cbBonFull').checked = false;
+        document.getElementById('lblBonLama').innerText = '0';
+        document.getElementById('notifHutang').style.display = 'none';
+        document.getElementById('boxBonLama').style.display = 'none';
+        supplierTerpilih = null;
+        bonLamaVal = 0;
         
         itemsTerima = []; 
         itemsRetur = []; 
         render(); 
         hitungTotal();
+        togglePembayaranMobile();
     }
 
     function resetFormForNewFaktur() {
@@ -310,11 +358,14 @@
     }
 
     function filterBarangSupplier() {
-        const sup = document.getElementById('pilihSupplier').value;
+        const supplierId = document.getElementById('pilihSupplier').value;
+        selectedSupplierId = supplierId || null;
         const modalBarang = document.getElementById('modalBarang');
         modalBarang.innerHTML = '<option value="">-- Pilih Barang --</option>';
-        
-        const filtered = sup ? listBarang.filter(b => b.supplier === sup) : listBarang;
+
+        const selectedSupplier = listAgenSupplier.find(s => String(s.id) === String(supplierId));
+        const selectedNama = selectedSupplier ? getNamaAgen(selectedSupplier) : '';
+        const filtered = selectedNama ? listBarang.filter(b => (b.supplier || '').toLowerCase() === selectedNama.toLowerCase()) : listBarang;
         filtered.sort((a,b)=>a.nama_barang.localeCompare(b.nama_barang)).forEach(b => {
             modalBarang.options.add(new Option(b.nama_barang, b.id));
         });
@@ -322,7 +373,7 @@
     }
 
     function autoFillHargaModal() {
-        const namaSup = document.getElementById('pilihSupplier').value;
+        const supplierId = document.getElementById('pilihSupplier').value;
         const brgId = document.getElementById('modalBarang').value;
         const satuanDipilih = (document.getElementById('modalSatuan').value || '').toLowerCase();
         
@@ -332,10 +383,7 @@
         let hargaPack = 0;
         let hargaPcs = 0;
 
-        const dataAgen = listAgenSupplier.find(a => {
-            const nAgen = (a.nama_agen || a.nama || a.nama_supplier || '').toLowerCase();
-            return nAgen === namaSup.toLowerCase();
-        });
+        const dataAgen = listAgenSupplier.find(a => String(a.id) === String(supplierId));
         
         if (dataAgen) {
             const settingHarga = listHargaAgen.find(h => 
@@ -519,6 +567,94 @@
         document.getElementById('txtTerima').innerText = "Rp " + tt.toLocaleString('id-ID');
         document.getElementById('txtRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
         document.getElementById('txtGrand').innerText = "Rp " + grand.toLocaleString('id-ID');
+        hitungKembalianMobile();
+    }
+
+    function togglePembayaranMobile() {
+        const isChecked = document.getElementById('cbBonFull').checked;
+        const inputCash = document.getElementById('inBayarCash');
+        const inputTrf = document.getElementById('inBayarTrf');
+
+        if (isChecked) {
+            inputCash.value = '0';
+            inputTrf.value = '0';
+            inputCash.disabled = true;
+            inputTrf.disabled = true;
+            inputCash.style.backgroundColor = '#e2e8f0';
+            inputTrf.style.backgroundColor = '#e2e8f0';
+        } else {
+            inputCash.disabled = false;
+            inputTrf.disabled = false;
+            inputCash.style.backgroundColor = 'transparent';
+            inputTrf.style.backgroundColor = 'transparent';
+        }
+
+        hitungKembalianMobile();
+    }
+
+    function hitungKembalianMobile() {
+        const tunai = getAngka('inBayarCash');
+        const tf = getAngka('inBayarTrf');
+        const bonLamaDariSaldo = supplierTerpilih ? Math.abs(Number(supplierTerpilih.saldo_bon || 0)) : getAngka('inputBonLama');
+        const bonLama = supplierTerpilih ? bonLamaDariSaldo : getAngka('inputBonLama');
+        const grandBarang = itemsTerima.reduce((a, b) => a + b.total, 0) - itemsRetur.reduce((a, b) => a + b.total, 0);
+        const totalTagihan = grandBarang + bonLama;
+
+        document.getElementById('totalTagihan').innerText = totalTagihan.toLocaleString('id-ID');
+
+        let sisaBon = totalTagihan - tunai - tf;
+        const labelSisa = sisaBon < 0 ? 'KEMBALIAN:' : 'SISA BON/HUTANG:';
+        document.getElementById('labelSisaBon').innerText = labelSisa;
+        document.getElementById('lblSisaBon').innerText = Math.abs(sisaBon).toLocaleString('id-ID');
+    }
+
+    async function updateBonSupplierMobile() {
+        const supplierId = document.getElementById('pilihSupplier').value;
+        selectedSupplierId = supplierId || null;
+        if (!supplierId) {
+            bonLamaVal = 0;
+            document.getElementById('lblBonLama').innerText = '0';
+            document.getElementById('inputBonLama').value = '0';
+            document.getElementById('boxBonLama').style.display = 'none';
+            document.getElementById('notifHutang').style.display = 'none';
+            supplierTerpilih = null;
+            return;
+        }
+
+        try {
+            const supplier = listAgenSupplier.find(s => String(s.id) === String(supplierId));
+            if (!supplier) {
+                supplierTerpilih = null;
+                document.getElementById('notifHutang').style.display = 'none';
+                document.getElementById('boxBonLama').style.display = 'none';
+                return;
+            }
+
+            supplierTerpilih = supplier;
+            const hutang = Number(supplier.saldo_bon || 0);
+            bonLamaVal = Math.abs(hutang);
+
+            document.getElementById('lblBonLama').innerText = bonLamaVal.toLocaleString('id-ID');
+            document.getElementById('inputBonLama').value = bonLamaVal.toLocaleString('id-ID');
+            document.getElementById('boxBonLama').style.display = hutang !== 0 ? 'block' : 'none';
+
+            const notif = document.getElementById('notifHutang');
+            if (hutang > 0) {
+                notif.innerText = '⚠️ MASIH PUNYA BON KURANG KE SUPPLIER INI !';
+                notif.style.display = 'block';
+                notif.style.color = '#c53030';
+            } else if (hutang < 0) {
+                notif.innerText = '✅ SUPPLIER INI PUNYA UANG MUKA/KREDIT!';
+                notif.style.display = 'block';
+                notif.style.color = '#27ae60';
+            } else {
+                notif.style.display = 'none';
+            }
+
+            hitungKembalianMobile();
+        } catch (e) {
+            console.error('Error update bon supplier:', e);
+        }
     }
 
     async function connectBT() {
@@ -562,7 +698,7 @@
                 <div class="garis"></div>
             </div>
             <div class="flex-row"><span>NO: ${dataStruk.noFaktur}</span><span>TGL: ${dataStruk.tglIndo}</span></div>
-            <div class="flex-row"><span>SPL: ${dataStruk.supplier}</span><span>OPR: ${dataStruk.penerima}</span></div>
+            <div class="flex-row"><span>SPL: ${dataStruk.supplier.toUpperCase()}</span><span>OPR: ${dataStruk.penerima}</span></div>
             <div class="garis"></div>
         `;
 
@@ -598,6 +734,18 @@
 
         htmlContent += `<div class="garis-tebal"></div>`;
         htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px;"><span>GRAND TOTAL:</span><span>Rp ${dataStruk.grand.toLocaleString('id-ID')}</span></div>`;
+        if (dataStruk.bonLama > 0) {
+            htmlContent += `<div class="flex-row" style="font-size: 13px;"><span>BON LAMA (HUTANG):</span><span>Rp ${dataStruk.bonLama.toLocaleString('id-ID')}</span></div>`;
+        }
+        htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 15px;"><span>TOTAL TAGIHAN:</span><span>Rp ${(dataStruk.grand + dataStruk.bonLama).toLocaleString('id-ID')}</span></div>`;
+        if (dataStruk.bayarCash > 0) {
+            htmlContent += `<div class="flex-row" style="font-size: 13px;"><span>Bayar CASH:</span><span>Rp ${dataStruk.bayarCash.toLocaleString('id-ID')}</span></div>`;
+        }
+        if (dataStruk.bayarTrf > 0) {
+            htmlContent += `<div class="flex-row" style="font-size: 13px;"><span>Bayar TRF:</span><span>Rp ${dataStruk.bayarTrf.toLocaleString('id-ID')}</span></div>`;
+        }
+        const labelSisa = dataStruk.sisaBon < 0 ? 'KEMBALIAN:' : 'SISA BON/HUTANG:';
+        htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 15px; background: rgba(255,253,245,0.5); padding: 4px; border-radius: 6px; margin-top: 6px;"><span>${labelSisa}</span><span>Rp ${Math.abs(dataStruk.sisaBon).toLocaleString('id-ID')}</span></div>`;
         htmlContent += `<div class="garis"></div>`;
 
         area.innerHTML = htmlContent;
@@ -630,10 +778,11 @@
 
     async function simpanDanUpdateStok() {
         let errorList = [];
-        const supplier = document.getElementById('pilihSupplier').value;
+        const supplierId = document.getElementById('pilihSupplier').value;
+        const supplierNama = supplierTerpilih ? getNamaAgen(supplierTerpilih) : (document.getElementById('pilihSupplier').selectedOptions[0]?.text || '');
         const penerima = document.getElementById('penerima').value;
 
-        if (!supplier) errorList.push("- Supplier belum dipilih");
+        if (!supplierId) errorList.push("- Supplier belum dipilih");
         if (itemsTerima.length === 0 && itemsRetur.length === 0) {
             errorList.push("- Belum ada item (Terima/Retur) yang dimasukkan");
         }
@@ -663,13 +812,23 @@
         let totalQtyBase = itemsTerima.reduce((a, b) => a + (b.qty_base || b.qty), 0);
 
         try {
+            const bayarCash = getAngka('inBayarCash');
+            const bayarTrf = getAngka('inBayarTrf');
+            const bonLama = supplierTerpilih ? Math.abs(Number(supplierTerpilih.saldo_bon || 0)) : (getAngka('inputBonLama') || 0);
+            const totalTagihanAkhir = grand + bonLama;
+            const sisaBon = totalTagihanAkhir - bayarCash - bayarTrf;
+
             const { error: errHeader } = await _supabase.from('pembelian_header').insert([{
                 id: noFaktur,
                 toko_id: tokoIdGlobal,
                 no_pb: noFaktur,
-                supplier: supplier,
+                supplier: supplierNama,
+                agen_id: supplierTerpilih?.id || supplierId || null,
                 total_qty: totalQtyBase,
                 total_rupiah: grand,
+                bayar_cash: bayarCash,
+                bayar_transfer: bayarTrf,
+                sisa_bon: sisaBon,
                 created_at: new Date()
             }]);
             if (errHeader) throw new Error("Header: " + errHeader.message);
@@ -716,6 +875,13 @@
                 await _supabase.from('barang').update({ stok_sekarang: stokBaru }).eq('id', item.id_barang);
             }
 
+            if (supplierTerpilih && supplierTerpilih.id) {
+                await _supabase.from('agen')
+                    .update({ saldo_bon: sisaBon })
+                    .eq('id', supplierTerpilih.id)
+                    .eq('toko_id', tokoIdGlobal);
+            }
+
             if (btCharacteristic && !isTanpaPrinter) {
                 btn.innerText = "MENCETAK STRUK...";
                 const lebar = parseInt(document.getElementById('ukuranKertas').value);
@@ -753,8 +919,19 @@
 
             btn.innerText = "MEMBUAT DIGITAL FAKTUR...";
             await buatGambarStruk({
-                noFaktur, tglIndo, supplier, penerima,
-                itemsTerima, itemsRetur, tt, tr, grand
+                noFaktur,
+                tglIndo,
+                supplier: supplierNama,
+                penerima,
+                itemsTerima,
+                itemsRetur,
+                tt,
+                tr,
+                grand,
+                bonLama,
+                bayarCash,
+                bayarTrf,
+                sisaBon
             });
 
             btn.innerText = "SUKSES DISIMPAN";

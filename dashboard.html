@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard Admin</title>
+    <title>Dashboard Admin - PosApp</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="tailwind.css">
     <style>
         :root { 
             --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0;
@@ -46,6 +47,27 @@
         .stat-icon { position: absolute; right: -5px; bottom: -5px; font-size: 60px; opacity: 0.2; transform: rotate(-10deg); }
         
         .section-title { font-size: 13px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; flex-shrink: 0; }
+        .dashboard-menu-toggle {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            border: 1px solid var(--border-line);
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: var(--text-main);
+            cursor: pointer;
+            font: inherit;
+            font-size: 13px;
+            font-weight: bold;
+            text-align: left;
+            text-transform: uppercase;
+        }
+        .dashboard-menu-toggle:hover { background: var(--bg-main); }
+        .dashboard-menu-toggle .menu-chevron { transition: transform 0.2s ease; }
+        .dashboard-menu-toggle[aria-expanded="true"] .menu-chevron { transform: rotate(180deg); }
         .menu-grid { 
     display: grid; 
     /* Default untuk layar sedang/kecil (misal 2 atau 3 kolom) */
@@ -68,6 +90,7 @@
     }
 }
         .menu-card { background: var(--bg-card); border-radius: 10px; padding: 12px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; border: 1px solid var(--border-line); text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .menu-grid[hidden] { display: none !important; }
         .menu-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
         .icon-yellow { background: #fff8e1; color: #ffc107; } .icon-blue { background: #e3f2fd; color: #2196f3; } .icon-green { background: #e8f5e9; color: #4caf50; } .icon-pink { background: #fce4ec; color: #e91e63; } .icon-orange { background: #fff3e0; color: #ff9800; } .icon-purple { background: #f3e5f5; color: #9c27b0; }
         .menu-text h4 { margin: 0 0 2px 0; font-size: 14px; color: var(--text-main); }
@@ -213,8 +236,11 @@
             <div class="stat-card green"><div class="stat-label">Total Kontak / Agen</div><div class="stat-value" id="valTotalAgen">0</div><div class="stat-icon">👥</div></div>
         </div>
 
-        <div class="section-title">🔧 Menu Utama</div>
-        <div class="menu-grid">
+        <button type="button" class="dashboard-menu-toggle" id="btnDashboardMenu" aria-expanded="false" aria-controls="dashboardMenu" onclick="toggleDashboardMenu()">
+            <span>🔧 Menu Utama</span>
+            <span class="menu-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <div class="menu-grid" id="dashboardMenu" hidden>
     <a href="barang.html" class="menu-card"><div class="menu-icon icon-yellow">🗃️</div><div class="menu-text"><h4>Master Barang</h4><p>Kelola stok & supplier</p></div></a>
     <a href="stok_masuk.html" class="menu-card"><div class="menu-icon icon-blue">📥</div><div class="menu-text"><h4>Stok Masuk</h4><p>Input barang dari supplier</p></div></a>
     <a href="stok_keluar.html" class="menu-card"><div class="menu-icon icon-blue">📥</div><div class="menu-text"><h4>Stok keluar bahan baku</h4><p>Input keluar barang dari gudang</p></div></a>
@@ -272,6 +298,13 @@
     function toggleTheme() { let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('themeMode', t); document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; }
     initTheme();
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    function toggleDashboardMenu() {
+        const button = document.getElementById('btnDashboardMenu');
+        const menu = document.getElementById('dashboardMenu');
+        const isExpanded = button.getAttribute('aria-expanded') === 'true';
+        button.setAttribute('aria-expanded', String(!isExpanded));
+        menu.hidden = isExpanded;
+    }
 
     function getKonversiBarang(barang) {
         const jenis = (barang?.satuan_jenis || 'pcs').toLowerCase();

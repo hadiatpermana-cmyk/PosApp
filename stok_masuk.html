@@ -132,6 +132,7 @@
         
         .btn-action { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; font-family: inherit; }
         .btn-icon { background: transparent; border: none; cursor: pointer; font-size: 14px; padding: 0 4px; }
+        #notifEditMode { display: none; background: #fef3c7; color: #b45309; padding: 10px; border-radius: 8px; border: 1px solid #fde68a; text-align: center; font-weight: bold; margin-bottom: 12px; font-size: 13px; }
         
         .link-kembali { color: var(--green); text-decoration: none; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 15px; }
         .link-kembali:hover { text-decoration: underline; }
@@ -310,6 +311,13 @@
                     <h3 style="margin:0;">Input Barang Faktur</h3>
                 </div>
             </div>
+            <div id="notifEditMode">⚠️ MODE EDIT PENERIMAAN LAMA - Data baru akan menggantikan data sebelumnya!</div>
+            <div style="display:flex; gap:8px; margin-bottom:15px;">
+                <select id="selectNoPenerimaan" style="flex:1; padding:8px; border:1px solid var(--border-line); border-radius:6px; font-weight:bold; background:var(--bg-main); color:var(--text-main);">
+                    <option value="BARU">-- PENERIMAAN BARU --</option>
+                </select>
+                <button id="btnAmbilPenerimaan" onclick="muatDataPenerimaanTerpilih()" class="btn-action" style="background:var(--blue); color:white; width:auto; font-size:12px; padding:0 15px;">✏️ AMBIL DATA</button>
+            </div>
             <a href="dashboard.html" class="link-kembali">← Kembali ke Dashboard</a>
 
             <div class="form-grid-container">
@@ -390,6 +398,7 @@
     let tokoIdGlobal = null, namaKasirGlobal = "", namaTokoGlobal = "", alamatTokoGlobal = "";
     let listBarang = [], listHargaAgen = [], listAgenSupplier = [], cartTerima = [], cartRetur = [];
     let noFakturAktif = "";
+    let isEditMode = false, originalPenerimaanData = null;
     let bonLamaVal = 0, totalBelanja = 0, supplierTerpilih = null;
 
     function initTheme() { if (localStorage.getItem('themeMode') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); document.getElementById('btnThemeToggle').innerText = '☀️'; } }
@@ -430,6 +439,15 @@
         if (unit.includes('bal')) return jml * (cfg.packPerBal * cfg.pcsPerPack);
         if (unit.includes('pack')) return jml * cfg.pcsPerPack;
         return jml;
+    }
+
+    function qtyDariSatuanTerkecil(barang, qtyBase, satuan) {
+        const jumlahBase = Number(qtyBase) || 0;
+        const cfg = getBarangKonversi(barang);
+        const unit = (satuan || '').toLowerCase();
+        if (unit.includes('bal')) return jumlahBase / (cfg.packPerBal * cfg.pcsPerPack || 1);
+        if (unit.includes('pack')) return jumlahBase / (cfg.pcsPerPack || 1);
+        return jumlahBase;
     }
 
     function buatNoFaktur() {
@@ -499,7 +517,10 @@
             
             if (supplier) {
                 supplierTerpilih = supplier;
-                const hutang = Number(supplier.saldo_bon || 0);
+                let hutang = Number(supplier.saldo_bon || 0);
+                if (isEditMode && originalPenerimaanData && originalPenerimaanData.header.supplier === namaSup) {
+                    hutang -= Number(originalPenerimaanData.header.sisa_bon || 0);
+                }
                 bonLamaVal = Math.abs(hutang);
 
                 document.getElementById('lblBonLama').innerText = bonLamaVal.toLocaleString('id-ID');
@@ -606,6 +627,93 @@
         });
         
         document.getElementById('inSupplier').innerHTML = dropdownHtml;
+        await muatDropdownPenerimaan();
+    }
+
+    async function muatDropdownPenerimaan() {
+        const select = document.getElementById('selectNoPenerimaan');
+        select.innerHTML = '<option value="BARU">-- PENERIMAAN BARU --</option>';
+
+        const { data, error } = await _supabase
+            .from('pembelian_header')
+            .select('no_pb, supplier, created_at')
+            .eq('toko_id', tokoIdGlobal)
+            .order('created_at', { ascending: false })
+            .limit(35);
+
+        if (error) {
+            console.error('Gagal memuat daftar penerimaan:', error);
+            return;
+        }
+
+        (data || []).forEach(header => {
+            const option = document.createElement('option');
+            option.value = header.no_pb;
+            const tanggal = header.created_at ? new Date(header.created_at).toLocaleDateString('id-ID') : '';
+            option.textContent = `✏️ ${header.no_pb} - ${header.supplier || '-'}${tanggal ? ` (${tanggal})` : ''}`;
+            select.appendChild(option);
+        });
+    }
+
+    async function muatDataPenerimaanTerpilih() {
+        const selectedNo = document.getElementById('selectNoPenerimaan').value;
+        if (!selectedNo || selectedNo === 'BARU') {
+            window.location.reload();
+            return;
+        }
+
+        const button = document.getElementById('btnAmbilPenerimaan');
+        button.disabled = true;
+        button.innerText = 'LOADING...';
+
+        try {
+            const { data: header, error: headerError } = await _supabase
+                .from('pembelian_header').select('*').eq('toko_id', tokoIdGlobal).eq('no_pb', selectedNo).single();
+            if (headerError || !header) throw new Error('Data penerimaan tidak ditemukan!');
+
+            const { data: details, error: detailError } = await _supabase
+                .from('pembelian_detail').select('*').eq('toko_id', tokoIdGlobal).eq('no_pb', selectedNo);
+            if (detailError) throw new Error('Gagal mengambil detail penerimaan: ' + detailError.message);
+
+            isEditMode = true;
+            originalPenerimaanData = { header, details: details || [] };
+            noFakturAktif = selectedNo;
+            document.getElementById('lblFaktur').innerText = selectedNo;
+            document.getElementById('lblTanggal').innerText = header.created_at ? new Date(header.created_at).toLocaleDateString('id-ID') : '-';
+            document.getElementById('notifEditMode').style.display = 'block';
+
+            document.getElementById('inSupplier').value = header.supplier || '';
+            filterBarangSupplier();
+            cartTerima = [];
+            cartRetur = [];
+            (details || []).forEach(detail => {
+                const master = listBarang.find(item => String(item.id) === String(detail.barang_id));
+                const qtyBase = Number(detail.qty) || 0;
+                const item = {
+                    id_barang: detail.barang_id,
+                    nama: master?.nama_barang || detail.nama_barang || detail.barang_id,
+                    qty: qtyDariSatuanTerkecil(master, qtyBase, 'Bal'),
+                    qty_base: qtyBase,
+                    satuan: 'Bal',
+                    harga: Number(detail.harga_satuan) || 0,
+                    total: Number(detail.subtotal) || 0
+                };
+                (detail.tipe === 'RETUR' ? cartRetur : cartTerima).push(item);
+            });
+
+            document.getElementById('inBayarCash').value = Number(header.bayar_cash || 0).toLocaleString('id-ID');
+            document.getElementById('inBayarTrf').value = Number(header.bayar_transfer || 0).toLocaleString('id-ID');
+            document.getElementById('cbBonFull').checked = Number(header.bayar_cash || 0) === 0 && Number(header.bayar_transfer || 0) === 0;
+            togglePembayaran();
+            updateBonSupplier();
+            renderBon();
+            alert(`✅ Penerimaan ${selectedNo} berhasil dimuat. Silakan ubah data lalu simpan untuk menggantinya.`);
+        } catch (error) {
+            alert('❌ Gagal memuat penerimaan: ' + error.message);
+        } finally {
+            button.disabled = false;
+            button.innerText = '✏️ AMBIL DATA';
+        }
     }
 
     function filterBarangSupplier() {
@@ -799,19 +907,59 @@
             const totalTagihanAkhir = totalBelanja + bonLama;
             const sisaBon = totalTagihanAkhir - bayarCash - bayarTrf;
 
-            const { error: errHeader } = await _supabase.from('pembelian_header').insert([{
-                id: noFakturAktif,
-                toko_id: tokoIdGlobal, 
-                no_pb: noFakturAktif, 
-                supplier: namaSupplier,
-                agen_id: supplierTerpilih?.id || null,
-                total_qty: totalQtyPb, 
-                total_rupiah: totalRupiahPb,
-                bayar_cash: bayarCash,
-                bayar_transfer: bayarTrf,
-                sisa_bon: sisaBon
-            }]);
-            if (errHeader) throw new Error("Header: " + errHeader.message);
+            if (isEditMode && originalPenerimaanData) {
+                for (const oldDetail of originalPenerimaanData.details) {
+                    const oldMaster = listBarang.find(item => String(item.id) === String(oldDetail.barang_id));
+                    if (!oldMaster) continue;
+                    const oldQty = Number(oldDetail.qty) || 0;
+                    const stockDelta = oldDetail.tipe === 'RETUR' ? oldQty : -oldQty;
+                    const { data: currentStock } = await _supabase.from('barang').select('stok_sekarang').eq('id', oldMaster.id).single();
+                    await _supabase.from('barang').update({
+                        stok_sekarang: Number(currentStock?.stok_sekarang || 0) + stockDelta
+                    }).eq('id', oldMaster.id);
+                }
+
+                const oldSupplier = originalPenerimaanData.header.supplier;
+                if (oldSupplier) {
+                    const oldSupplierData = listAgenSupplier.find(item => item.nama_agen === oldSupplier);
+                    const { data: supplierRow } = oldSupplierData
+                        ? await _supabase.from('agen').select('saldo_bon').eq('id', oldSupplierData.id).single()
+                        : { data: null };
+                    const saldoNormal = Number(supplierRow?.saldo_bon || 0) - Number(originalPenerimaanData.header.sisa_bon || 0);
+                    const supplierQuery = oldSupplierData
+                        ? _supabase.from('agen').update({ saldo_bon: saldoNormal }).eq('id', oldSupplierData.id)
+                        : _supabase.from('agen').update({ saldo_bon: saldoNormal }).eq('nama_agen', oldSupplier);
+                    await supplierQuery;
+                }
+
+                const { error: errHeader } = await _supabase.from('pembelian_header').update({
+                    supplier: namaSupplier,
+                    agen_id: supplierTerpilih?.id || null,
+                    total_qty: totalQtyPb,
+                    total_rupiah: totalRupiahPb,
+                    bayar_cash: bayarCash,
+                    bayar_transfer: bayarTrf,
+                    sisa_bon: sisaBon
+                }).eq('toko_id', tokoIdGlobal).eq('no_pb', noFakturAktif);
+                if (errHeader) throw new Error("Header: " + errHeader.message);
+                const { error: errDelete } = await _supabase.from('pembelian_detail').delete()
+                    .eq('toko_id', tokoIdGlobal).eq('no_pb', noFakturAktif);
+                if (errDelete) throw new Error("Hapus detail lama: " + errDelete.message);
+            } else {
+                const { error: errHeader } = await _supabase.from('pembelian_header').insert([{
+                    id: noFakturAktif,
+                    toko_id: tokoIdGlobal,
+                    no_pb: noFakturAktif,
+                    supplier: namaSupplier,
+                    agen_id: supplierTerpilih?.id || null,
+                    total_qty: totalQtyPb,
+                    total_rupiah: totalRupiahPb,
+                    bayar_cash: bayarCash,
+                    bayar_transfer: bayarTrf,
+                    sisa_bon: sisaBon
+                }]);
+                if (errHeader) throw new Error("Header: " + errHeader.message);
+            }
 
             let counter = 1;
             for (const item of cartTerima) {
@@ -830,6 +978,7 @@
                     barang_id: item.id_barang, 
                     qty: totalPcsKonversi, 
                     satuan: 'pcs', 
+                    tipe: 'TERIMA',
                     harga_satuan: item.harga, 
                     subtotal: item.total
                 }]);
@@ -842,6 +991,19 @@
 
                 const { data: brg } = await _supabase.from('barang').select('stok_sekarang').eq('id', item.id_barang).single();
                 await _supabase.from('barang').update({ stok_sekarang: Number(brg?.stok_sekarang || 0) - totalPcsKonversi }).eq('id', item.id_barang);
+
+                const { error: errRetur } = await _supabase.from('pembelian_detail').insert([{
+                    id: `${noFakturAktif}-R${counter++}`,
+                    toko_id: tokoIdGlobal,
+                    no_pb: noFakturAktif,
+                    barang_id: item.id_barang,
+                    qty: totalPcsKonversi,
+                    satuan: 'pcs',
+                    tipe: 'RETUR',
+                    harga_satuan: item.harga,
+                    subtotal: item.total
+                }]);
+                if (errRetur) throw new Error("Pembelian Retur Detail: " + errRetur.message);
             }
 
             // UPDATE SALDO BON SUPPLIER
@@ -874,6 +1036,10 @@
             dataStruk.grandTotal = dataStruk.totTerima - dataStruk.totRetur;
 
             cartTerima = []; cartRetur = [];
+            isEditMode = false;
+            originalPenerimaanData = null;
+            document.getElementById('notifEditMode').style.display = 'none';
+            document.getElementById('selectNoPenerimaan').value = 'BARU';
             buatNoFaktur(); 
             renderBon();
 

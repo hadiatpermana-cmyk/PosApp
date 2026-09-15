@@ -86,6 +86,14 @@
         <input type="text" id="penerima" readonly style="background:#f1f5f9; color:#64748b;" placeholder="Penerima">
     </div>
 
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <select id="selectNoPenerimaan" style="flex:1; padding:10px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:14px; font-weight:600; background:#fff;">
+            <option value="BARU">-- PENERIMAAN BARU --</option>
+        </select>
+        <button id="btnAmbilPenerimaan" onclick="muatDataPenerimaanTerpilih()" class="btn-action" style="background:#3b82f6; padding:0 12px;">✏️ EDIT</button>
+    </div>
+    <div id="notifEditMode" style="display:none; padding:10px; margin-bottom:12px; border-radius:8px; background:#fff7ed; color:#c2410c; border:1px solid #fdba74; font-size:13px; font-weight:700;">⚠️ MODE EDIT BON LAMA - Data baru akan menggantikan data sebelumnya.</div>
+
     <div>
         <!-- DITERIMA -->
         <div class="section-label">
@@ -223,7 +231,8 @@
     
     let tokoIdGlobal = null, namaKasirGlobal = "", namaTokoGlobal = "TOKO SBR", alamatTokoGlobal = "-";
     let listBarang = [], listSupplier = [], listHargaAgen = [], listAgenSupplier = [];
-    let itemsTerima = [], itemsRetur = []; 
+    let itemsTerima = [], itemsRetur = [];
+    let isEditMode = false, originalPenerimaanData = null;
     let currentMode = 'TERIMA', editIndex = -1;
     let btCharacteristic = null, connectedDeviceId = null;
     let supplierTerpilih = null, bonLamaVal = 0, selectedSupplierId = null;
@@ -311,6 +320,7 @@
                 if (nama) selSupplier.options.add(new Option(nama, String(sup.id)));
             });
 
+            await muatDropdownPenerimaan();
             resetForm();
         } catch(e) { 
             alert("🚨 KONEKSI DATABASE ERROR:\n" + e.message); 
@@ -331,6 +341,7 @@
         document.getElementById('tglFaktur').value = `${year}-${month}-${day}`;
         document.getElementById('noFaktur').value = generateNoFaktur();
         document.getElementById('pilihSupplier').value = "";
+        document.getElementById('selectNoPenerimaan').value = "BARU";
         selectedSupplierId = null;
         document.getElementById('cbTanpaPrinter').checked = false;
         document.getElementById('inBayarCash').value = '0';
@@ -342,6 +353,9 @@
         document.getElementById('boxBonLama').style.display = 'none';
         supplierTerpilih = null;
         bonLamaVal = 0;
+        isEditMode = false;
+        originalPenerimaanData = null;
+        document.getElementById('notifEditMode').style.display = 'none';
         
         itemsTerima = []; 
         itemsRetur = []; 
@@ -355,6 +369,82 @@
         const btn = document.getElementById('btnSimpan');
         btn.disabled = false;
         btn.innerText = "SIMPAN & UPDATE STOK";
+    }
+
+    async function muatDropdownPenerimaan() {
+        const select = document.getElementById('selectNoPenerimaan');
+        select.innerHTML = '<option value="BARU">-- PENERIMAAN BARU --</option>';
+        let query = _supabase.from('pembelian_header').select('no_pb, supplier, created_at').order('created_at', { ascending: false }).limit(35);
+        if (tokoIdGlobal) query = query.eq('toko_id', tokoIdGlobal);
+        const { data, error } = await query;
+        if (error) {
+            console.error('Gagal memuat daftar penerimaan:', error);
+            return;
+        }
+        (data || []).forEach(header => {
+            const option = document.createElement('option');
+            option.value = header.no_pb;
+            const tanggal = header.created_at ? new Date(header.created_at).toLocaleDateString('id-ID') : '';
+            option.textContent = `✏️ ${header.no_pb} - ${header.supplier || '-'}${tanggal ? ` (${tanggal})` : ''}`;
+            select.appendChild(option);
+        });
+    }
+
+    async function muatDataPenerimaanTerpilih() {
+        const selectedNo = document.getElementById('selectNoPenerimaan').value;
+        if (!selectedNo || selectedNo === 'BARU') {
+            resetFormForNewFaktur();
+            return;
+        }
+
+        const button = document.getElementById('btnAmbilPenerimaan');
+        button.disabled = true;
+        button.innerText = '...';
+        try {
+            const { data: header, error: headerError } = await _supabase.from('pembelian_header').select('*').eq('toko_id', tokoIdGlobal).eq('no_pb', selectedNo).single();
+            if (headerError || !header) throw new Error('Data penerimaan tidak ditemukan!');
+            const { data: details, error: detailError } = await _supabase.from('pembelian_detail').select('*').eq('toko_id', tokoIdGlobal).eq('no_pb', selectedNo);
+            if (detailError) throw new Error('Gagal mengambil detail: ' + detailError.message);
+
+            isEditMode = true;
+            originalPenerimaanData = { header, details: details || [] };
+            document.getElementById('noFaktur').value = selectedNo;
+            if (header.created_at) document.getElementById('tglFaktur').value = new Date(header.created_at).toISOString().slice(0, 10);
+            const supplierId = header.agen_id || listAgenSupplier.find(s => getNamaAgen(s) === header.supplier)?.id;
+            document.getElementById('pilihSupplier').value = supplierId ? String(supplierId) : '';
+            filterBarangSupplier();
+            itemsTerima = [];
+            itemsRetur = [];
+            (details || []).forEach(detail => {
+                const master = listBarang.find(item => String(item.id) === String(detail.barang_id));
+                const qtyBase = Number(detail.qty) || 0;
+                const satuan = detail.satuan || 'Bal';
+                const item = {
+                    id_barang: detail.barang_id,
+                    barang: master?.nama_barang || detail.nama_barang || detail.barang_id,
+                    qty: qtyDariSatuanTerkecil(master, qtyBase, satuan),
+                    qty_base: qtyBase,
+                    satuan,
+                    harga: Number(detail.harga_satuan) || 0,
+                    total: Number(detail.subtotal) || 0
+                };
+                (detail.tipe === 'RETUR' ? itemsRetur : itemsTerima).push(item);
+            });
+            document.getElementById('inBayarCash').value = Number(header.bayar_cash || 0).toLocaleString('id-ID');
+            document.getElementById('inBayarTrf').value = Number(header.bayar_transfer || 0).toLocaleString('id-ID');
+            document.getElementById('cbBonFull').checked = Number(header.bayar_cash || 0) === 0 && Number(header.bayar_transfer || 0) === 0;
+            document.getElementById('notifEditMode').style.display = 'block';
+            await updateBonSupplierMobile();
+            togglePembayaranMobile();
+            render();
+            hitungTotal();
+            alert(`✅ Penerimaan ${selectedNo} berhasil dimuat. Silakan ubah data lalu simpan.`);
+        } catch (error) {
+            alert('❌ Gagal memuat penerimaan: ' + error.message);
+        } finally {
+            button.disabled = false;
+            button.innerText = '✏️ EDIT';
+        }
     }
 
     function filterBarangSupplier() {
@@ -472,6 +562,13 @@
         if (unit.includes('bal')) return jml * (cfg.packPerBal * cfg.pcsPerPack);
         if (unit.includes('pack')) return jml * cfg.pcsPerPack;
         return jml;
+    }
+
+    function qtyDariSatuanTerkecil(barang, qtyBase, satuan) {
+        const cfg = getBarangKonversi(barang);
+        const unit = (satuan || '').toLowerCase();
+        const pembagi = unit.includes('bal') ? cfg.packPerBal * cfg.pcsPerPack : unit.includes('pack') ? cfg.pcsPerPack : 1;
+        return pembagi > 0 ? (Number(qtyBase) || 0) / pembagi : Number(qtyBase) || 0;
     }
 
     function addItem() {
@@ -631,7 +728,10 @@
             }
 
             supplierTerpilih = supplier;
-            const hutang = Number(supplier.saldo_bon || 0);
+            let hutang = Number(supplier.saldo_bon || 0);
+            if (isEditMode && originalPenerimaanData && (String(originalPenerimaanData.header.agen_id) === String(supplier.id) || getNamaAgen(supplier) === originalPenerimaanData.header.supplier)) {
+                hutang -= Number(originalPenerimaanData.header.sisa_bon || 0);
+            }
             bonLamaVal = Math.abs(hutang);
 
             document.getElementById('lblBonLama').innerText = bonLamaVal.toLocaleString('id-ID');
@@ -814,24 +914,56 @@
         try {
             const bayarCash = getAngka('inBayarCash');
             const bayarTrf = getAngka('inBayarTrf');
-            const bonLama = supplierTerpilih ? Math.abs(Number(supplierTerpilih.saldo_bon || 0)) : (getAngka('inputBonLama') || 0);
+            let bonLama = supplierTerpilih ? Math.abs(Number(supplierTerpilih.saldo_bon || 0)) : (getAngka('inputBonLama') || 0);
+            if (isEditMode && originalPenerimaanData && supplierTerpilih && (String(originalPenerimaanData.header.agen_id) === String(supplierTerpilih.id) || supplierNama === originalPenerimaanData.header.supplier)) {
+                bonLama = Math.abs(Number(supplierTerpilih.saldo_bon || 0) - Number(originalPenerimaanData.header.sisa_bon || 0));
+            }
             const totalTagihanAkhir = grand + bonLama;
             const sisaBon = totalTagihanAkhir - bayarCash - bayarTrf;
 
-            const { error: errHeader } = await _supabase.from('pembelian_header').insert([{
-                id: noFaktur,
-                toko_id: tokoIdGlobal,
-                no_pb: noFaktur,
-                supplier: supplierNama,
-                agen_id: supplierTerpilih?.id || supplierId || null,
-                total_qty: totalQtyBase,
-                total_rupiah: grand,
-                bayar_cash: bayarCash,
-                bayar_transfer: bayarTrf,
-                sisa_bon: sisaBon,
-                created_at: new Date()
-            }]);
-            if (errHeader) throw new Error("Header: " + errHeader.message);
+            if (isEditMode && originalPenerimaanData) {
+                for (const oldDetail of originalPenerimaanData.details) {
+                    const { data: oldBarang } = await _supabase.from('barang').select('stok_sekarang').eq('id', oldDetail.barang_id).single();
+                    const oldQty = Number(oldDetail.qty) || 0;
+                    const delta = oldDetail.tipe === 'RETUR' ? oldQty : -oldQty;
+                    await _supabase.from('barang').update({ stok_sekarang: Number(oldBarang?.stok_sekarang || 0) + delta }).eq('id', oldDetail.barang_id);
+                }
+
+                const oldSupplier = originalPenerimaanData.header.supplier;
+                const oldSupplierData = listAgenSupplier.find(item => getNamaAgen(item) === oldSupplier);
+                if (oldSupplierData) {
+                    const { data: supplierRow } = await _supabase.from('agen').select('saldo_bon').eq('id', oldSupplierData.id).single();
+                    await _supabase.from('agen').update({ saldo_bon: Number(supplierRow?.saldo_bon || 0) - Number(originalPenerimaanData.header.sisa_bon || 0) }).eq('id', oldSupplierData.id);
+                }
+
+                const { error: errHeader } = await _supabase.from('pembelian_header').update({
+                    supplier: supplierNama,
+                    agen_id: supplierTerpilih?.id || supplierId || null,
+                    total_qty: totalQtyBase,
+                    total_rupiah: grand,
+                    bayar_cash: bayarCash,
+                    bayar_transfer: bayarTrf,
+                    sisa_bon: sisaBon
+                }).eq('toko_id', tokoIdGlobal).eq('no_pb', noFaktur);
+                if (errHeader) throw new Error("Header: " + errHeader.message);
+                const { error: errDelete } = await _supabase.from('pembelian_detail').delete().eq('toko_id', tokoIdGlobal).eq('no_pb', noFaktur);
+                if (errDelete) throw new Error("Hapus detail lama: " + errDelete.message);
+            } else {
+                const { error: errHeader } = await _supabase.from('pembelian_header').insert([{
+                    id: noFaktur,
+                    toko_id: tokoIdGlobal,
+                    no_pb: noFaktur,
+                    supplier: supplierNama,
+                    agen_id: supplierTerpilih?.id || supplierId || null,
+                    total_qty: totalQtyBase,
+                    total_rupiah: grand,
+                    bayar_cash: bayarCash,
+                    bayar_transfer: bayarTrf,
+                    sisa_bon: sisaBon,
+                    created_at: new Date()
+                }]);
+                if (errHeader) throw new Error("Header: " + errHeader.message);
+            }
 
             let counter = 1;
             
@@ -844,6 +976,7 @@
                     barang_id: item.id_barang,
                     qty: item.qty_base || item.qty,
                     satuan: item.satuan,
+                    tipe: 'TERIMA',
                     harga_satuan: item.harga,
                     subtotal: item.total
                 }]);
@@ -864,6 +997,7 @@
                     barang_id: item.id_barang,
                     qty: item.qty_base || item.qty,
                     satuan: item.satuan, 
+                    tipe: 'RETUR',
                     harga_satuan: item.harga,
                     subtotal: item.total
                 }]);

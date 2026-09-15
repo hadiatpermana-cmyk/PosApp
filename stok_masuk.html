@@ -223,17 +223,17 @@
     <div class="sidebar collapsed" id="sidebar">
         <div class="nav-menu">
             <a href="dashboard.html" class="nav-item">📊 Dashboard</a>
-                <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
-                <a href="barang.html" class="nav-item">📦 Master Barang</a>
-                <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
-                <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
-                <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
-                <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
-                <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
-                <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
-                <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
-                <a href="kontrol_bon_supplier.html" class="nav-item active">📉 Kontrol Bon Supplier</a>
-                <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
+            <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+            <a href="barang.html" class="nav-item">📦 Master Barang</a>
+            <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+            <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+            <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
+            <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+            <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
+            <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
+            <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
+            <a href="kontrol_bon_supplier.html" class="nav-item active">📉 Kontrol Bon Supplier</a>
+            <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
         </div>
     </div>
 
@@ -452,7 +452,7 @@
 
     function buatNoFaktur() {
         const d = new Date();
-        const uniqueId = Date.now() + Math.floor(1000 + Math.random() * 9000);
+        const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2, 7).toUpperCase();
         noFakturAktif = `PB-${uniqueId}`;
         document.getElementById('lblFaktur').innerText = noFakturAktif;
         document.getElementById('lblTanggal').innerText = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
@@ -506,7 +506,6 @@
         }
 
         try {
-            // Cari supplier dari array listAgenSupplier yang sudah di-filter
             let supplier = null;
             const khususSupplier = listAgenSupplier.filter(a => {
                 let tipe = (a.tipe_agen || a.type_agen || '').toLowerCase();
@@ -547,7 +546,6 @@
         }
     }
 
-    /* Filter Sidebar Permission */
     async function muatHakAksesFitur(tokoId) {
         try {
             const { data: perms } = await _supabase.from('store_page_permissions').select('page_id, is_active').eq('store_id', tokoId);
@@ -888,7 +886,11 @@
     async function eksekusiSimpan() {
         const namaSupplier = document.getElementById('inSupplier').value;
         const btn = document.getElementById('btnSimpan');
-        btn.disabled = true; btn.innerText = "MENYIMPAN & KONVERSI...";
+        
+        // Mencegah double click secara instan
+        if (btn.disabled) return;
+        btn.disabled = true; 
+        btn.innerText = "MENYIMPAN & KONVERSI...";
 
         try {
             let totalQtyPb = 0, totalRupiahPb = 0;
@@ -900,7 +902,6 @@
                 totalRupiahPb += item.total;
             }
 
-            // Ambil data pembayaran
             const bayarCash = getAngka('inBayarCash');
             const bayarTrf = getAngka('inBayarTrf');
             const bonLama = getAngka('inputBonLama') || 0;
@@ -1006,16 +1007,12 @@
                 if (errRetur) throw new Error("Pembelian Retur Detail: " + errRetur.message);
             }
 
-            // UPDATE SALDO BON SUPPLIER
-            // Gunakan ID supplier untuk memastikan update yang tepat
             if (supplierTerpilih && supplierTerpilih.id) {
                 await _supabase.from('agen').update({ saldo_bon: sisaBon }).eq('id', supplierTerpilih.id);
             } else {
-                // Fallback: filter by nama + tipe_agen jika ID tidak ada
                 await _supabase.from('agen').update({ saldo_bon: sisaBon }).eq('nama_agen', namaSupplier).filter('tipe_agen', 'ilike', '%supplier%');
             }
 
-            // --- MULAI PEMBUATAN STRUK DIGITAL ---
             btn.innerText = "MEMBUAT STRUK DIGITAL...";
             
             const dataStruk = {
@@ -1044,7 +1041,6 @@
             renderBon();
 
             await buatGambarLaporan(dataStruk);
-            // --- SELESAI PEMBUATAN STRUK DIGITAL ---
 
         } catch (e) { 
             console.error(e);
@@ -1102,7 +1098,6 @@
         htmlContent += `<div style="border-top: 2px dashed #000; margin: 8px 0;"></div>`;
         htmlContent += `<div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px;"><span>GRAND TOTAL BARANG:</span><span>Rp ${dataStruk.grandTotal.toLocaleString('id-ID')}</span></div>`;
         
-        // Tambah informasi pembayaran
         htmlContent += `<div style="border-top: 1px dashed #000; margin: 8px 0;"></div>`;
         if (dataStruk.bonLama > 0) {
             htmlContent += `<div style="display: flex; justify-content: space-between; font-size: 13px;"><span>BON LAMA (Hutang):</span><span>Rp ${dataStruk.bonLama.toLocaleString('id-ID')}</span></div>`;
@@ -1125,12 +1120,10 @@
         const canvas = await html2canvas(area, { scale: 2, backgroundColor: "#ffffff", logging: false });
         const imgUrl = canvas.toDataURL("image/jpeg", 0.9);
 
-        // --- AUTO-DOWNLOAD ---
         const linkDownload = document.createElement('a');
         linkDownload.download = `Faktur_${dataStruk.noFaktur}.jpg`;
         linkDownload.href = imgUrl;
         linkDownload.click();
-        // ---
 
         document.getElementById('imgPreviewLaporan').src = imgUrl;
         
@@ -1150,7 +1143,6 @@
 
     function tutupModalDanReset() {
         document.getElementById('modalPreviewStruk').style.display = 'none';
-        // Reset form pembayaran
         document.getElementById('inBayarCash').value = '0';
         document.getElementById('inBayarTrf').value = '0';
         document.getElementById('cbBonFull').checked = false;

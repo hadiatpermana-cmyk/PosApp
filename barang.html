@@ -311,10 +311,10 @@
         </div>
 
         <div style="display: flex; gap: 10px;">
-            <div class="form-group" style="flex: 1;"><label>Stok Min</label><input type="number" id="inStokMin" placeholder="0"></div>
-            <div class="form-group" style="flex: 1;"><label id="labelStokFisik">Stok Fisik (Total)</label><input type="number" id="inStok" placeholder="Total Satuan"></div>
+            <div class="form-group" style="flex: 1;"><label id="labelStokMin">Stok Minimum (Bal)</label><input type="number" id="inStokMin" placeholder="0" min="0" step="any"></div>
+            <div class="form-group" style="flex: 1;"><label id="labelStokFisik">Stok Fisik (Bal)</label><input type="number" id="inStok" placeholder="0" min="0" step="any"></div>
         </div>
-        <small style="color: var(--text-muted); display: block; margin-top: -10px; margin-bottom: 15px; font-size: 11px;">*Masukkan total keseluruhan fisik dalam satuan terkecil (Pcs/Lembar/Kg).</small>
+        <small id="hintStokMin" style="color: var(--text-muted); display: block; margin-top: -10px; margin-bottom: 15px; font-size: 11px;">Stok minimum dan stok fisik diisi dalam Bal. Sistem otomatis mengonversinya ke Pcs.</small>
 
         <div style="display: flex; gap: 10px;">
             <button class="btn-action" style="background:var(--text-muted); color:white; flex: 1;" onclick="tutupModal()">Tutup</button>
@@ -410,23 +410,45 @@
         const lblBox1 = document.getElementById('lblBox1');
         const lblBox2 = document.getElementById('lblBox2');
         const labelStok = document.getElementById('labelStokFisik');
+        const labelStokMin = document.getElementById('labelStokMin');
+        const hintStokMin = document.getElementById('hintStokMin');
         const containerPack = lblBox1.parentElement;
         
         if (jenis === 'kg') {
             boxKonversi.style.display = 'none';
             labelStok.innerText = 'Stok Fisik (Kg)';
+            labelStokMin.innerText = 'Stok Minimum (Kg)';
+            hintStokMin.innerText = 'Stok minimum dan stok fisik diisi dalam Kg.';
         } else if (jenis === 'lembar') {
             boxKonversi.style.display = 'block';
             containerPack.style.display = 'none'; 
             lblBox2.innerText = '1 Pack isi (Lembar):';
-            labelStok.innerText = 'Stok Fisik (Total Lembar)';
+            labelStok.innerText = 'Stok Fisik (Pack)';
+            labelStokMin.innerText = 'Stok Minimum (Pack)';
+            hintStokMin.innerText = 'Stok minimum dan stok fisik diisi dalam Pack. Sistem otomatis mengonversinya ke Lembar.';
         } else {
             boxKonversi.style.display = 'block';
             containerPack.style.display = 'block';
             lblBox1.innerText = '1 Bal = (Pack):';
             lblBox2.innerText = '1 Pack = (Pcs):';
-            labelStok.innerText = 'Stok Fisik (Total Pcs)';
+            labelStok.innerText = 'Stok Fisik (Bal)';
+            labelStokMin.innerText = 'Stok Minimum (Bal)';
+            hintStokMin.innerText = 'Stok minimum dan stok fisik diisi dalam Bal. Sistem otomatis mengonversinya ke Pcs.';
         }
+    }
+
+    function konversiStokMinimumKeDasar(nilaiKemasan, jenis, isiPack, isiPcs) {
+        const nilai = Number(nilaiKemasan) || 0;
+        if (jenis === 'kg') return nilai;
+        if (jenis === 'lembar') return nilai * (Number(isiPcs) || 1);
+        return nilai * (Number(isiPack) || 1) * (Number(isiPcs) || 1);
+    }
+
+    function konversiStokMinimumDariDasar(nilaiDasar, jenis, isiPack, isiPcs) {
+        const nilai = Number(nilaiDasar) || 0;
+        if (jenis === 'kg') return nilai;
+        if (jenis === 'lembar') return nilai / (Number(isiPcs) || 1);
+        return nilai / ((Number(isiPack) || 1) * (Number(isiPcs) || 1));
     }
 
     function formatRincianStok(nilaiAngka, barang) {
@@ -634,8 +656,8 @@
         document.getElementById('inSatuanJenis').value = data.satuan_jenis || 'pcs';
         document.getElementById('inIsiPack').value = data.isi_pack || 10;
         document.getElementById('inIsiPcs').value = data.isi_pcs || 12;
-        document.getElementById('inStokMin').value = data.stok_minimum || 0; 
-        document.getElementById('inStok').value = data.stok_sekarang || 0; 
+        document.getElementById('inStokMin').value = konversiStokMinimumDariDasar(data.stok_minimum, data.satuan_jenis || 'pcs', data.isi_pack, data.isi_pcs);
+        document.getElementById('inStok').value = konversiStokMinimumDariDasar(data.stok_sekarang, data.satuan_jenis || 'pcs', data.isi_pack, data.isi_pcs);
         toggleFormSatuan();
         document.getElementById('modalBarang').style.display = 'flex';
     }
@@ -663,8 +685,8 @@
                 satuan_jenis: satuanJenisVal,
                 isi_pack: satuanJenisVal === 'lembar' ? 1 : (parseInt(document.getElementById('inIsiPack').value) || 1),
                 isi_pcs: parseInt(document.getElementById('inIsiPcs').value) || 1,
-                stok_minimum: Number(document.getElementById('inStokMin').value) || 0, 
-                stok_sekarang: Number(document.getElementById('inStok').value) || 0 
+                stok_minimum: konversiStokMinimumKeDasar(document.getElementById('inStokMin').value, satuanJenisVal, document.getElementById('inIsiPack').value, document.getElementById('inIsiPcs').value), 
+                stok_sekarang: konversiStokMinimumKeDasar(document.getElementById('inStok').value, satuanJenisVal, document.getElementById('inIsiPack').value, document.getElementById('inIsiPcs').value)
             };
 
             let res;

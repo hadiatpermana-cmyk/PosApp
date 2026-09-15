@@ -254,10 +254,11 @@
             <span id="txtHargaBeliDasar" style="font-size: 15px;">Rp 0</span>
         </div>
 
+        <div id="infoKonversiHarga" style="display:none; background:var(--bg-main); border:1px dashed var(--border-line); padding:8px 12px; border-radius:6px; font-size:12px; margin-bottom:15px; color:var(--text-muted); font-weight:bold;"></div>
         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
-            <div class="form-group"><label>Harga Bal</label><input type="text" id="inBal" placeholder="0" oninput="formatRibuan(this)"></div>
-            <div class="form-group"><label>Harga Pack</label><input type="text" id="inPack" placeholder="0" oninput="formatRibuan(this)"></div>
-            <div class="form-group"><label>Harga Pcs</label><input type="text" id="inPcs" placeholder="0" oninput="formatRibuan(this)"></div>
+            <div class="form-group"><label>Harga Bal *</label><input type="text" id="inBal" placeholder="0" oninput="formatRibuan(this); hitungHargaTurunan()"></div>
+            <div class="form-group"><label>Harga Pack (Otomatis)</label><input type="text" id="inPack" placeholder="0" readonly style="background:var(--bg-main); color:var(--text-muted);"></div>
+            <div class="form-group"><label>Harga Pcs (Otomatis)</label><input type="text" id="inPcs" placeholder="0" readonly style="background:var(--bg-main); color:var(--text-muted);"></div>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 15px;">
             <button class="btn-action" style="background:var(--text-muted); color:white; flex: 1;" onclick="tutupModal()">Tutup</button>
@@ -289,6 +290,44 @@
     }
     function parseRupiah(str) { return str ? parseInt(str.toString().replace(/\./g, '')) || 0 : 0; }
 
+    function hitungHargaTurunan() {
+        const barangId = document.getElementById('inBarang').value;
+        const barang = listBarangCache.find(b => String(b.id) === String(barangId));
+        const hargaBal = parseRupiah(document.getElementById('inBal').value);
+        const info = document.getElementById('infoKonversiHarga');
+
+        if (!barang || hargaBal <= 0) {
+            document.getElementById('inPack').value = '';
+            document.getElementById('inPcs').value = '';
+            info.style.display = 'none';
+            return;
+        }
+
+        const jenis = barang.satuan_jenis || 'pcs';
+        const isiPack = Number(barang.isi_pack) || 1;
+        const isiPcs = Number(barang.isi_pcs) || 1;
+        let hargaPack = hargaBal;
+        let hargaPcs = hargaBal;
+        let keterangan = '';
+
+        if (jenis === 'kg') {
+            keterangan = 'Barang Kg: harga Pack/Pcs mengikuti harga Bal.';
+        } else if (jenis === 'lembar') {
+            hargaPack = Math.round(hargaBal / isiPack);
+            hargaPcs = Math.round(hargaPack / isiPcs);
+            keterangan = `1 Pack = ${isiPcs} Lembar`;
+        } else {
+            hargaPack = Math.round(hargaBal / isiPack);
+            hargaPcs = Math.round(hargaPack / isiPcs);
+            keterangan = `1 Bal = ${isiPack} Pack, 1 Pack = ${isiPcs} Pcs`;
+        }
+
+        document.getElementById('inPack').value = hargaPack.toLocaleString('id-ID');
+        document.getElementById('inPcs').value = hargaPcs.toLocaleString('id-ID');
+        info.innerText = `${keterangan} | Bal Rp ${hargaBal.toLocaleString('id-ID')} -> Pack Rp ${hargaPack.toLocaleString('id-ID')} -> Pcs Rp ${hargaPcs.toLocaleString('id-ID')}`;
+        info.style.display = 'block';
+    }
+
     function getTipeKontak(a) {
         return a.tipe_agen || a.type_agen || 'Agen';
     }
@@ -302,6 +341,7 @@
         document.getElementById('inBal').value = ''; 
         document.getElementById('inPack').value = ''; 
         document.getElementById('inPcs').value = ''; 
+        document.getElementById('infoKonversiHarga').style.display = 'none';
         document.getElementById('modalHarga').style.display = 'flex'; 
     }
 
@@ -421,6 +461,7 @@
             document.getElementById('inBal').value = '';
             document.getElementById('inPack').value = '';
             document.getElementById('inPcs').value = '';
+            document.getElementById('infoKonversiHarga').style.display = 'none';
         }
     }
 
@@ -435,6 +476,7 @@
             document.getElementById('inBal').value = '';
             document.getElementById('inPack').value = '';
             document.getElementById('inPcs').value = '';
+            document.getElementById('infoKonversiHarga').style.display = 'none';
             return;
         }
 
@@ -458,8 +500,7 @@
 
         if (existingHarga) {
             document.getElementById('inBal').value = existingHarga.harga_bal ? parseInt(existingHarga.harga_bal).toLocaleString('id-ID') : '';
-            document.getElementById('inPack').value = existingHarga.harga_pack ? parseInt(existingHarga.harga_pack).toLocaleString('id-ID') : '';
-            document.getElementById('inPcs').value = existingHarga.harga_pcs ? parseInt(existingHarga.harga_pcs).toLocaleString('id-ID') : '';
+            hitungHargaTurunan();
             editId = existingHarga.id;
             document.getElementById('modalTitle').innerText = 'Edit Harga Khusus';
         } else {
@@ -467,11 +508,13 @@
             document.getElementById('modalTitle').innerText = 'Set Harga Khusus Baru';
             if (labelTipe.includes('supplier') && !labelTipe.includes('agen') && hargaBeliDasar > 0) {
                 document.getElementById('inBal').value = parseInt(hargaBeliDasar).toLocaleString('id-ID');
+                hitungHargaTurunan();
             } else {
                 document.getElementById('inBal').value = '';
             }
             document.getElementById('inPack').value = '';
             document.getElementById('inPcs').value = '';
+            document.getElementById('infoKonversiHarga').style.display = 'none';
         }
     }
 
@@ -571,8 +614,7 @@
         filterBarangAgen(data.barang_id);
 
         document.getElementById('inBal').value = data.harga_bal ? parseInt(data.harga_bal).toLocaleString('id-ID') : ''; 
-        document.getElementById('inPack').value = data.harga_pack ? parseInt(data.harga_pack).toLocaleString('id-ID') : ''; 
-        document.getElementById('inPcs').value = data.harga_pcs ? parseInt(data.harga_pcs).toLocaleString('id-ID') : ''; 
+        hitungHargaTurunan();
         document.getElementById('modalHarga').style.display = 'flex';
     }
 

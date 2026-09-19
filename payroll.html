@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Payroll Produksi - PosApp</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="tailwind.css">
@@ -339,9 +340,12 @@
         </div>
         <div class="modal-body" id="modalPreviewBody"></div>
         <div class="modal-footer">
-            <button class="btn-action" style="background: var(--text-muted); padding: 8px 15px;" onclick="document.getElementById('modalPreview').style.display='none'">Tutup</button>
-            <button class="btn-action" style="background: #2563eb; padding: 8px 15px;" onclick="cetakBluetoothDirect()">🖨️ Cetak Bluetooth</button>
-        </div>
+    <button class="btn-action" style="background: var(--text-muted); padding: 8px 15px;" onclick="document.getElementById('modalPreview').style.display='none'">Tutup</button>
+    <button class="btn-action" style="background: #16a34a; padding: 8px 15px;" onclick="downloadStrukImage()">📥 Unduh Gambar</button>
+    <button class="btn-action" style="background: #25d366; padding: 8px 15px;" onclick="kirimStrukWhatsApp()">📱 Kirim WA</button>
+    <button class="btn-action" style="background: #2563eb; padding: 8px 15px;" onclick="cetakBluetoothDirect()">🖨️ Cetak Bluetooth</button>
+</div>
+
     </div>
 </div>
 
@@ -1719,6 +1723,54 @@ async function simpanRiwayatGajiToDB(payloadGaji) {
             alert("Reprint Gagal: " + e.message);
         }
     }
+
+// Fungsi untuk Mengubah Preview Struk Menjadi Gambar dan Mengunduhnya
+async function downloadStrukImage() {
+    let previewElement = document.getElementById('previewContainer') || document.querySelector('#modalPreviewBody div[style*="background: #ffffff"]');
+    if (!previewElement) {
+        alert("Area struk tidak ditemukan!");
+        return;
+    }
+
+    try {
+        // Menggunakan html2canvas untuk merender elemen HTML menjadi gambar
+        let canvas = await html2canvas(previewElement, { scale: 2 });
+        let imageLink = document.createElement('a');
+        imageLink.href = canvas.toDataURL('image/png');
+        imageLink.imageName = 'Slip-Gaji-Karyawan.png';
+        imageLink.download = 'Slip-Gaji-Karyawan.png';
+        imageLink.click();
+        alert("✅ Gambar slip gaji berhasil diunduh!");
+    } catch (e) {
+        alert("Gagal mengunduh gambar: " + e.message);
+    }
+}
+
+// Fungsi untuk Membagikan Struk via WhatsApp (Teks / Link Pesan)
+function kirimStrukWhatsApp() {
+    let previewElement = document.querySelector('#modalPreviewBody div[style*="background: #ffffff"]');
+    if (!previewElement) {
+        alert("Data slip tidak ditemukan!");
+        return;
+    }
+
+    // Mengambil teks dari elemen preview secara rapi untuk dikirim via teks WA
+    let textStruk = previewElement.innerText || "Slip Gaji Karyawan";
+    
+    // Opsional: Minta nomor WhatsApp karyawan tujuan
+    let noWa = prompt("Masukkan Nomor WhatsApp Karyawan (Contoh: 628123456789):", "");
+    if (!noWa) return;
+
+    // Format nomor HP (pastikan diawali kode negara 62)
+    if (noWa.startsWith('0')) {
+        noWa = '62' + noWa.slice(1);
+    }
+
+    let encodedMessage = encodeURIComponent("Halo, berikut adalah slip gaji digital Anda:\n\n" + textStruk);
+    let waUrl = `https://wa.me/${noWa}?text=${encodedMessage}`;
+    
+    window.open(waUrl, '_blank');
+}
 
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }
 

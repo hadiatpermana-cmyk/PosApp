@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard Admin - PosApp</title>
+    <title>Dashboard Admin</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="tailwind.css">
     <style>
         :root { 
             --bg-main: #f8f9fa; --bg-card: #ffffff; --text-main: #2d3436; --text-muted: #888888; --border-line: #e0e0e0;
@@ -47,27 +46,6 @@
         .stat-icon { position: absolute; right: -5px; bottom: -5px; font-size: 60px; opacity: 0.2; transform: rotate(-10deg); }
         
         .section-title { font-size: 13px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; flex-shrink: 0; }
-        .dashboard-menu-toggle {
-            display: flex;
-            width: 100%;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 10px 12px;
-            border: 1px solid var(--border-line);
-            border-radius: 8px;
-            background: var(--bg-card);
-            color: var(--text-main);
-            cursor: pointer;
-            font: inherit;
-            font-size: 13px;
-            font-weight: bold;
-            text-align: left;
-            text-transform: uppercase;
-        }
-        .dashboard-menu-toggle:hover { background: var(--bg-main); }
-        .dashboard-menu-toggle .menu-chevron { transition: transform 0.2s ease; }
-        .dashboard-menu-toggle[aria-expanded="true"] .menu-chevron { transform: rotate(180deg); }
         .menu-grid { 
     display: grid; 
     /* Default untuk layar sedang/kecil (misal 2 atau 3 kolom) */
@@ -90,7 +68,6 @@
     }
 }
         .menu-card { background: var(--bg-card); border-radius: 10px; padding: 12px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; border: 1px solid var(--border-line); text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        .menu-grid[hidden] { display: none !important; }
         .menu-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
         .icon-yellow { background: #fff8e1; color: #ffc107; } .icon-blue { background: #e3f2fd; color: #2196f3; } .icon-green { background: #e8f5e9; color: #4caf50; } .icon-pink { background: #fce4ec; color: #e91e63; } .icon-orange { background: #fff3e0; color: #ff9800; } .icon-purple { background: #f3e5f5; color: #9c27b0; }
         .menu-text h4 { margin: 0 0 2px 0; font-size: 14px; color: var(--text-main); }
@@ -183,7 +160,19 @@
     70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
-	</style>
+
+        /* --- PANEL KEUANGAN (khusus akun terpilih) --- */
+        #panelKeuangan { display:none; flex-direction:column; gap:12px; flex-shrink:0; }
+        .keu-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:15px; }
+        .keu-card { background:var(--bg-card); border:1px solid var(--border-line); border-radius:12px; padding:16px; box-shadow:0 4px 10px rgba(0,0,0,0.05); }
+        .keu-card h4 { margin:0 0 10px; font-size:14px; color:var(--p-color); }
+        .keu-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed var(--border-line); font-size:13px; }
+        .keu-row:last-child { border-bottom:none; }
+        .keu-total { font-weight:bold; font-size:15px; }
+        .keu-mini { width:100%; font-size:12px; margin-top:8px; border-collapse:collapse; }
+        .keu-mini td { padding:4px 0; border-bottom:1px solid var(--border-line); background:transparent; border-right:none; }
+        .pos { color:var(--green); } .neg { color:var(--red); }
+    </style>
 </head>
 <body>
 
@@ -213,17 +202,16 @@
     <div class="sidebar collapsed" id="sidebar">
         <div class="nav-menu">
             <a href="dashboard.html" class="nav-item active">📊 Dashboard</a>
-                <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
-                <a href="barang.html" class="nav-item">📦 Master Barang</a>
-                <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
-                <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
-                <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
-                <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
-                <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
-                <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
-                <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
-                <a href="kontrol_bon_supplier.html" class="nav-item">📉 Kontrol Bon Supplier</a>
-                <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
+             <a href="agen.html" class="nav-item">👥 Master Agen & Supplier</a>
+             <a href="barang.html" class="nav-item">📦 Master Barang</a>
+             <a href="harga_agen.html" class="nav-item">🏷️ Setting Harga Khusus</a>
+             <a href="stok_masuk.html" class="nav-item">📥 Stok Masuk</a>
+            <a href="stok_keluar.html" class="nav-item">📤 Stok Keluar Bahan</a>
+             <a href="pos_kasir.html" class="nav-item">🛒 POS Kasir</a>
+             <a href="laporan.html" class="nav-item">📈 Pusat Laporan</a>
+             <a href="buku_kas.html" class="nav-item">📖 Buku Kas</a>
+             <a href="payroll.html" class="nav-item">💵 Payroll & Produksi</a>
+             <a href="pengaturan.html" class="nav-item">⚙️ Pengaturan Toko</a>
         </div>
     </div>
 
@@ -236,11 +224,33 @@
             <div class="stat-card green"><div class="stat-label">Total Kontak / Agen</div><div class="stat-value" id="valTotalAgen">0</div><div class="stat-icon">👥</div></div>
         </div>
 
-        <button type="button" class="dashboard-menu-toggle" id="btnDashboardMenu" aria-expanded="false" aria-controls="dashboardMenu" onclick="toggleDashboardMenu()">
-            <span>🔧 Menu Utama</span>
-            <span class="menu-chevron" aria-hidden="true">⌄</span>
-        </button>
-        <div class="menu-grid" id="dashboardMenu" hidden>
+        <div id="panelKeuangan">
+            <div class="card-header-flex" style="margin-bottom:0;">
+                <div class="section-title">💰 Ringkasan Keuangan</div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;">
+                    <input type="date" id="keuDari" class="filter-select" onchange="hitungPanelKeuangan()">
+                    <span>s/d</span>
+                    <input type="date" id="keuSampai" class="filter-select" onchange="hitungPanelKeuangan()">
+                </div>
+            </div>
+            <div class="keu-grid">
+                <div class="keu-card">
+                    <h4>📈 Laba Rugi (periode)</h4>
+                    <div class="keu-row"><span>Total Omzet</span><b id="keuOmzet">Rp 0</b></div>
+                    <div class="keu-row"><span>Total HPP (Modal Bal)</span><b id="keuHpp" style="color:orange;">Rp 0</b></div>
+                    <div class="keu-row keu-total"><span>Laba Bersih</span><span id="keuLaba">Rp 0</span></div>
+                </div>
+                <div class="keu-card">
+                    <h4>📖 Buku Kas (periode)</h4>
+                    <div class="keu-row"><span>Pemasukan</span><b class="pos" id="keuMasuk">Rp 0</b></div>
+                    <div class="keu-row"><span>Pengeluaran</span><b class="neg" id="keuKeluar">Rp 0</b></div>
+                    <div class="keu-row keu-total"><span>Saldo Akhir Periode</span><span id="keuSaldo">Rp 0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">🔧 Menu Utama</div>
+        <div class="menu-grid">
     <a href="barang.html" class="menu-card"><div class="menu-icon icon-yellow">🗃️</div><div class="menu-text"><h4>Master Barang</h4><p>Kelola stok & supplier</p></div></a>
     <a href="stok_masuk.html" class="menu-card"><div class="menu-icon icon-blue">📥</div><div class="menu-text"><h4>Stok Masuk</h4><p>Input barang dari supplier</p></div></a>
     <a href="stok_keluar.html" class="menu-card"><div class="menu-icon icon-blue">📥</div><div class="menu-text"><h4>Stok keluar bahan baku</h4><p>Input keluar barang dari gudang</p></div></a>
@@ -251,8 +261,8 @@
     <a href="payroll.html" class="menu-card"><div class="menu-icon icon-orange">💵</div><div class="menu-text"><h4>PayRoll</h4><p>Transaksi Penggajian</p></div></a>
     <a href="laporan.html" class="menu-card"><div class="menu-icon icon-purple">📑</div><div class="menu-text"><h4>Laporan</h4><p>Analisis omset & laba</p></div></a>
     <a href="pengaturan.html" class="menu-card"><div class="menu-icon icon-orange">⚙️</div><div class="menu-text"><h4>Pengaturan</h4><p>Setting Toko</p></div></a>
-    <a href="bayar_bon.html" class="menu-card"><div class="menu-icon icon-orange">📔 </div><div class="menu-text"><h4>Bayar Bon</h4><p> input Pelunasan atau cicilan tagihan</p></div></a>
-    <a href="kontrol_bon_supplier.html" class="menu-card"><div class="menu-icon icon-orange">📉</div><div class="menu-text"><h4>Kontrol Bon</h4><p>Supplier Toko</p></div></a>
+    <a href="Bayar_bon.html" class="menu-card"><div class="menu-icon icon-orange">📔 </div><div class="menu-text"><h4>Bayar Bon</h4><p> input Pelunasan atau cicilan tagihan</p></div></a>
+
         </div>
 
         <div class="card">
@@ -298,13 +308,6 @@
     function toggleTheme() { let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('themeMode', t); document.getElementById('btnThemeToggle').innerText = t === 'dark' ? '☀️' : '🌙'; }
     initTheme();
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
-    function toggleDashboardMenu() {
-        const button = document.getElementById('btnDashboardMenu');
-        const menu = document.getElementById('dashboardMenu');
-        const isExpanded = button.getAttribute('aria-expanded') === 'true';
-        button.setAttribute('aria-expanded', String(!isExpanded));
-        menu.hidden = isExpanded;
-    }
 
     function getKonversiBarang(barang) {
         const jenis = (barang?.satuan_jenis || 'pcs').toLowerCase();
@@ -352,7 +355,7 @@
             if (!sessionData.session) return window.location.replace("index.html");
             const userId = sessionData.session.user.id;
 
-            const { data: profile } = await _supabase.from('profiles').select('toko_id, nama_lengkap, role').eq('id', userId).single();
+            const { data: profile } = await _supabase.from('profiles').select('*').eq('id', userId).single();
             profileTokoId = profile.toko_id;
             
             const { data: toko } = await _supabase.from('toko').select('*').eq('id', profileTokoId).single();
@@ -374,6 +377,11 @@
 
             renderTabelKrisis();
             document.getElementById('loader').style.display = 'none';
+
+            // Panel keuangan: hanya untuk TOKO terpilih (toko.lihat_keuangan = true), bukan karyawan. Superadmin selalu boleh.
+            const r = (profile.role || profile.tipe_user || '').toLowerCase();
+            const boleh = r === 'superadmin' || r === 'administrator' || (toko.lihat_keuangan === true && r !== 'karyawan');
+            if (boleh) muatPanelKeuangan();
         } catch (e) {
             alert("Error: " + e.message);
             prosesLogout();
@@ -408,6 +416,94 @@
                 `;
             }).join('');
         }
+    }
+
+
+    // ===== PANEL KEUANGAN =====
+    const rp = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+    const tglStr = o => String(o.tanggal || o.created_at || o.tgl_transaksi || '').split('T')[0];
+    function qtyKeBasisPcs(qty, satuan, b) {
+        const j = Number(qty) || 0; if (!b) return j;
+        const k = getKonversiBarang(b), u = (satuan || '').toLowerCase();
+        if (k.jenis === 'kg') return j;
+        if (u.includes('bal')) return j * k.packPerBal * k.pcsPerPack;
+        if (u.includes('pack')) return j * k.pcsPerPack;
+        return j;
+    }
+    function qtyKeBal(qty, satuan, b) {
+        const j = Number(qty) || 0; if (!b) return j;
+        const k = getKonversiBarang(b), tot = k.packPerBal * k.pcsPerPack, u = (satuan || '').toLowerCase();
+        if (u.includes('bal')) return j;
+        if (u.includes('pack')) return j / k.packPerBal;
+        return tot > 0 ? j / tot : 0;
+    }
+    let keuData = null;
+    const fmtLokal = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    async function muatPanelKeuangan() {
+        try {
+            const t = profileTokoId;
+            const [kas, pb, kirim, det, brg] = await Promise.all([
+                _supabase.from('kas_manual').select('*').eq('toko_id', t),
+                _supabase.from('pembelian_header').select('*').eq('toko_id', t),
+                _supabase.from('transaksi_pengiriman').select('*').eq('toko_id', t),
+                _supabase.from('transaksi_pengiriman_detail').select('*').eq('toko_id', t),
+                _supabase.from('barang').select('*').eq('toko_id', t)
+            ]);
+            keuData = {
+                kas: (kas.data || []).filter(k => (k.kategori_kas || 'ADMIN') !== 'KARYAWAN'),
+                pb: pb.data || [], kirim: kirim.data || [], det: det.data || [], brg: brg.data || []
+            };
+            const now = new Date();
+            document.getElementById('keuDari').value = fmtLokal(new Date(now.getFullYear(), now.getMonth(), 1));
+            document.getElementById('keuSampai').value = fmtLokal(now);
+            document.getElementById('panelKeuangan').style.display = 'flex';
+            hitungPanelKeuangan();
+        } catch (e) { console.error('Panel keuangan gagal dimuat:', e); }
+    }
+    function hitungPanelKeuangan() {
+        if (!keuData) return;
+        const { kas: dKas, pb: dPb, kirim: dKirim, det: dDet, brg: dBrg } = keuData;
+        const dari = document.getElementById('keuDari').value || '0000-00-00';
+        const sampai = document.getElementById('keuSampai').value || '9999-99-99';
+        const dalamPeriode = o => { const d = tglStr(o); return d >= dari && d <= sampai; };
+        const sebelumAkhir = o => tglStr(o) <= sampai;
+        const nomKas = k => Number(k.jumlah || k.nominal || 0);
+        const nomPb = x => Number(x.total_rupiah || x.total || x.jumlah || 0);
+        const nomKirim = x => Number(x.total_kirim || x.total || x.grand_total || x.jumlah || 0);
+
+        // Laba rugi (sama dengan laporan.html)
+        const kirimP = dKirim.filter(dalamPeriode);
+        const omzet = kirimP.reduce((a, k) => a + Number(k.total_kirim || 0), 0);
+        const ids = new Set(kirimP.map(k => String(k.id))), notas = new Set(kirimP.map(k => String(k.no_nota)));
+        let hpp = 0;
+        dDet.forEach(d => {
+            const pId = String(d.pengiriman_id || d.transaksi_pengiriman_id || d.id_pengiriman || '');
+            if (!(ids.has(pId) || notas.has(String(d.no_nota || '')))) return;
+            const bId = d.barang_id || d.id_barang || d.barangId, bNama = (d.nama_barang || d.namabarang || '').trim().toLowerCase();
+            const b = dBrg.find(x => (bId && (String(x.id) === String(bId) || String(x.id_barang) === String(bId))) || (bNama && x.nama_barang && x.nama_barang.trim().toLowerCase() === bNama));
+            const harga = b ? Number(b.harga_beli_dasar || 0) : Number(d.harga_beli_dasar || 0);
+            const pcs = qtyKeBasisPcs(d.qty || d.jumlah || 0, d.satuan || b?.satuan_jenis || 'pcs', b);
+            hpp += harga * qtyKeBal(pcs, 'pcs', b);
+        });
+        const laba = omzet - hpp;
+        document.getElementById('keuOmzet').innerText = rp(omzet);
+        document.getElementById('keuHpp').innerText = rp(hpp);
+        const elLaba = document.getElementById('keuLaba');
+        elLaba.innerText = rp(laba); elLaba.className = laba < 0 ? 'neg' : 'pos';
+
+        // Buku kas (sama dengan tab Admin di buku_kas.html)
+        let masuk = 0, keluar = 0, saldo = 0;
+        dKas.forEach(k => {
+            const n = nomKas(k), m = k.jenis === 'MASUK', kl = k.jenis === 'KELUAR';
+            if (sebelumAkhir(k)) saldo += m ? n : (kl ? -n : 0);
+            if (dalamPeriode(k)) { if (m) masuk += n; else if (kl) keluar += n; }
+        });
+        dPb.forEach(x => { const n = nomPb(x); if (sebelumAkhir(x)) saldo -= n; if (dalamPeriode(x)) keluar += n; });
+        dKirim.forEach(x => { const n = nomKirim(x); if (n <= 0) return; if (sebelumAkhir(x)) saldo += n; if (dalamPeriode(x)) masuk += n; });
+        document.getElementById('keuMasuk').innerText = rp(masuk);
+        document.getElementById('keuKeluar').innerText = rp(keluar);
+        const elS = document.getElementById('keuSaldo');
+        elS.innerText = rp(saldo); elS.className = saldo < 0 ? 'neg' : 'pos';
     }
 
     async function prosesLogout() { await _supabase.auth.signOut(); window.location.replace("index.html"); }

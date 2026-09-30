@@ -428,7 +428,7 @@
                     harga: Number(detail.harga_satuan) || 0,
                     total: Number(detail.subtotal) || 0
                 };
-                (detail.tipe === 'RETUR' ? itemsRetur : itemsTerima).push(item);
+                ((detail.status || detail.tipe) === 'RETUR' ? itemsRetur : itemsTerima).push(item);
             });
             document.getElementById('inBayarCash').value = Number(header.bayar_cash || 0).toLocaleString('id-ID');
             document.getElementById('inBayarTrf').value = Number(header.bayar_transfer || 0).toLocaleString('id-ID');
@@ -925,7 +925,8 @@
                 for (const oldDetail of originalPenerimaanData.details) {
                     const { data: oldBarang } = await _supabase.from('barang').select('stok_sekarang').eq('id', oldDetail.barang_id).single();
                     const oldQty = Number(oldDetail.qty) || 0;
-                    const delta = oldDetail.tipe === 'RETUR' ? oldQty : -oldQty;
+                    const tipeDetailLama = oldDetail.status || oldDetail.tipe;
+                    const delta = tipeDetailLama === 'RETUR' ? oldQty : -oldQty;
                     await _supabase.from('barang').update({ stok_sekarang: Number(oldBarang?.stok_sekarang || 0) + delta }).eq('id', oldDetail.barang_id);
                 }
 
@@ -1031,7 +1032,7 @@
                 p += `\x1B\x21\x00\x1B\x45\x00${alamatTokoGlobal}\n${garisStrip}`; 
                 p += `\x1B\x45\x01FAKTUR PENERIMAAN BARANG\x1B\x45\x00\n${garisStrip}`;
                 p += `\x1B\x61\x00` + buatBaris(`NO: ${noFaktur}`, `TGL: ${tglIndo}`); 
-                p += buatBaris(`SPL: ${supplier}`, `OPR: ${penerima}`) + garisStrip;
+                p += buatBaris(`SPL: ${supplierNama}`, `OPR: ${penerima}`) + garisStrip;
                 
                 if(itemsTerima.length > 0) {
                     p += `\x1B\x45\x01DITERIMA:\x1B\x45\x00\n`;

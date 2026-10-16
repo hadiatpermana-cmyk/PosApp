@@ -346,4 +346,380 @@ if ('serviceWorker' in navigator) {
     }
 </script>
 </body>
+</html><!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Store - Login</title>
+    
+    <!-- PENGATURAN PWA (STANDALONE) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#dde1e7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Store POS">
+    <!-- --------------------------- -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap"/>
+    <!-- CDN Font Awesome 6 Terbaru -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        html, body {
+            height: 100%;
+        }
+        body {
+            display: grid;
+            place-items: center;
+            background: #dde1e7;
+            text-align: center;
+            padding: 20px 0;
+        }
+        .content {
+            width: 100%;
+            max-width: 380px;
+            padding: 35px 30px;
+            background: #dde1e7;
+            border-radius: 15px;
+            box-shadow: -3px -3px 7px #ffffff73,
+                        2px 2px 5px rgba(94,104,121,0.288);
+        }
+        .content .text {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #595959;
+            text-transform: uppercase;
+        }
+        .content .text span {
+            color: #3498db;
+        }
+        .field {
+            height: 50px;
+            width: 100%;
+            display: flex;
+            position: relative;
+            margin-top: 15px;
+        }
+        .field input {
+            height: 100%;
+            width: 100%;
+            padding-left: 45px;
+            padding-right: 15px;
+            outline: none;
+            border: none;
+            font-size: 15px;
+            background: #dde1e7;
+            color: #595959;
+            border-radius: 25px;
+            box-shadow: inset 2px 2px 5px #BABECC,
+                        inset -5px -5px 10px #ffffff73;
+        }
+        .field input:focus {
+            box-shadow: inset 1px 1px 2px #BABECC,
+                        inset -1px -1px 2px #ffffff73;
+        }
+        .field span.icon {
+            position: absolute;
+            color: #595959;
+            width: 45px;
+            height: 100%;
+            line-height: 50px;
+            left: 0;
+            top: 0;
+            text-align: center;
+            pointer-events: none;
+        }
+        .btn-auth {
+            margin: 20px 0 10px 0;
+            width: 100%;
+            height: 50px;
+            font-size: 16px;
+            line-height: 50px;
+            font-weight: 600;
+            background: #dde1e7;
+            border-radius: 25px;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            color: #595959;
+            box-shadow: 2px 2px 5px #BABECC,
+                       -5px -5px 10px #ffffff73;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+        .btn-auth:focus, .btn-auth:active {
+            color: #3498db;
+            box-shadow: inset 2px 2px 5px #BABECC,
+                        inset -5px -5px 10px #ffffff73;
+        }
+        .sign-up {
+            margin: 15px 0 5px 0;
+            color: #595959;
+            font-size: 14px;
+        }
+        .sign-up a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .sign-up a:hover {
+            text-decoration: underline;
+        }
+        .hint-text {
+            color: #7f8c8d;
+            font-size: 11px;
+            margin-top: 5px;
+            display: block;
+            text-align: left;
+            padding-left: 10px;
+        }
+        .msg-box {
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            display: none;
+            font-weight: 600;
+            text-align: center;
+        }
+        .msg-error {
+            background: #ffe3e3;
+            color: #c53030;
+            box-shadow: inset 1px 1px 3px #e0b0b0, inset -2px -2px 5px #ffffff;
+        }
+        .msg-success {
+            background: #e3f9e5;
+            color: #22543d;
+            box-shadow: inset 1px 1px 3px #b0e0b5, inset -2px -2px 5px #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="content">
+    <div class="text" id="authTitle">Store<span>digital</span> POS</div>
+    
+    <div id="msgBox" class="msg-box"></div>
+
+    <!-- FORM LOGIN -->
+    <div id="formLogin">
+        <div class="field">
+            <input type="email" id="loginEmail" placeholder="Email Pengguna" required>
+            <span class="icon fas fa-envelope"></span>
+        </div>
+        <div class="field">
+            <input type="password" id="loginPassword" placeholder="Kata Sandi" required>
+            <span class="icon fas fa-lock"></span>
+        </div>
+        
+        <button class="btn-auth" onclick="prosesLogin()">Masuk Aplikasi</button>
+
+        <div class="sign-up" style="margin-top: 8px;">
+            <a onclick="prosesLupaPassword()">Lupa kata sandi?</a>
+        </div>
+        
+        <div class="sign-up">
+            Belum punya akun? <a onclick="tukarForm(true)">Daftar Karyawan</a>
+        </div>
+    </div>
+
+    <!-- FORM PENDAFTARAN KARYAWAN -->
+    <div id="formDaftar" style="display: none;">
+        <div id="boxFormKaryawan">
+            <div class="field">
+                <input type="text" id="regIdToko" placeholder="ID / Kode Toko" style="font-weight: bold; text-transform: uppercase;">
+                <span class="icon fas fa-store"></span>
+            </div>
+            <small class="hint-text">*Minta Kode/ID Toko dari Admin utama Anda jika belum terisi otomatis.</small>
+        </div>
+
+        <div class="field">
+            <input type="text" id="regNamaLengkap" placeholder="Nama Lengkap Anda">
+            <span class="icon fas fa-user"></span>
+        </div>
+        <div class="field">
+            <input type="email" id="regEmail" placeholder="Email Pendaftaran">
+            <span class="icon fas fa-envelope"></span>
+        </div>
+        <div class="field">
+            <input type="password" id="regPassword" placeholder="Kata Sandi (Min. 6 Karakter)">
+            <span class="icon fas fa-lock"></span>
+        </div>
+
+        <button class="btn-auth" style="color: #27ae60;" onclick="prosesRegistrasi()">Daftarkan Akun</button>
+        
+        <div class="sign-up">
+            Sudah memiliki akun? <a onclick="tukarForm(false)">Login di sini</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- SCRIPT REGISTRASI SERVICE WORKER (AUTOMATIC UPDATE) ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').then(reg => {
+            console.log('Service Worker terdaftar!', reg.scope);
+            // Paksa cek update ke server setiap kali halaman dibuka
+            reg.update();
+        }).catch(err => console.error('Gagal mendaftar Service Worker', err));
+
+        // Reload otomatis jika Service Worker baru aktif
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                window.location.reload();
+            }
+        });
+    });
+}
+// -----------------------------------------------------------
+
+    const SB_URL = "https://fwmeuhqimqccjweabubx.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWV1aHFpbXFjY2p3ZWFidWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTE5MDUsImV4cCI6MjA5NjcyNzkwNX0.og_qhG-b2Lv1lx1Rvq3k0BvdgfdIbqG_XDWUuBCeIno";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    function tampilkanPesan(teks, tipe) {
+        const box = document.getElementById('msgBox');
+        box.innerText = teks;
+        box.style.display = 'block';
+        box.className = 'msg-box ' + (tipe === 'error' ? 'msg-error' : 'msg-success');
+    }
+
+    async function muatIdTokoOtomatis() {
+        try {
+            const { data: sessionData } = await _supabase.auth.getSession();
+            if (sessionData && sessionData.session) {
+                const { data: profile } = await _supabase.from('profiles').select('toko_id').eq('id', sessionData.session.user.id).single();
+                if (profile && profile.toko_id) {
+                    document.getElementById('regIdToko').value = profile.toko_id;
+                }
+            }
+        } catch (e) {
+            console.error("Gagal memuat ID toko otomatis:", e);
+        }
+    }
+
+    function tukarForm(keDaftar) {
+        document.getElementById('msgBox').style.display = 'none';
+        if (keDaftar) {
+            document.getElementById('formLogin').style.display = 'none';
+            document.getElementById('formDaftar').style.display = 'block';
+            document.getElementById('authTitle').innerHTML = "DAFTAR<span> KARYAWAN</span>";
+            muatIdTokoOtomatis(); 
+        } else {
+            document.getElementById('formLogin').style.display = 'block';
+            document.getElementById('formDaftar').style.display = 'none';
+            document.getElementById('authTitle').innerHTML = "Store<span>digital</span> POS";
+        }
+    }
+
+    async function prosesRegistrasi() {
+        const namaLengkap = document.getElementById('regNamaLengkap').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        const idTokoFinal = document.getElementById('regIdToko').value.trim();
+
+        if (!namaLengkap || !email || !password || !idTokoFinal) {
+            return tampilkanPesan("Semua kolom wajib harus diisi termasuk ID Toko!", "error");
+        }
+
+        try {
+            // Validasi apakah ID Toko benar-benar ada di database
+            const { data: cekToko, error: errCek } = await _supabase.from('toko')
+                .select('id')
+                .eq('id', idTokoFinal)
+                .single();
+            if (errCek || !cekToko) throw new Error("ID Toko aktif tidak valid atau tidak ditemukan di database.");
+
+            // Daftarkan Akun ke Supabase Auth
+            const { data: dataAuth, error: errAuth } = await _supabase.auth.signUp({ email, password });
+            if (errAuth) throw errAuth;
+            if (!dataAuth.user) throw new Error("Registrasi gagal. Cek format email Anda.");
+
+            // Masukkan data ke tabel Profiles dengan role karyawan
+            const { error: errProfile } = await _supabase.from('profiles').insert([{
+                id: dataAuth.user.id,
+                toko_id: idTokoFinal,
+                nama_lengkap: namaLengkap,
+                role: 'karyawan'
+            }]);
+            if (errProfile) throw errProfile;
+
+            tampilkanPesan("✅ Pendaftaran Karyawan Berhasil! Silakan login.", "success");
+            setTimeout(() => tukarForm(false), 2000);
+
+        } catch (e) {
+            tampilkanPesan("❌ Registrasi Gagal: " + e.message, "error");
+        }
+    }
+
+    // Kirim tautan reset kata sandi ke email pengguna.
+    async function prosesLupaPassword() {
+        const email = document.getElementById('loginEmail').value.trim();
+
+        if (!email) {
+            return tampilkanPesan("Masukkan email akun Anda terlebih dahulu, lalu klik Lupa kata sandi.", "error");
+        }
+
+        try {
+            const resetUrl = new URL("reset-password.html", window.location.href).href;
+            const { error } = await _supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: resetUrl
+            });
+            if (error) throw error;
+
+            tampilkanPesan(
+                "Jika email terdaftar, tautan reset akan dikirim. Periksa Inbox/Spam email Anda.",
+                "success"
+            );
+        } catch (e) {
+            tampilkanPesan("Gagal mengirim tautan reset: " + e.message, "error");
+        }
+    }
+
+    async function prosesLogin() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
+        if (!email || !password) return tampilkanPesan("Email dan Kata Sandi wajib diisi!", "error");
+
+        try {
+            const { data: authData, error: errAuth } = await _supabase.auth.signInWithPassword({ email, password });
+            if (errAuth) throw errAuth;
+
+            const { data: profile, error: errProf } = await _supabase.from('profiles')
+                .select('role, toko_id')
+                .eq('id', authData.user.id)
+                .single();
+
+            if (errProf || !profile) throw new Error("Data profil pengguna tidak ditemukan.");
+
+            tampilkanPesan("⚡ Autentikasi berhasil! Mengalihkan...", "success");
+            
+            setTimeout(() => {
+                if (profile.role === 'karyawan') {
+                    window.location.href = "dashboard_karyawan.html";
+                } else {
+                    window.location.href = "dashboard.html";
+                }
+            }, 1000);
+
+        } catch (e) {
+            tampilkanPesan("❌ Gagal Masuk: " + e.message, "error");
+        }
+    }
+</script>
+</body>
 </html>
